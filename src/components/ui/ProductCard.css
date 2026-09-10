@@ -1,0 +1,157 @@
+/* ============================================================
+   PRODUCT CARD – src/components/ui/ProductCard.css
+   ============================================================ */
+
+/* ---------- Card Shell ---------- */
+.product-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  border: 1px solid #ebebeb;
+  transition: box-shadow var(--transition-fast);
+  cursor: pointer;
+}
+
+.product-card:hover {
+  box-shadow: var(--shadow-md);
+}
+
+/* ---------- Image Wrapper ---------- */
+.product-card__img-wrap {
+  position: relative;
+  overflow: hidden;
+  background-color: #f9f9f9;
+  /* Force 1:1 ratio for uniform grid */
+  aspect-ratio: 1 / 1;
+}
+
+.product-card__img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center;
+  display: block;
+  transition: transform 0.4s ease;
+  padding: 12px;
+}
+
+.product-card:hover .product-card__img {
+  transform: scale(1.06);
+}
+
+/* ---------- Badges ---------- */
+.product-card__badges {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  z-index: 2;
+}
+
+.badge {
+  display: inline-block;
+  padding: 2px 7px;
+  font-family: var(--font-primary);
+  font-size: 0.6rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  border-radius: 2px;
+  line-height: 1.6;
+}
+
+.badge--new {
+  background-color: #222;
+  color: #fff;
+}
+
+.badge--discount {
+  background-color: #4caf82; /* green – matches template */
+  color: #fff;
+}
+
+/* ---------- Hover Action Buttons ---------- */
+.product-card__actions {
+  position: absolute;
+  bottom: 12px;
+  left: 50%;
+  transform: translateX(-50%) translateY(8px);
+  display: flex;
+  gap: 6px;
+  opacity: 0;
+  transition: opacity 0.25s ease, transform 0.25s ease;
+  z-index: 3;
+  white-space: nowrap;
+}
+
+.product-card:hover .product-card__actions {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+.product-card__action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 50%;
+  color: #333;
+  cursor: pointer;
+  transition: background-color var(--transition-fast), border-color var(--transition-fast), color var(--transition-fast);
+}
+
+.product-card__action-btn:hover {
+  background-color: var(--color-accent);
+  border-color: var(--color-accent);
+  color: #fff;
+}
+
+/* ---------- Card Info ---------- */
+.product-card__info {
+  padding: 14px 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  flex: 1;
+}
+
+.product-card__name {
+  font-family: var(--font-primary);
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: var(--color-text-dark);
+  line-height: 1.4;
+  text-decoration: none;
+  transition: color var(--transition-fast);
+}
+
+.product-card__name:hover {
+  color: var(--color-accent);
+}
+
+/* ---------- Price ---------- */
+.product-card__price-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.product-card__price {
+  font-family: var(--font-primary);
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--color-text-dark);
+}
+
+.product-card__price--old {
+  font-size: 0.8rem;
+  font-weight: 400;
+  color: #aaa;
+  text-decoration: line-through;
+}
