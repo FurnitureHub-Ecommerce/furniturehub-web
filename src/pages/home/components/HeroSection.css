@@ -1,0 +1,265 @@
+/* ============================================================
+   HERO SECTION – src/pages/home/components/HeroSection.css
+   ============================================================ */
+
+/* ---------- Slider Shell ---------- */
+.hero {
+  position: relative;
+  width: 100%;
+  height: 540px;
+  background-color: #f6f6f6;
+  overflow: hidden;
+}
+
+/* ---------- Individual Slide ---------- */
+.hero__slide {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 0.7s ease;
+  pointer-events: none;
+}
+
+.hero__slide.hero__slide--active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Full-bleed background image */
+.hero__slide-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  display: block;
+}
+
+/* ---------- Text Content (overlay) ---------- */
+.hero__content {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 0 8%;
+  pointer-events: none;
+  transition: all 0.4s ease;
+}
+
+/* Center aligned (Slide 1: Lamps) */
+.hero__content--center {
+  align-items: center;
+}
+.hero__content--center .hero__content-box {
+  align-items: center;
+  text-align: center;
+}
+.hero__content--center .hero__cta-wrap {
+  justify-content: center;
+}
+
+/* Right aligned (Slide 2: Daybed on the left -> Text on the right) */
+.hero__content--right {
+  align-items: flex-end;
+  padding-right: 12%;
+}
+.hero__content--right .hero__content-box {
+  align-items: flex-end;
+  text-align: right;
+}
+.hero__content--right .hero__cta-wrap {
+  justify-content: flex-end;
+}
+
+/* Left aligned (Slide 3: Chairs on the right -> Text on the left) */
+.hero__content--left {
+  align-items: flex-start;
+  padding-left: 12%;
+}
+.hero__content--left .hero__content-box {
+  align-items: flex-start;
+  text-align: left;
+}
+.hero__content--left .hero__cta-wrap {
+  justify-content: flex-start;
+}
+
+.hero__content-box {
+  background: transparent;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  border: none;
+  box-shadow: none;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  max-width: 520px;
+  pointer-events: auto;
+}
+
+/* Small label: "FURNITURE DESIGNS IDEAS" */
+.hero__label {
+  font-family: var(--font-body);
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: #777e85;
+  margin-bottom: var(--space-sm);
+}
+
+/* h1: "LIGHTING" */
+.hero__heading {
+  font-family: var(--font-primary);
+  font-size: clamp(36px, 5.2vw, 64px);
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #22252a;
+  line-height: 1.05;
+  margin: 0;
+}
+
+/* h2: "PENDANT LAMPS" */
+.hero__subheading {
+  font-family: var(--font-primary);
+  font-size: clamp(22px, 3.4vw, 42px);
+  font-weight: 400;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #4a5158;
+  line-height: 1.2;
+  margin: 8px 0 var(--space-md);
+}
+
+/* Description paragraph */
+.hero__description {
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  font-style: italic;
+  color: #6b7280;
+  line-height: 1.8;
+  max-width: 400px;
+  margin-bottom: var(--space-lg);
+}
+
+/* ---- SHOP NOW with line decoration ---- */
+.hero__cta-wrap {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  pointer-events: auto;
+}
+
+.hero__cta-line {
+  width: 42px;
+  height: 1px;
+  background-color: #4a5158;
+  flex-shrink: 0;
+}
+
+.hero__cta {
+  font-family: var(--font-primary);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: #22252a;
+  text-decoration: none;
+  transition: color var(--transition-fast);
+  cursor: pointer;
+}
+
+.hero__cta:hover {
+  color: var(--color-accent);
+}
+
+.hero__cta:hover ~ .hero__cta-line,
+.hero__cta-wrap:hover .hero__cta-line {
+  background-color: var(--color-accent);
+  transition: background-color var(--transition-fast);
+}
+
+/* ---------- Dots Navigation ---------- */
+.hero__dots {
+  position: absolute;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 10px;
+  z-index: 10;
+}
+
+.hero__dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  border: 1px solid #9ca3af;
+  background-color: transparent;
+  cursor: pointer;
+  padding: 0;
+  transition:
+    border-color 0.3s ease,
+    background-color 0.3s ease,
+    transform 0.3s ease;
+}
+
+.hero__dot.hero__dot--active {
+  background-color: #374151;
+  border-color: #374151;
+  transform: scale(1.2);
+}
+
+.hero__dot:hover:not(.hero__dot--active) {
+  border-color: #374151;
+  transform: scale(1.1);
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 991px) {
+  .hero {
+    height: 460px;
+  }
+}
+
+@media (max-width: 767px) {
+  .hero {
+    height: 380px;
+  }
+
+  .hero__content,
+  .hero__content--right,
+  .hero__content--left {
+    align-items: center;
+    padding: 0 var(--space-md);
+  }
+
+  .hero__content-box,
+  .hero__content--right .hero__content-box,
+  .hero__content--left .hero__content-box {
+    align-items: center;
+    text-align: center;
+    max-width: 90%;
+  }
+
+  .hero__cta-wrap,
+  .hero__content--right .hero__cta-wrap,
+  .hero__content--left .hero__cta-wrap {
+    justify-content: center;
+  }
+
+  .hero__description {
+    display: none; /* hide on small screens */
+  }
+}
+
+@media (max-width: 479px) {
+  .hero {
+    height: 320px;
+  }
+
+  .hero__label {
+    font-size: 0.62rem;
+  }
+}

@@ -1,0 +1,32 @@
+/* ============================================================
+   RATING – src/components/ui/Rating.css
+   ============================================================ */
+
+.rating {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.rating__star {
+  font-size: 0.7rem;
+  line-height: 1;
+  color: #ddd; /* empty star */
+  transition: color var(--transition-fast);
+}
+
+.rating__star--filled {
+  color: #f5c518; /* gold */
+}
+
+.rating__star--half {
+  /* simple approach: use gold for half too */
+  color: #f5c518;
+}
+
+.rating__count {
+  font-family: var(--font-body);
+  font-size: 0.7rem;
+  color: #aaa;
+  margin-left: 4px;
+}
