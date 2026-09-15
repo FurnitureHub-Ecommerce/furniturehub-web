@@ -1,292 +1,267 @@
-/* Top Announcement Bar */
-.header__topbar {
-  background-color: var(--lumora-text-main);
-  color: #D9D2C7;
-  font-size: 0.75rem;
-  letter-spacing: 0.05em;
-  padding-block: 8px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-}
+/* ============================================================
+   HEADER – src/components/layout/Header.css
+   ============================================================ */
 
-.header__topbar-inner {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.header__topbar-text {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin: 0 auto;
-}
-
-@media (min-width: 768px) {
-  .header__topbar-text {
-    margin: 0;
-  }
-}
-
-.header__topbar-divider {
-  color: var(--lumora-accent-wood);
-}
-
-.header__topbar-highlight {
-  color: var(--lumora-bg-secondary);
-  font-weight: 500;
-}
-
-.header__topbar-links {
-  display: none;
-  gap: 16px;
-}
-
-@media (min-width: 768px) {
-  .header__topbar-links {
-    display: flex;
-  }
-}
-
-.header__topbar-links a {
-  color: #D9D2C7;
-  transition: color var(--transition-fast);
-}
-
-.header__topbar-links a:hover {
-  color: #FFFFFF;
-}
-
-/* Header Outer */
+/* ---------- Header Shell ---------- */
 .header {
   position: sticky;
   top: 0;
-  z-index: 100;
-  background-color: var(--lumora-bg-primary);
-  border-bottom: 1px solid var(--lumora-border);
-  transition: all var(--transition-normal);
-}
-
-.header--scrolled {
-  background-color: rgba(247, 244, 238, 0.95);
-  backdrop-filter: blur(12px);
-  box-shadow: var(--shadow-subtle);
+  z-index: 1000;
+  background-color: var(--color-bg-white);
+  border-bottom: 1px solid var(--color-border);
+  height: var(--header-height);
+  /* No drop-shadow – matches original template */
 }
 
 .header__inner {
-  height: var(--header-height);
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  height: 100%;
+  width: 100%;
+  padding-inline: 30px;        /* logo hugs left edge, icons hug right edge */
+  gap: var(--space-md);
 }
 
-/* Logo */
+/* ---------- Logo ---------- */
 .header__logo {
+  flex-shrink: 0;
   display: flex;
-  align-items: center;
+  align-items: baseline;
+  gap: 0;
   text-decoration: none;
-  mix-blend-mode: multiply;
-  color: var(--lumora-text-main);
-  transition: opacity var(--transition-fast);
 }
 
-.header__logo:hover {
-  opacity: 0.85;
+.header__logo-text {
+  font-family: var(--font-primary);
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: var(--color-text-dark);
+  letter-spacing: -0.02em;
+  line-height: 1;
 }
 
-.header__logo-img {
-  height: 40px;
-  max-height: 40px;
-  width: auto;
-  object-fit: contain;
-  display: block;
+.header__logo-dot {
+  color: var(--color-accent);
+  font-size: 2rem;
+  font-weight: 900;
+  line-height: 1;
+  margin-left: 1px;
 }
 
-.header__logo-img--mobile {
-  height: 32px;
-  max-height: 32px;
-}
-
-/* Desktop Nav */
+/* ---------- Primary Navigation ---------- */
 .header__nav {
-  display: none;
-}
-
-@media (min-width: 992px) {
-  .header__nav {
-    display: block;
-  }
+  flex: 1;
+  display: flex;
+  justify-content: flex-end; /* logo LEFT | [space] | nav + icons RIGHT */
 }
 
 .header__nav-list {
   display: flex;
   align-items: center;
-  gap: 32px;
+  gap: 2px;
+}
+
+.header__nav-item {
+  position: relative;
 }
 
 .header__nav-link {
-  font-size: 0.85rem;
-  font-weight: 500;
-  letter-spacing: 0.06em;
+  font-family: var(--font-primary);
+  font-size: 0.68rem;
+  font-weight: 500;          /* lighter – template nav is not bold */
+  letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--lumora-text-main);
-  position: relative;
-  padding-block: 6px;
+  color: var(--color-text-dark);
+  padding: 6px 10px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transition: color var(--transition-fast);
+  white-space: nowrap;
 }
 
-.header__nav-link::after {
+.header__nav-link:hover,
+.header__nav-link.active {
+  color: var(--color-accent);
+}
+
+.header__nav-link--has-dropdown::after {
   content: '';
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 0%;
-  height: 1.5px;
-  background-color: var(--lumora-accent-wood);
-  transition: width var(--transition-normal);
+  display: inline-block;
+  width: 0;
+  height: 0;
+  border-left: 4px solid transparent;
+  border-right: 4px solid transparent;
+  border-top: 4px solid currentColor;
+  transition: transform var(--transition-fast);
 }
 
-.header__nav-link:hover::after,
-.header__nav-link--active::after {
-  width: 100%;
-}
-
-.header__nav-link--active {
-  color: var(--lumora-accent-wood);
-}
-
-/* Actions */
+/* ---------- Icon Actions (right side) ---------- */
 .header__actions {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: var(--space-xs);
+  flex-shrink: 0;
+  margin-left: auto; /* always push icons to far right even when nav is hidden */
 }
 
 .header__action-btn {
   position: relative;
-  padding: 8px;
-  color: var(--lumora-text-main);
-  border-radius: var(--radius-full);
-  transition: all var(--transition-fast);
-}
-
-.header__action-btn:hover {
-  color: var(--lumora-accent-wood);
-  background-color: var(--lumora-bg-secondary);
-}
-
-.header__user-btn {
-  display: none;
-}
-
-@media (min-width: 640px) {
-  .header__user-btn {
-    display: inline-flex;
-  }
-}
-
-.header__badge {
-  position: absolute;
-  top: 2px;
-  right: 2px;
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  background-color: var(--lumora-accent-wood);
-  color: #FFFFFF;
-  font-size: 0.65rem;
-  font-weight: 700;
   display: flex;
   align-items: center;
   justify-content: center;
-}
-
-.header__mobile-toggle {
-  display: flex;
-  padding: 6px;
-  color: var(--lumora-text-main);
-}
-
-@media (min-width: 992px) {
-  .header__mobile-toggle {
-    display: none;
-  }
-}
-
-/* Mobile Drawer Overlay */
-.header__mobile-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 1000;
-  background-color: rgba(0, 0, 0, 0.4);
-  backdrop-filter: blur(4px);
-}
-
-.header__mobile-drawer {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 85%;
-  max-width: 360px;
-  height: 100%;
-  background-color: var(--lumora-bg-primary);
-  display: flex;
-  flex-direction: column;
-  padding: 24px;
-  box-shadow: var(--shadow-floating);
-  animation: slideRight 0.3s ease-out;
-}
-
-@keyframes slideRight {
-  from {
-    transform: translateX(-100%);
-  }
-  to {
-    transform: translateX(0);
-  }
-}
-
-.header__mobile-drawer-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding-bottom: 20px;
-  border-bottom: 1px solid var(--lumora-border);
-}
-
-.header__mobile-nav-list {
-  margin-top: 24px;
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
-}
-
-.header__mobile-nav-link {
-  font-family: var(--font-serif);
-  font-size: 1.35rem;
-  color: var(--lumora-text-main);
+  width: 30px;
+  height: 30px;
+  color: var(--color-text-dark);
+  background: none;
+  border: none;
+  border-radius: 0;
+  cursor: pointer;
   transition: color var(--transition-fast);
 }
 
-.header__mobile-nav-link:hover {
-  color: var(--lumora-accent-wood);
+.header__action-btn:hover {
+  color: var(--color-accent);
 }
 
-.header__mobile-drawer-footer {
-  margin-top: auto;
-  padding-top: 24px;
-  border-top: 1px solid var(--lumora-border);
-  font-size: 0.85rem;
-  color: var(--lumora-text-muted);
+/* Thin stroke icons – matches Schön template style */
+.header__action-btn svg {
+  width: 17px;
+  height: 17px;
+  stroke-width: 1.5;
 }
 
-.header__mobile-phone {
+/* Badge – hardcoded colors, completely isolated from parent icon color */
+.header__badge {
+  position: absolute;
+  top: 1px;
+  right: -3px;
+  min-width: 14px;
+  height: 14px;
+  padding: 0 3px;
+  background-color: #555 !important;  /* never inherit from parent SVG */
+  color: #ffffff !important;
+  fill: none !important;              /* prevent any SVG bleed */
+  font-family: var(--font-primary);
+  font-size: 0.5rem;
+  font-weight: 700;
+  border-radius: 99px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* ---------- Mobile Menu Toggle ---------- */
+.header__menu-toggle {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  color: var(--color-text-dark);
+  border-radius: var(--radius-md);
+  transition: color var(--transition-fast), background-color var(--transition-fast);
+}
+
+.header__menu-toggle:hover {
+  color: var(--color-accent);
+  background-color: var(--color-bg-light);
+}
+
+.header__menu-toggle svg {
+  width: 22px;
+  height: 22px;
+}
+
+/* ---------- Mobile Nav Drawer ---------- */
+.header__mobile-nav {
+  display: none;
+  position: fixed;
+  top: var(--header-height);
+  left: 0;
+  right: 0;
+  background-color: var(--color-bg-white);
+  border-bottom: 1px solid var(--color-border);
+  box-shadow: var(--shadow-md);
+  padding: var(--space-md);
+  z-index: 999;
+}
+
+.header__mobile-nav.open {
   display: block;
-  font-family: var(--font-serif);
-  font-size: 1.1rem;
-  color: var(--lumora-accent-wood);
-  margin-block: 4px;
 }
 
-.header__mobile-hours {
-  font-size: 0.75rem;
-  color: var(--lumora-text-light);
+.header__mobile-nav-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.header__mobile-nav-link {
+  display: block;
+  font-family: var(--font-primary);
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-text-dark);
+  padding: var(--space-sm) var(--space-md);
+  border-bottom: 1px solid var(--color-border);
+  transition: color var(--transition-fast), background-color var(--transition-fast);
+}
+
+.header__mobile-nav-link:last-child {
+  border-bottom: none;
+}
+
+.header__mobile-nav-link:hover {
+  color: var(--color-accent);
+  background-color: var(--color-bg-light);
+}
+
+/* ============================================================
+   RESPONSIVE BREAKPOINTS
+   ============================================================ */
+
+/* Desktop narrow + tablet: ≤ 1200px – collapse nav to hamburger
+   Original Schön template hides nav at this breakpoint */
+@media (max-width: 1200px) {
+  .header__nav {
+    display: none;
+  }
+
+  .header__menu-toggle {
+    display: flex;
+  }
+}
+
+/* Small tablet / large phone: ≤ 767px */
+@media (max-width: 767px) {
+  .header__logo-text {
+    font-size: 1.35rem;
+  }
+
+  .header__actions {
+    gap: 2px;
+  }
+
+  .header__action-btn {
+    width: 32px;
+    height: 32px;
+  }
+
+  .header__action-btn svg {
+    width: 18px;
+    height: 18px;
+  }
+}
+
+/* Phone: ≤ 479px */
+@media (max-width: 479px) {
+  .header__logo-text {
+    font-size: 1.2rem;
+  }
 }
