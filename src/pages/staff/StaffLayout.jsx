@@ -1,13 +1,25 @@
-import React, { useState } from 'react';
-import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { Settings, User, LogOut, LayoutDashboard, Users, ClipboardList } from 'lucide-react';
-import logo from '../../assets/logo.jpg';
-import './Staff.css';
+import React, { useState } from "react";
+import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
+import {
+  Settings,
+  User,
+  LogOut,
+  LayoutDashboard,
+  Users,
+  ClipboardList,
+} from "lucide-react";
+import logo from "../../assets/logo.jpg";
+import "./Staff.css";
 
 const navItems = [
-  { path: '/staff',         label: 'Staff Dashboard',  icon: LayoutDashboard, exact: true },
-  { path: '/staff/members', label: 'Staff Directory',   icon: Users },
-  { path: '/staff/orders',  label: 'Order Desk',        icon: ClipboardList },
+  {
+    path: "/staff",
+    label: "Staff Dashboard",
+    icon: LayoutDashboard,
+    exact: true,
+  },
+  { path: "/staff/members", label: "Staff Directory", icon: Users },
+  { path: "/staff/orders", label: "Order Desk", icon: ClipboardList },
 ];
 
 const StaffLayout = () => {
@@ -16,13 +28,14 @@ const StaffLayout = () => {
   const navigate = useNavigate();
 
   const currentUser = {
-    name: 'E. Van Der Bilt',
-    role: 'DIRECTOR OPS',
-    avatar: 'https://ui-avatars.com/api/?name=E+Van+Der+Bilt&background=1c1c1c&color=fff',
+    name: "E. Van Der Bilt",
+    role: "DIRECTOR OPS",
+    avatar:
+      "https://ui-avatars.com/api/?name=E+Van+Der+Bilt&background=1c1c1c&color=fff",
   };
 
   const handleLogout = () => {
-    navigate('/login');
+    navigate("/login");
   };
 
   const isActive = (item) => {
@@ -40,7 +53,9 @@ const StaffLayout = () => {
 
           <div className="staff-module-badge">
             <span className="staff-module-badge__dot" />
-            <span className="staff-module-badge__text">Staff Operations Module</span>
+            <span className="staff-module-badge__text">
+              Staff Operations Module
+            </span>
           </div>
 
           <div className="nav-group">
@@ -49,7 +64,10 @@ const StaffLayout = () => {
               {navItems.map((item) => {
                 const Icon = item.icon;
                 return (
-                  <li key={item.path} className={isActive(item) ? 'active' : ''}>
+                  <li
+                    key={item.path}
+                    className={isActive(item) ? "active" : ""}
+                  >
                     <Link to={item.path}>
                       <Icon size={16} />
                       {item.label}
@@ -65,7 +83,11 @@ const StaffLayout = () => {
         <div className="user-profile-wrapper">
           <div className="user-profile">
             <div className="user-main-info">
-              <img src={currentUser.avatar} alt={currentUser.name} className="user-avatar" />
+              <img
+                src={currentUser.avatar}
+                alt={currentUser.name}
+                className="user-avatar"
+              />
               <div>
                 <span className="user-name">{currentUser.name}</span>
                 <span className="user-role">{currentUser.role}</span>
@@ -73,7 +95,7 @@ const StaffLayout = () => {
             </div>
 
             <button
-              className={`settings-btn ${showSettingsMenu ? 'active' : ''}`}
+              className={`settings-btn ${showSettingsMenu ? "active" : ""}`}
               onClick={() => setShowSettingsMenu(!showSettingsMenu)}
               type="button"
               title="Settings"
@@ -84,7 +106,10 @@ const StaffLayout = () => {
 
           {showSettingsMenu && (
             <div className="settings-dropdown">
-              <Link to="/staff/profile" onClick={() => setShowSettingsMenu(false)}>
+              <Link
+                to="/staff/profile"
+                onClick={() => setShowSettingsMenu(false)}
+              >
                 <User size={16} />
                 Profile
               </Link>
