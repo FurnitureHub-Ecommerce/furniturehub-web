@@ -1,0 +1,110 @@
+.staff-card {
+  background: #fff;
+  border: 1px solid #e5e2da;
+  border-radius: 10px;
+  padding: 20px;
+  transition: box-shadow 0.2s, transform 0.2s;
+}
+
+.staff-card:hover {
+  box-shadow: 0 6px 20px rgba(37, 37, 37, 0.08);
+  transform: translateY(-2px);
+}
+
+.staff-card__top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 14px;
+}
+
+.staff-card__avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.staff-card__status {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 12px;
+}
+
+.staff-card__status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+.card-status--active {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.card-status--active .staff-card__status-dot {
+  background: #10b981;
+}
+
+.card-status--leave {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.card-status--leave .staff-card__status-dot {
+  background: #f59e0b;
+}
+
+.card-status--off {
+  background: #f3f4f6;
+  color: #6b7280;
+}
+
+.card-status--off .staff-card__status-dot {
+  background: #9ca3af;
+}
+
+.staff-card__info {
+  margin-bottom: 16px;
+}
+
+.staff-card__name {
+  display: block;
+  font-size: 15px;
+  color: #1a1a1a;
+  margin-bottom: 2px;
+}
+
+.staff-card__role {
+  font-size: 12px;
+  color: #8c857b;
+}
+
+.staff-card__stats {
+  display: flex;
+  gap: 24px;
+  padding-top: 14px;
+  border-top: 1px solid #f0ede6;
+}
+
+.staff-card__stat {
+  display: flex;
+  flex-direction: column;
+}
+
+.staff-card__stat-value {
+  font-size: 18px;
+  font-weight: 700;
+  color: #1a1a1a;
+}
+
+.staff-card__stat-label {
+  font-size: 11px;
+  color: #8c857b;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
