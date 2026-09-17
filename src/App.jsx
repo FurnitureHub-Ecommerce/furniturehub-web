@@ -8,6 +8,8 @@ import StaffLayout from './pages/staff/StaffLayout';
 import StaffDashboard from './pages/staff/StaffDashboard';
 import StaffList from './pages/staff/StaffList';
 import StaffOrders from './pages/staff/StaffOrders';
+import Login from './pages/auth/Login';
+import Register from './pages/auth/Register';
 
 function App() {
   return (
@@ -21,6 +23,9 @@ function App() {
             </MainLayout>
           }
         />
+
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
 
         <Route path="/storage" element={<StorageLayout />}>
           <Route index element={<StorageDashboard />} />
