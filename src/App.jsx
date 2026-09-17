@@ -4,6 +4,10 @@ import MainLayout from './components/layout/MainLayout/MainLayout';
 import Home from './pages/home/Home';
 import StorageLayout from './pages/storage/StorageLayout';
 import StorageDashboard from './pages/storage/StorageDashboard';
+import StaffLayout from './pages/staff/StaffLayout';
+import StaffDashboard from './pages/staff/StaffDashboard';
+import StaffList from './pages/staff/StaffList';
+import StaffOrders from './pages/staff/StaffOrders';
 
 function App() {
   return (
@@ -20,6 +24,12 @@ function App() {
 
         <Route path="/storage" element={<StorageLayout />}>
           <Route index element={<StorageDashboard />} />
+        </Route>
+
+        <Route path="/staff" element={<StaffLayout />}>
+          <Route index element={<StaffDashboard />} />
+          <Route path="members" element={<StaffList />} />
+          <Route path="orders" element={<StaffOrders />} />
         </Route>
       </Routes>
     </BrowserRouter>
