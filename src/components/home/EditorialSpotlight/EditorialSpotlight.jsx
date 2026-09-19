@@ -31,13 +31,13 @@ export function EditorialSpotlight({ isLoading = false, onAddToCart }) {
   };
 
   return (
-    <section className="section editorial-spotlight" aria-label="Curated Lookbook Spotlight">
+    <section className="section editorial-spotlight" aria-label="Điểm nhấn lookbook được tuyển chọn">
       <div className="container">
         {/* Section Header */}
         <div className="editorial-spotlight__header">
           <span className="section-heading__badge">
             <Sparkles size={12} style={{ display: 'inline', marginRight: 4 }} />
-            Shop the Lookbook
+            Mua theo Lookbook
           </span>
           <h2 className="editorial-spotlight__title">{EDITORIAL_LOOKBOOK.title}</h2>
           <p className="editorial-spotlight__subtitle">{EDITORIAL_LOOKBOOK.subtitle}</p>
@@ -49,7 +49,7 @@ export function EditorialSpotlight({ isLoading = false, onAddToCart }) {
           <div className="editorial-spotlight__image-box">
             <img
               src={EDITORIAL_LOOKBOOK.heroImage}
-              alt="Kyoto Residence Lifestyle Living Room"
+              alt="Phòng khách phong cách sống Kyoto Residence"
               className="editorial-spotlight__main-image"
               loading="lazy"
             />
@@ -64,7 +64,7 @@ export function EditorialSpotlight({ isLoading = false, onAddToCart }) {
                   className={`hotspot-pin ${isActive ? 'hotspot-pin--active' : ''}`}
                   style={{ left: `${spot.x}%`, top: `${spot.y}%` }}
                   onClick={() => setActiveHotspotId(spot.id)}
-                  aria-label={`Hotspot for ${spot.name}`}
+                  aria-label={`Điểm nhấn cho ${spot.name}`}
                   type="button"
                 >
                   <span className="hotspot-pin__ripple" />
@@ -78,7 +78,7 @@ export function EditorialSpotlight({ isLoading = false, onAddToCart }) {
 
           {/* Right: Active Item Details & Hotspot Items List */}
           <div className="editorial-spotlight__sidebar">
-            <span className="editorial-spotlight__spot-tag">Featured Hotspot Item</span>
+            <span className="editorial-spotlight__spot-tag">Sản phẩm nổi bật</span>
 
             {/* Active Highlighted Product Card */}
             <div className="hotspot-featured-card">
@@ -101,12 +101,12 @@ export function EditorialSpotlight({ isLoading = false, onAddToCart }) {
                     {addedItem === activeHotspot.id ? (
                       <>
                         <Check size={16} />
-                        <span>In Bag</span>
+                        <span>Trong giỏ</span>
                       </>
                     ) : (
                       <>
                         <ShoppingBag size={16} />
-                        <span>Add to Bag</span>
+                        <span>Thêm vào giỏ</span>
                       </>
                     )}
                   </button>
@@ -116,7 +116,7 @@ export function EditorialSpotlight({ isLoading = false, onAddToCart }) {
 
             {/* All Room Items List */}
             <div className="hotspot-list-section">
-              <h4 className="hotspot-list-title">All Room Items ({EDITORIAL_LOOKBOOK.hotspots.length})</h4>
+              <h4 className="hotspot-list-title">Tất cả sản phẩm trong phòng ({EDITORIAL_LOOKBOOK.hotspots.length})</h4>
               <ul className="hotspot-list">
                 {EDITORIAL_LOOKBOOK.hotspots.map((spot) => {
                   const isActive = spot.id === activeHotspotId;
@@ -141,7 +141,7 @@ export function EditorialSpotlight({ isLoading = false, onAddToCart }) {
             </div>
 
             <a href="/lookbook" className="editorial-spotlight__full-link">
-              <span>View Full Kyoto Residency Lookbook</span>
+              <span>Xem toàn bộ Lookbook Kyoto Residency</span>
               <ArrowRight size={16} />
             </a>
           </div>

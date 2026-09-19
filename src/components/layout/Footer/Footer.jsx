@@ -1,3 +1,4 @@
+import React from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
 import './Footer.css';
@@ -9,27 +10,27 @@ export function Footer() {
       <div className="footer__newsletter">
         <div className="container footer__newsletter-inner">
           <div className="footer__newsletter-content">
-            <span className="footer__newsletter-tag">LUMORA Atelier Journal</span>
-            <h3 className="footer__newsletter-title">Subscribe to Private Previews & Design Notes</h3>
+            <span className="footer__newsletter-tag">Bản Tin LUMORA Atelier</span>
+            <h3 className="footer__newsletter-title">Đăng Ký Nhận Xem Trước & Ghi Chép Thiết Kế</h3>
             <p className="footer__newsletter-desc">
-              Receive seasonal lookbooks, trade invitations, and exclusive early access to limited edition artisan pieces.
+              Nhận bộ sưu tập theo mùa, thư mời thương mại và quyền truy cập sớm độc quyền các sản phẩm thủ công giới hạn.
             </p>
           </div>
           <form className="footer__newsletter-form" onSubmit={(e) => e.preventDefault()}>
             <div className="footer__input-wrap">
               <input
                 type="email"
-                placeholder="Enter your email address"
+                placeholder="Nhập địa chỉ email của bạn"
                 required
-                aria-label="Email address for journal subscription"
+                aria-label="Địa chỉ email để đăng ký bản tin"
               />
-              <button type="submit" aria-label="Subscribe to journal">
-                <span>Subscribe</span>
+              <button type="submit" aria-label="Đăng ký nhận bản tin">
+                <span>Đăng Ký</span>
                 <ArrowRight size={16} />
               </button>
             </div>
             <span className="footer__disclaimer">
-              By subscribing you agree to our Privacy Policy. Unsubscribe anytime.
+              Bằng cách đăng ký, bạn đồng ý với Chính Sách Bảo Mật của chúng tôi. Hủy đăng ký bất cứ lúc nào.
             </span>
           </form>
         </div>
@@ -45,7 +46,7 @@ export function Footer() {
               <span className="footer__logo-sub">STUDIO</span>
             </Link>
             <p className="footer__brand-desc">
-              Modern luxury furniture crafted with architectural intent, organic wood textures, and refined minimalism. Engineered for quiet permanence.
+              Nội thất cao cấp hiện đại được chế tác với tư duy kiến trúc, kết cấu gỗ mộc tự nhiên và chủ nghĩa tối giản tinh tế. Được thiết kế cho sự bền vững trường tồn.
             </p>
             <div className="footer__socials">
               <a href="#instagram" aria-label="Instagram">
@@ -70,33 +71,33 @@ export function Footer() {
 
           {/* Column 1: Collections */}
           <div className="footer__col">
-            <h4 className="footer__heading">Collections</h4>
+            <h4 className="footer__heading">Bộ Sưu Tập</h4>
             <ul className="footer__list">
-              <li><Link to="/category/living-room">Wabi-Sabi Living</Link></li>
-              <li><Link to="/category/dining-room">Solace Dining</Link></li>
-              <li><Link to="/category/bedroom">Nordic Sanctuary</Link></li>
-              <li><Link to="/category/studio-office">Architectural Studio</Link></li>
-              <li><Link to="/category/lighting-decor">Luminaires & Decor</Link></li>
+              <li><Link to="/category/living-room">Không Gian Wabi-Sabi</Link></li>
+              <li><Link to="/category/dining-room">Phòng Ăn Solace</Link></li>
+              <li><Link to="/category/bedroom">Thiền Viện Bắc Âu</Link></li>
+              <li><Link to="/category/studio-office">Studio Kiến Trúc</Link></li>
+              <li><Link to="/category/lighting-decor">Đèn & Đồ Trang Trí</Link></li>
             </ul>
           </div>
 
           {/* Column 2: Client Care */}
           <div className="footer__col">
-            <h4 className="footer__heading">Client Care</h4>
+            <h4 className="footer__heading">Chăm Sóc Khách Hàng</h4>
             <ul className="footer__list">
-              <li><a href="#concierge">White-Glove Concierge</a></li>
-              <li><a href="#custom">Custom Fabric Swatches</a></li>
-              <li><a href="#warranty">10-Year Warranty Details</a></li>
-              <li><a href="#shipping">Shipping & Carbon Offsets</a></li>
-              <li><a href="#trade">Trade Program Application</a></li>
+              <li><a href="#concierge">Dịch Vụ Concierge Cao Cấp</a></li>
+              <li><a href="#custom">Mẫu Vải Tùy Chỉnh</a></li>
+              <li><a href="#warranty">Chi Tiết Bảo Hành 10 Năm</a></li>
+              <li><a href="#shipping">Vận Chuyển & Bù Đắp Carbon</a></li>
+              <li><a href="#trade">Đăng Ký Chương Trình Đối Tác</a></li>
             </ul>
           </div>
 
           {/* Column 3: Showrooms */}
           <div className="footer__col">
-            <h4 className="footer__heading">Atelier Flagships</h4>
+            <h4 className="footer__heading">Cửa Hàng Trưng Bày</h4>
             <div className="footer__address">
-              <p><strong>Kyoto Studio:</strong> Gion District, Higashiyama, Kyoto 605-0074</p>
+              <p><strong>Kyoto Studio:</strong> Quận Gion, Higashiyama, Kyoto 605-0074</p>
               <p><strong>New York Flagship:</strong> 452 Broome St, SoHo, NY 10013</p>
               <p><strong>Copenhagen:</strong> Store Kongensgade 48, 1264 København</p>
             </div>
@@ -107,11 +108,11 @@ export function Footer() {
       {/* Bottom Bar */}
       <div className="footer__bottom">
         <div className="container footer__bottom-inner">
-          <p>© {new Date().getFullYear()} LUMORA Studio Inc. All rights reserved.</p>
+          <p>© {new Date().getFullYear()} LUMORA Studio Inc. Bảo lưu mọi quyền.</p>
           <div className="footer__bottom-links">
-            <a href="#privacy">Privacy Policy</a>
-            <a href="#terms">Terms of Craft</a>
-            <a href="#accessibility">Accessibility</a>
+            <a href="#privacy">Chính Sách Bảo Mật</a>
+            <a href="#terms">Điều Khoản Chế Tác</a>
+            <a href="#accessibility">Khả Năng Tiếp Cận</a>
           </div>
         </div>
       </div>
