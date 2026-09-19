@@ -24,24 +24,27 @@
 }
 
 .footer__newsletter-tag {
-  font-size: 0.75rem;
-  font-weight: 600;
-  letter-spacing: 0.25em;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
   text-transform: uppercase;
   color: var(--lumora-accent-wood);
 }
 
 .footer__newsletter-title {
   font-family: var(--font-serif);
-  font-size: 1.85rem;
-  font-weight: 400;
+  font-size: clamp(2rem, 2.8vw, 2.8rem);
+  font-weight: 600;
+  line-height: 1.08;
+  letter-spacing: -0.02em;
   color: #FFFFFF;
   margin-block: 6px 12px;
 }
 
 .footer__newsletter-desc {
-  font-size: 0.9rem;
+  font-size: 0.96rem;
   color: #A39B90;
+  line-height: 1.7;
   max-width: 520px;
 }
 
@@ -127,22 +130,24 @@
 
 .footer__logo-name {
   font-family: var(--font-serif);
-  font-size: 1.75rem;
+  font-size: 1.9rem;
   font-weight: 600;
-  letter-spacing: 0.18em;
+  line-height: 1;
+  letter-spacing: 0.16em;
 }
 
 .footer__logo-sub {
-  font-size: 0.55rem;
-  font-weight: 600;
-  letter-spacing: 0.35em;
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.32em;
   color: var(--lumora-accent-wood);
+  margin-top: 4px;
 }
 
 .footer__brand-desc {
-  font-size: 0.85rem;
+  font-size: 0.9rem;
   color: #A39B90;
-  line-height: 1.6;
+  line-height: 1.7;
   margin-bottom: 20px;
 }
 
@@ -171,11 +176,12 @@
 
 .footer__heading {
   font-family: var(--font-serif);
-  font-size: 1.15rem;
-  font-weight: 500;
+  font-size: 1.3rem;
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
   color: #FFFFFF;
   margin-bottom: 18px;
-
 }
 
 .footer__list {
@@ -185,7 +191,8 @@
 }
 
 .footer__list a {
-  font-size: 0.85rem;
+  font-size: 0.9rem;
+  line-height: 1.8;
   color: #A39B90;
   transition: color var(--transition-fast);
 }
@@ -195,14 +202,15 @@
 }
 
 .footer__address p {
-  font-size: 0.825rem;
+  font-size: 0.88rem;
   color: #A39B90;
-  line-height: 1.5;
+  line-height: 1.7;
   margin-bottom: 12px;
 }
 
 .footer__address strong {
   color: #FFFFFF;
+  font-weight: 600;
 }
 
 /* Bottom Bar */

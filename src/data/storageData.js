@@ -1,30 +1,15 @@
+// src/data/storageData.js
+
 export const storageMetrics = [
-  { label: 'TỔNG SKU HOẠT ĐỘNG', value: '48', sub: '142 biến thể đã & bọc da cao cấp' },
-  { label: 'TỒN KHO VẬT LÝ', value: '1,482', sub: '87.4% sức chứa Depository' },
-  { label: 'ĐỊNH GIÁ TỒN KHO', value: '8,194,520 €', sub: 'Thẩm định bảo hiểm Q2/2026' },
-  { label: 'XẴN SÀNG XUẤT XƯỞNG', value: '96.2%', sub: '1,425 kiện hoàn tất QA & Khô ẩm' }
+  { label: 'TỔNG SỐ SKU', value: '128', sub: 'Đang quản lý trong hệ thống' },
+  { label: 'HÀNG TỒN KHO (TỔNG)', value: '1,420', sub: 'Sản phẩm sẵn sàng lưu trữ' },
+  { label: 'VỊ TRÍ LƯU TRỮ', value: '45 Vịnh', sub: 'Khu vực kho A & Kho B' },
+  { label: 'CẢNH BÁO TỒN THẤP', value: '4 SKU', sub: 'Dưới mức tồn kho tối thiểu' }
 ];
 
 export const skuProducts = [
-  {
-    id: 'SKU-MNL-TRV-01',
-    name: 'Bàn Monolith Khối',
-    specs: 'Roman Navona Honed / 280 x 110 x 74 cm',
-    location: 'Hay A2-01',
-    stock: 5
-  },
-  {
-    id: 'SKU-CLD-CHR-092',
-    name: 'Ghế Caldera Occasional',
-    specs: 'Walnut Ý / Bouclé Cát / Tiêu chuẩn Atelier',
-    location: 'Hay B1-14',
-    stock: 18
-  },
-  {
-    id: 'SKU-SVL-TRV-88',
-    name: 'Bàn Trà Svelta Travertine',
-    specs: 'Đá Xẻ Mở Tự Nhiên / 140 x 70 x 36 cm',
-    location: 'Hay A1-09',
-    stock: 8
-  }
+  { id: 'SKU-8821', name: 'LUMORA Atelier Signature Vase', specs: 'Gốm thủ công - Màu Trà / Cao 30cm', location: 'Kho A - Vịnh 04', stock: 42 },
+  { id: 'SKU-8822', name: 'LUMORA Minimalist Ceramic Plate', specs: 'Bộ 3 cái - Men mờ / Đường kính 20cm', location: 'Kho A - Vịnh 05', stock: 8 }, // Sắp hết
+  { id: 'SKU-8823', name: 'LUMORA Artisan Aroma Diffuser', specs: 'Đất nung kết hợp gỗ sồi tự nhiên', location: 'Kho B - Vịnh 12', stock: 15 },
+  { id: 'SKU-8824', name: 'LUMORA Linen Table Runner', specs: 'Vải lanh tự nhiên - 160x40cm', location: 'Kho B - Vịnh 14', stock: 0 }, // Hết hàng
 ];

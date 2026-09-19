@@ -1,0 +1,23 @@
+@import './Login.css';
+
+/* Tối ưu lại padding cho form đăng ký vì có nhiều trường thông tin hơn */
+.register-card {
+  max-width: 400px;
+}
+
+.register-card .auth-header {
+  margin-bottom: 20px;
+}
+
+.register-card .form-group {
+  margin-bottom: 14px;
+}
+
+.register-card .form-input {
+  padding: 10px 14px;
+}
+
+.register-card .btn-submit {
+  margin-top: 8px;
+  padding: 12px;
+}

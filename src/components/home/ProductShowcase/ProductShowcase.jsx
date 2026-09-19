@@ -6,9 +6,9 @@ import { ProductCardSkeleton } from '../../common/Skeleton/Skeleton';
 import './ProductShowcase.css';
 
 const TABS = [
-  { id: 'featured', label: 'Curated Featured' },
-  { id: 'new-arrivals', label: 'New Arrivals' },
-  { id: 'best-sellers', label: 'Best Sellers' },
+  { id: 'featured', label: 'Nổi bật' },
+  { id: 'new-arrivals', label: 'Hàng mới' },
+  { id: 'best-sellers', label: 'Bán chạy' },
 ];
 
 export function ProductShowcase({
@@ -34,14 +34,14 @@ export function ProductShowcase({
   };
 
   return (
-    <section className="section product-showcase" aria-label="Product Showcase">
+    <section className="section product-showcase" aria-label="Trưng bày sản phẩm">
       <div className="container">
         {/* Section Header */}
         <div className="section-heading">
-          <span className="section-heading__badge">Masterpiece Craftsmanship</span>
-          <h2 className="section-heading__title">Timeless Furniture Pieces</h2>
+          <span className="section-heading__badge">Chế tác kiệt tác</span>
+          <h2 className="section-heading__title">Những món nội thất vượt thời gian</h2>
           <p className="section-heading__subtitle">
-            Meticulously engineered from FSC certified hardwood, natural linen, and hand-finished brass.
+            Được chế tạo tỉ mỉ từ gỗ đạt chứng nhận FSC, vải lanh tự nhiên và đồng mạ tay.
           </p>
         </div>
 
@@ -90,10 +90,10 @@ export function ProductShowcase({
 
                       {/* Badges */}
                       <div className="product-card__badges">
-                        {product.isNew && <span className="product-badge product-badge--new">New</span>}
+                        {product.isNew && <span className="product-badge product-badge--new">Mới</span>}
                         {product.oldPrice && (
                           <span className="product-badge product-badge--sale">
-                            Save ${(product.oldPrice - product.price).toLocaleString()}
+                            Tiết kiệm ${(product.oldPrice - product.price).toLocaleString()}
                           </span>
                         )}
                       </div>
@@ -106,8 +106,8 @@ export function ProductShowcase({
                         onClick={() => onToggleWishlist && onToggleWishlist(product.id)}
                         aria-label={
                           isWishlisted
-                            ? `Remove ${product.name} from Wishlist`
-                            : `Add ${product.name} to Wishlist`
+                            ? `Xóa ${product.name} khỏi yêu thích`
+                            : `Thêm ${product.name} vào yêu thích`
                         }
                         type="button"
                       >
@@ -118,11 +118,11 @@ export function ProductShowcase({
                       <div className="product-card__quick-actions">
                         <button
                           className="product-card__quick-view-btn"
-                          aria-label={`Quick View ${product.name}`}
+                          aria-label={`Xem nhanh ${product.name}`}
                           type="button"
                         >
                           <Eye size={16} />
-                          <span>Quick View</span>
+                          <span>Xem nhanh</span>
                         </button>
                       </div>
                     </div>
@@ -156,18 +156,18 @@ export function ProductShowcase({
                             isJustAdded ? 'product-card__cart-btn--added' : ''
                           }`}
                           onClick={() => handleAddToCart(product)}
-                          aria-label={`Add ${product.name} to Cart`}
+                          aria-label={`Thêm ${product.name} vào giỏ hàng`}
                           type="button"
                         >
                           {isJustAdded ? (
                             <>
                               <Check size={16} />
-                              <span>Added</span>
+                              <span>Đã thêm</span>
                             </>
                           ) : (
                             <>
                               <ShoppingBag size={16} />
-                              <span>Add to Bag</span>
+                              <span>Thêm vào giỏ</span>
                             </>
                           )}
                         </button>

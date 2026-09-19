@@ -15,15 +15,15 @@ export function FeaturedCategories({ isLoading = false }) {
   };
 
   return (
-    <section className="section categories-section" aria-label="Featured Categories">
+    <section className="section categories-section" aria-label="Danh mục nổi bật">
       <div className="container">
         {/* Section Header */}
         <div className="categories__header">
           <div>
-            <span className="section-heading__badge">Architectural Spaces</span>
-            <h2 className="categories__title">Featured Categories</h2>
+            <span className="section-heading__badge">Không gian kiến trúc</span>
+            <h2 className="categories__title">Danh mục nổi bật</h2>
             <p className="categories__subtitle">
-              Explore meticulously crafted furniture collections designed for harmonized living environments.
+              Khám phá bộ sưu tập nội thất được chế tác tỉ mỉ, thiết kế cho không gian sống hài hòa.
             </p>
           </div>
 
@@ -31,7 +31,7 @@ export function FeaturedCategories({ isLoading = false }) {
             <button
               className="categories__arrow-btn"
               onClick={() => handleScroll('left')}
-              aria-label="Scroll Categories Left"
+              aria-label="Cuộn danh mục sang trái"
               type="button"
             >
               <ChevronLeft size={20} />
@@ -39,7 +39,7 @@ export function FeaturedCategories({ isLoading = false }) {
             <button
               className="categories__arrow-btn"
               onClick={() => handleScroll('right')}
-              aria-label="Scroll Categories Right"
+              aria-label="Cuộn danh mục sang phải"
               type="button"
             >
               <ChevronRight size={20} />
@@ -61,7 +61,7 @@ export function FeaturedCategories({ isLoading = false }) {
                     key={category.id}
                     to={category.link}
                     className="category-card"
-                    aria-label={`Explore ${category.name} collection`}
+                    aria-label={`Khám phá bộ sưu tập ${category.name}`}
                   >
                     <div className="category-card__image-wrap">
                       <img

@@ -41,7 +41,7 @@ export function HeroBanner({ isLoading = false }) {
   return (
     <section
       className="hero"
-      aria-label="Featured Collection Showcase"
+      aria-label="Triển lãm bộ sưu tập nổi bật"
       onMouseEnter={() => setIsPaused(true)}
       aria-roledescription="carousel"
       onMouseLeave={() => setIsPaused(false)}
@@ -85,7 +85,7 @@ export function HeroBanner({ isLoading = false }) {
           {/* Price Snippet & CTAs */}
           <div className="hero__actions-row">
             <div className="hero__price-box">
-              <span className="hero__price-label">Starting Price</span>
+              <span className="hero__price-label">Giá bắt đầu</span>
               <span className="hero__price-value">{currentBanner.priceSnippet}</span>
             </div>
 
@@ -109,7 +109,7 @@ export function HeroBanner({ isLoading = false }) {
                 key={idx}
                 className={`hero__dot ${idx === activeIndex ? 'hero__dot--active' : ''}`}
                 onClick={() => setActiveIndex(idx)}
-                aria-label={`Go to slide ${idx + 1}`}
+                aria-label={`Đi tới slide ${idx + 1}`}
               />
             ))}
           </div>
@@ -118,7 +118,7 @@ export function HeroBanner({ isLoading = false }) {
             <button
               className="hero__arrow-btn"
               onClick={handlePrev}
-              aria-label="Previous Slide"
+              aria-label="Slide trước"
               type="button"
             >
               <ChevronLeft size={20} />
@@ -129,7 +129,7 @@ export function HeroBanner({ isLoading = false }) {
             <button
               className="hero__arrow-btn"
               onClick={handleNext}
-              aria-label="Next Slide"
+              aria-label="Slide tiếp theo"
               type="button"
             >
               <ChevronRight size={20} />
