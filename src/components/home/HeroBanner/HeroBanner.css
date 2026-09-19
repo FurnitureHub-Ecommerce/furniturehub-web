@@ -104,34 +104,29 @@
 
 .hero__tag {
   color: var(--lumora-bg-secondary);
-  font-size: 0.8rem;
-  font-weight: 500;
-  letter-spacing: 0.1em;
+  font-size: 0.74rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
 }
 
 .hero__title {
   font-family: var(--font-serif);
-  font-size: 2.75rem;
-  font-weight: 400;
-  line-height: 1.1;
+  font-size: clamp(2.8rem, 5vw, 5rem);
+  font-weight: 600;
+  line-height: 0.96;
   color: #FFFFFF;
   margin-bottom: var(--space-md);
-  letter-spacing: -0.01em;
-}
-
-@media (min-width: 768px) {
-  .hero__title {
-    font-size: 3.75rem;
-  }
+  letter-spacing: -0.03em;
 }
 
 .hero__subtitle {
-  font-size: 1.05rem;
-  line-height: 1.6;
+  font-size: 1.04rem;
+  line-height: 1.72;
   color: #E2DBD0;
   margin-bottom: var(--space-xl);
-  font-weight: 300;
+  font-weight: 400;
+  max-width: 620px;
 }
 
 .hero__actions-row {
@@ -156,16 +151,18 @@
 }
 
 .hero__price-label {
-  font-size: 0.75rem;
+  font-size: 0.7rem;
   color: #A39B90;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.1em;
+  font-weight: 600;
 }
 
 .hero__price-value {
   font-family: var(--font-serif);
-  font-size: 1.25rem;
+  font-size: 1.28rem;
   font-weight: 600;
+  line-height: 1.2;
   color: var(--lumora-bg-secondary);
 }
 
@@ -177,8 +174,8 @@
 
 .hero__btn {
   padding: 14px 28px;
-  font-size: 0.85rem;
-  font-weight: 600;
+  font-size: 0.78rem;
+  font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   border-radius: var(--radius-sm);
@@ -260,8 +257,8 @@
 
 .hero__counter {
   font-family: var(--font-serif);
-  font-size: 0.9rem;
-  letter-spacing: 0.1em;
+  font-size: 0.95rem;
+  letter-spacing: 0.12em;
   color: #E2DBD0;
 }
 
@@ -303,4 +300,5 @@
 .hero__usp-text {
   font-weight: 500;
   letter-spacing: 0.02em;
+  line-height: 1.5;
 }

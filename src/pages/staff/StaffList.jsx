@@ -7,12 +7,12 @@ const StaffList = () => {
     <div className="staff-list">
       <div className="staff-page-header">
         <div className="staff-page-header__info">
-          <p className="staff-breadcrumb">OPERATIONS PROTOCOL // ROUTE /STAFF / MEMBERS</p>
-          <h1>Staff Directory</h1>
-          <p>View and manage all team members, roles, and shift assignments.</p>
+          <p className="staff-breadcrumb">PROTOCOL VẬN HÀNH // TUYẾN ĐƯỜNG /STAFF / NHÂN VIÊN</p>
+          <h1>Danh Sách Nhân Viên</h1>
+          <p>Xem và quản lý toàn bộ nhân sự, vai trò và ca làm việc.</p>
         </div>
         <div className="staff-page-header__actions">
-          <button className="btn-add-staff">+ Add Staff Member</button>
+          <button className="btn-add-staff">+ Thêm Nhân Viên</button>
         </div>
       </div>
 
@@ -21,10 +21,10 @@ const StaffList = () => {
         <input
           type="text"
           className="staff-search-input"
-          placeholder="Search by name, role, or department..."
+          placeholder="Tìm theo tên, vai trò hoặc phòng ban..."
         />
         <span style={{ fontSize: '13px', color: '#8c857b' }}>
-          {staffMembers.length} members total
+          Tổng cộng {staffMembers.length} nhân viên
         </span>
       </div>
 

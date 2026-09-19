@@ -31,18 +31,13 @@
 
 .testimonials__quote {
   font-family: var(--font-serif);
-  font-size: 1.45rem;
-  font-weight: 400;
-  line-height: 1.4;
+  font-size: clamp(1.5rem, 2.3vw, 2.2rem);
+  font-weight: 500;
+  line-height: 1.35;
   color: var(--lumora-text-main);
   margin-block: 20px 32px;
   font-style: italic;
-}
-
-@media (min-width: 768px) {
-  .testimonials__quote {
-    font-size: 1.85rem;
-  }
+  letter-spacing: -0.01em;
 }
 
 .testimonials__author-box {
@@ -73,8 +68,9 @@
 
 .testimonials__author-name {
   font-family: var(--font-serif);
-  font-size: 1.15rem;
+  font-size: 1.28rem;
   font-weight: 600;
+  line-height: 1.2;
   color: var(--lumora-text-main);
 }
 
@@ -82,22 +78,24 @@
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  font-size: 0.7rem;
-  font-weight: 600;
+  font-size: 0.68rem;
+  font-weight: 700;
   color: #2E6B40;
   background-color: #EBF7EE;
-  padding: 2px 8px;
+  padding: 3px 9px;
   border-radius: var(--radius-full);
 }
 
 .testimonials__author-role {
-  font-size: 0.8rem;
+  font-size: 0.82rem;
   color: var(--lumora-text-muted);
+  line-height: 1.5;
 }
 
 .testimonials__author-location {
   font-size: 0.75rem;
   color: var(--lumora-text-light);
+  line-height: 1.5;
 }
 
 .testimonials__controls {

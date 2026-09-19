@@ -11,7 +11,7 @@ const ICON_MAP = {
 
 export function ValueProps() {
   return (
-    <section className="section value-props" aria-label="LUMORA Value Pillars">
+    <section className="section value-props" aria-label="Giá trị cốt lõi của LUMORA">
       <div className="container">
         <div className="value-props__grid">
           {VALUE_PROPOSITIONS.map((item) => {

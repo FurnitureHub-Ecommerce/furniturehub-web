@@ -6,13 +6,13 @@ const OrderTable = ({ orders, selectedOrderId, onSelectOrder }) => {
   return (
     <div className="order-table-wrapper">
       <div className="order-table-header">
-        <h3>Active Orders</h3>
+        <h3>Đơn Hàng Đang Hoạt Động</h3>
         <div className="order-table-meta">
-          <span className="order-route">Route: /staff/orders</span>
+          <span className="order-route">Tuyến: /staff/orders</span>
           <input
             type="text"
             className="order-filter-input"
-            placeholder="Filter by ID, client..."
+            placeholder="Lọc theo ID, khách hàng..."
           />
         </div>
       </div>
@@ -20,11 +20,11 @@ const OrderTable = ({ orders, selectedOrderId, onSelectOrder }) => {
       <table className="order-table">
         <thead>
           <tr>
-            <th>ORDER ID</th>
-            <th>CLIENT & TIER</th>
-            <th>DATE</th>
-            <th>TOTAL</th>
-            <th>STATUS</th>
+            <th>MÃ ĐƠN</th>
+            <th>KHÁCH HÀNG & CẤP</th>
+            <th>NGÀY</th>
+            <th>TỔNG</th>
+            <th>TRẠNG THÁI</th>
           </tr>
         </thead>
         <tbody>
@@ -54,12 +54,12 @@ const OrderTable = ({ orders, selectedOrderId, onSelectOrder }) => {
       </table>
 
       <div className="order-table-footer">
-        <span>Showing {orders.length} of 18 pending orders</span>
+        <span>Hiển thị {orders.length} trong tổng số 18 đơn đang chờ</span>
         <div className="pagination">
-          <button className="page-btn" disabled>Previous</button>
+          <button className="page-btn" disabled>Trước</button>
           <button className="page-btn page-btn--active">1</button>
           <button className="page-btn">2</button>
-          <button className="page-btn">Next</button>
+          <button className="page-btn">Sau</button>
         </div>
       </div>
     </div>

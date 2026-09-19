@@ -2,7 +2,7 @@
    LUMORA – MODERN LUXURY MINIMALIST DESIGN SYSTEM
    src/index.css
    ============================================================ */
-@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Noto+Sans:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap');
 
 /* ---------- Design Tokens ---------- */
 :root {
@@ -22,8 +22,8 @@
   --lumora-overlay:         rgba(37, 37, 37, 0.4);
 
   /* Typography */
-  --font-serif:             'Cormorant Garamond', Georgia, serif;
-  --font-sans:              'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-serif:             'Cormorant Garamond', 'Times New Roman', serif;
+  --font-sans:              'Plus Jakarta Sans', 'Noto Sans', 'Segoe UI', sans-serif;
 
   /* Spacing Scale */
   --space-xs:  0.25rem;  /* 4px */
@@ -71,12 +71,28 @@ html {
 
 body {
   font-family: var(--font-sans);
+  font-size: 16px;
+  font-weight: 400;
   color: var(--lumora-text-main);
   background-color: var(--lumora-bg-primary);
-  line-height: 1.6;
+  line-height: 1.65;
+  letter-spacing: 0;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
   overflow-x: hidden;
+}
+
+p, li, span, div, label, input, textarea, select, button {
+  font-family: inherit;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-serif);
+  line-height: 1.08;
+  letter-spacing: -0.02em;
+  font-weight: 600;
+  color: var(--lumora-text-main);
 }
 
 #root {
@@ -107,10 +123,10 @@ button {
   border: none;
   background: none;
   font-family: inherit;
+  font-weight: 500;
   color: inherit;
   display: inline-flex;
   align-items: center;
- 
 }
 
 input, textarea, select {
@@ -163,10 +179,10 @@ input, textarea, select {
 
 .section-heading__title {
   font-family: var(--font-serif);
-  font-size: 2.25rem;
-  font-weight: 500;
-  line-height: 1.2;
-  letter-spacing: -0.01em;
+  font-size: clamp(2.2rem, 3vw, 3.25rem);
+  font-weight: 600;
+  line-height: 1.06;
+  letter-spacing: -0.02em;
   color: var(--lumora-text-main);
 }
 
@@ -177,10 +193,11 @@ input, textarea, select {
 }
 
 .section-heading__subtitle {
-  font-size: 0.95rem;
+  font-size: 1rem;
   color: var(--lumora-text-muted);
   margin-top: var(--space-sm);
-  font-weight: 300;
+  font-weight: 400;
+  line-height: 1.7;
 }
 
 .sr-only {

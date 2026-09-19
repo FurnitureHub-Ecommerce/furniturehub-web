@@ -6,28 +6,28 @@
 
 export const orderMetrics = [
   {
-    label: 'PENDING VERIFICATION',
+    label: 'CHỜ XÁC NHẬN',
     value: '18',
-    sub: '+3 today',
+    sub: '+3 hôm nay',
     icon: 'clipboard',
   },
   {
-    label: 'EXPRESS HIGH-PRIORITY',
+    label: 'ƯU TIÊN CAO',
     value: '06',
-    sub: '+2h Critical',
+    sub: '+2h quan trọng',
     icon: 'zap',
     highlight: 'red',
   },
   {
-    label: 'AWAITING CLIENT SIGNOFF',
+    label: 'CHỜ KHÁCH DUYỆT',
     value: '11',
-    sub: 'Swatch & Bespoke',
+    sub: 'Mẫu vải & Đặt riêng',
     icon: 'pen-tool',
   },
   {
-    label: 'SLA COMPLIANCE RATE',
+    label: 'TỶ LỆ SLA',
     value: '99.4%',
-    sub: 'Target 98%',
+    sub: 'Mục tiêu 98%',
     icon: 'target',
     highlight: 'green',
   },
@@ -69,10 +69,10 @@ export const orders = [
       accessWindow: '14:00 – 18:00',
     },
     lifecycle: [
-      { step: 1, label: 'Received', status: 'completed', time: '09:14 CEST' },
-      { step: 2, label: 'Verification', status: 'active', time: 'At Desk (You)' },
-      { step: 3, label: 'Allocation', status: 'pending', time: 'Pending Bay' },
-      { step: 4, label: 'Dispatched', status: 'pending', time: 'Courier' },
+      { step: 1, label: 'Đã nhận', status: 'completed', time: '09:14 CEST' },
+      { step: 2, label: 'Xác minh', status: 'active', time: 'Tại bàn (Bạn)' },
+      { step: 3, label: 'Phân bổ', status: 'pending', time: 'Khu chờ' },
+      { step: 4, label: 'Đã giao', status: 'pending', time: 'Chuyển phát' },
     ],
     client: {
       id: 'CUST-443',
@@ -122,10 +122,10 @@ export const orders = [
       accessWindow: '09:00 – 12:00',
     },
     lifecycle: [
-      { step: 1, label: 'Received', status: 'completed', time: '07:42 CEST' },
-      { step: 2, label: 'Verification', status: 'completed', time: 'Passed' },
-      { step: 3, label: 'Allocation', status: 'active', time: 'Bay Pending' },
-      { step: 4, label: 'Dispatched', status: 'pending', time: 'Courier' },
+      { step: 1, label: 'Đã nhận', status: 'completed', time: '07:42 CEST' },
+      { step: 2, label: 'Xác minh', status: 'completed', time: 'Đã qua' },
+      { step: 3, label: 'Phân bổ', status: 'active', time: 'Chờ khu' },
+      { step: 4, label: 'Đã giao', status: 'pending', time: 'Chuyển phát' },
     ],
     client: {
       id: 'CUST-287',
@@ -173,10 +173,10 @@ export const orders = [
       accessWindow: '10:00 – 14:00',
     },
     lifecycle: [
-      { step: 1, label: 'Received', status: 'completed', time: 'Yesterday' },
-      { step: 2, label: 'Verification', status: 'completed', time: 'Passed' },
-      { step: 3, label: 'Allocation', status: 'completed', time: 'Bay 4' },
-      { step: 4, label: 'Dispatched', status: 'active', time: 'In Transit' },
+      { step: 1, label: 'Đã nhận', status: 'completed', time: 'Hôm qua' },
+      { step: 2, label: 'Xác minh', status: 'completed', time: 'Đã qua' },
+      { step: 3, label: 'Phân bổ', status: 'completed', time: 'Khu 4' },
+      { step: 4, label: 'Đã giao', status: 'active', time: 'Đang vận chuyển' },
     ],
     client: {
       id: 'CUST-119',
@@ -224,10 +224,10 @@ export const orders = [
       accessWindow: '08:00 – 20:00',
     },
     lifecycle: [
-      { step: 1, label: 'Received', status: 'completed', time: 'Oct 24' },
-      { step: 2, label: 'Verification', status: 'completed', time: 'Passed' },
-      { step: 3, label: 'Allocation', status: 'completed', time: 'Bay 2' },
-      { step: 4, label: 'Dispatched', status: 'completed', time: 'Air Freight' },
+      { step: 1, label: 'Đã nhận', status: 'completed', time: '24/10' },
+      { step: 2, label: 'Xác minh', status: 'completed', time: 'Đã qua' },
+      { step: 3, label: 'Phân bổ', status: 'completed', time: 'Khu 2' },
+      { step: 4, label: 'Đã giao', status: 'completed', time: 'Vận chuyển hàng không' },
     ],
     client: {
       id: 'CUST-051',

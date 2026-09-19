@@ -2,9 +2,9 @@ import React from 'react';
 import './StaffTable.css';
 
 const statusConfig = {
-  active:   { className: 'staff-status--active',   label: 'Active' },
-  'on-leave': { className: 'staff-status--leave',  label: 'On Leave' },
-  'off-duty': { className: 'staff-status--off',    label: 'Off Duty' },
+  active:   { className: 'staff-status--active',   label: 'Đang Làm' },
+  'on-leave': { className: 'staff-status--leave',  label: 'Nghỉ Phép' },
+  'off-duty': { className: 'staff-status--off',    label: 'Nghỉ Ca' },
 };
 
 const StaffTable = ({ staff }) => {
@@ -13,12 +13,12 @@ const StaffTable = ({ staff }) => {
       <table className="staff-table">
         <thead>
           <tr>
-            <th>STAFF MEMBER</th>
-            <th>ROLE</th>
-            <th>DEPARTMENT</th>
-            <th>STATUS</th>
-            <th>SHIFT</th>
-            <th>ORDERS</th>
+            <th>NHÂN VIÊN</th>
+            <th>VAI TRÒ</th>
+            <th>PHÒNG BAN</th>
+            <th>TRẠNG THÁI</th>
+            <th>CA LÀM</th>
+            <th>ĐƠN</th>
             <th>SLA</th>
           </tr>
         </thead>
