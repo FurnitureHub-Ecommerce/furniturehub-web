@@ -25,11 +25,11 @@ export function Testimonials() {
   const current = TESTIMONIALS[activeIndex];
 
   return (
-    <section className="section testimonials-section" aria-label="Customer Reviews">
+    <section className="section testimonials-section" aria-label="Đánh giá khách hàng">
       <div className="container">
         <div className="section-heading">
-          <span className="section-heading__badge">Residences & Collectors</span>
-          <h2 className="section-heading__title">Voices of LUMORA</h2>
+          <span className="section-heading__badge">Ngôi nhà & Nhà sưu tập</span>
+          <h2 className="section-heading__title">Giọng nói của LUMORA</h2>
         </div>
 
         <div className="testimonials__card">
@@ -54,7 +54,7 @@ export function Testimonials() {
                   {current.verified && (
                     <span className="testimonials__verified-badge">
                       <CheckCircle2 size={13} />
-                      Verified Collector
+                      Nhà sưu tập xác thực
                     </span>
                   )}
                 </div>
@@ -69,7 +69,7 @@ export function Testimonials() {
             <button
               className="testimonials__arrow-btn"
               onClick={handlePrev}
-              aria-label="Previous Review"
+              aria-label="Đánh giá trước"
               type="button"
             >
               <ChevronLeft size={20} />
@@ -81,7 +81,7 @@ export function Testimonials() {
                   key={idx}
                   className={`testimonials__dot ${idx === activeIndex ? 'testimonials__dot--active' : ''}`}
                   onClick={() => setActiveIndex(idx)}
-                  aria-label={`Go to review ${idx + 1}`}
+                  aria-label={`Đi tới đánh giá ${idx + 1}`}
                   type="button"
                 />
               ))}
@@ -90,7 +90,7 @@ export function Testimonials() {
             <button
               className="testimonials__arrow-btn"
               onClick={handleNext}
-              aria-label="Next Review"
+              aria-label="Đánh giá tiếp theo"
               type="button"
             >
               <ChevronRight size={20} />

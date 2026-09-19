@@ -14,12 +14,12 @@ import "./Staff.css";
 const navItems = [
   {
     path: "/staff",
-    label: "Staff Dashboard",
+    label: "Tổng Quan",
     icon: LayoutDashboard,
     exact: true,
   },
-  { path: "/staff/members", label: "Staff Directory", icon: Users },
-  { path: "/staff/orders", label: "Order Desk", icon: ClipboardList },
+  { path: "/staff/members", label: "Nhân Viên", icon: Users },
+  { path: "/staff/orders", label: "Đơn Hàng", icon: ClipboardList },
 ];
 
 const StaffLayout = () => {
@@ -29,7 +29,7 @@ const StaffLayout = () => {
 
   const currentUser = {
     name: "E. Van Der Bilt",
-    role: "DIRECTOR OPS",
+    role: "GIÁM ĐỐC VẬN HÀNH",
     avatar:
       "https://ui-avatars.com/api/?name=E+Van+Der+Bilt&background=1c1c1c&color=fff",
   };
@@ -54,12 +54,12 @@ const StaffLayout = () => {
           <div className="staff-module-badge">
             <span className="staff-module-badge__dot" />
             <span className="staff-module-badge__text">
-              Staff Operations Module
+              Mô-Đun Vận Hành Nhân Sự
             </span>
           </div>
 
           <div className="nav-group">
-            <p className="nav-label">Operations & Orders</p>
+            <p className="nav-label">Vận Hành & Đơn Hàng</p>
             <ul>
               {navItems.map((item) => {
                 const Icon = item.icon;
@@ -111,11 +111,11 @@ const StaffLayout = () => {
                 onClick={() => setShowSettingsMenu(false)}
               >
                 <User size={16} />
-                Profile
+                Hồ Sơ
               </Link>
               <button onClick={handleLogout} className="logout-btn">
                 <LogOut size={16} />
-                Sign Out
+                Đăng Xuất
               </button>
             </div>
           )}

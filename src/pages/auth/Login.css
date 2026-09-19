@@ -12,7 +12,7 @@
   display: flex;
   min-height: 100vh;
   background-color: var(--sand-50);
-  font-family: 'Inter', sans-serif;
+  font-family: var(--font-sans);
 }
 
 /* Cột hình ảnh minh họa nội thất bên trái */
@@ -28,21 +28,25 @@
 }
 
 .banner-brand {
-  font-size: 24px;
-  font-weight: 700;
-  letter-spacing: 2px;
+  font-family: var(--font-serif);
+  font-size: 2.1rem;
+  font-weight: 600;
+  letter-spacing: 0.18em;
 }
 
 .banner-quote h3 {
-  font-size: 32px;
-  font-weight: 400;
-  line-height: 1.3;
+  font-family: var(--font-serif);
+  font-size: clamp(2.1rem, 3vw, 3rem);
+  font-weight: 600;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
   margin-bottom: 12px;
 }
 
 .banner-quote p {
-  font-size: 14px;
-  opacity: 0.85;
+  font-size: 0.95rem;
+  line-height: 1.7;
+  opacity: 0.9;
 }
 
 /* Form Đăng nhập bên phải */
@@ -65,13 +69,17 @@
 }
 
 .auth-header h2 {
-  font-size: 28px;
+  font-family: var(--font-serif);
+  font-size: clamp(2rem, 2.6vw, 2.6rem);
+  font-weight: 600;
+  letter-spacing: -0.02em;
   color: var(--sand-900);
   margin-bottom: 8px;
 }
 
 .auth-header p {
-  font-size: 14px;
+  font-size: 0.92rem;
+  line-height: 1.6;
   color: var(--sand-700);
 }
 
@@ -81,11 +89,12 @@
 
 .form-group label {
   display: block;
-  font-size: 13px;
-  font-weight: 600;
+  font-size: 0.76rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
   color: var(--sand-900);
   margin-bottom: 8px;
-  
 }
 
 .form-input {
@@ -94,7 +103,7 @@
   border: 1px solid var(--sand-200);
   border-radius: 8px;
   background-color: var(--sand-50);
-  font-size: 14px;
+  font-size: 0.95rem;
   color: var(--sand-900);
   outline: none;
   transition: all 0.2s ease;
@@ -123,8 +132,10 @@
   color: #ffffff;
   border: none;
   border-radius: 8px;
-  font-size: 14px;
-  font-weight: 600;
+  font-size: 0.9rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
   cursor: pointer;
   transition: background-color 0.2s ease;
   display: flex;
@@ -139,7 +150,7 @@
 .auth-footer {
   margin-top: 24px;
   text-align: center;
-  font-size: 13px;
+  font-size: 0.9rem;
   color: var(--sand-700);
 }
 

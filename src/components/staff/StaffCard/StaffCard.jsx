@@ -2,9 +2,9 @@ import React from 'react';
 import './StaffCard.css';
 
 const statusConfig = {
-  active:     { className: 'card-status--active',  label: 'Active' },
-  'on-leave': { className: 'card-status--leave',   label: 'On Leave' },
-  'off-duty': { className: 'card-status--off',     label: 'Off Duty' },
+  active:     { className: 'card-status--active',  label: 'Đang Làm' },
+  'on-leave': { className: 'card-status--leave',   label: 'Nghỉ Phép' },
+  'off-duty': { className: 'card-status--off',     label: 'Nghỉ Ca' },
 };
 
 const StaffCard = ({ member }) => {
@@ -26,7 +26,7 @@ const StaffCard = ({ member }) => {
       <div className="staff-card__stats">
         <div className="staff-card__stat">
           <span className="staff-card__stat-value">{member.ordersHandled}</span>
-          <span className="staff-card__stat-label">Orders</span>
+          <span className="staff-card__stat-label">Đơn</span>
         </div>
         <div className="staff-card__stat">
           <span className="staff-card__stat-value">{member.slaScore}%</span>
