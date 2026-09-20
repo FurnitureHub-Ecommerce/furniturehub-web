@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: 'https://changes-pike-comparing-incoming.trycloudflare.com/api/',
+  baseURL: 'https://furniturehub-server-production-30b6.up.railway.app/api-docs/',
   headers: {
     'Content-Type': 'application/json',
   },

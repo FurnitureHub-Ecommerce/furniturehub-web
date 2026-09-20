@@ -2,6 +2,13 @@ import React from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import MainLayout from "./components/layout/MainLayout/MainLayout";
 import Home from "./pages/home/Home";
+
+
+// ===========AUTH PAGES===========
+import Login from "./pages/auth/Login";
+import Register from "./pages/auth/Register";
+
+// ===========STORAGE PAGES===========
 import StorageLayout from "./pages/storage/StorageLayout";
 import StorageDashboard from "./pages/storage/StorageDashboard";
 import SkuManagement from "./pages/storage/SkuManagement";
@@ -13,17 +20,30 @@ import StockAdjustment from "./pages/storage/StockAdjustment";
 import InventoryHistory from "./pages/storage/InventoryHistory";
 import InventoryStatistics from "./pages/storage/InventoryStatistics";
 import InventoryTestingIntegration from "./pages/storage/InventoryTestingIntegration";
+
+
+
+// ==============STAFF PAGES===========
 import StaffLayout from "./pages/staff/StaffLayout";
 import StaffDashboard from "./pages/staff/StaffDashboard";
 import StaffList from "./pages/staff/StaffList";
 import StaffOrders from "./pages/staff/StaffOrders";
-import Login from "./pages/auth/Login";
-import Register from "./pages/auth/Register";
+
+
+// ===========ADMIN PAGES===========
+import AdminLayout from "./pages/admin/AdminLayout";
+import AdminDashboard from "./pages/admin/dashboard/AdminDashboard";
+import AdminUsers from "./pages/admin/users/AdminUsers";
+
 
 function App() {
   return (
     <BrowserRouter>
       <Routes>
+        <Route path="/admin" element={<AdminLayout />}>
+          <Route index element={<AdminDashboard />} />
+          <Route path="users" element={<AdminUsers />} />
+        </Route>
         <Route
           path="/"
           element={
@@ -35,6 +55,7 @@ function App() {
 
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+
 
         <Route path="/storage" element={<StorageLayout />}>
           <Route index element={<StorageDashboard />} />

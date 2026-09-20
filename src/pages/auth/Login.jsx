@@ -25,8 +25,8 @@ const Login = () => {
       // Lưu token và thông tin user nhận từ API
       localStorage.setItem('token', response.data.token);
       localStorage.setItem('user', JSON.stringify(response.data.user));
-      
-      navigate('/storage/dashboard');
+
+      navigate('/storage');
     } catch (err) {
       const res = err.response?.data;
       if (res?.errors && res.errors.length > 0) {
