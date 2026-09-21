@@ -127,7 +127,6 @@ button {
   color: inherit;
   display: inline-flex;
   align-items: center;
-  justify-content: center;
 }
 
 input, textarea, select {
