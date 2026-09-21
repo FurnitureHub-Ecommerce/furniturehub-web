@@ -49,6 +49,8 @@ export const productAPI = {
   // Lấy variant theo productId (dùng /admin để lấy cả các variant đã vô hiệu hóa nếu cần)
   getProductVariants: (productId) => api.get(`/api/products/${productId}/variants`),
   getProductVariantsAdmin: (productId) => api.get(`/api/products/${productId}/variants/admin`),
+  
+  createVariant: (productId, data) => api.post(`/api/products/${productId}/variants`, data),
 };
 
 export const categoryAPI = {
@@ -85,6 +87,8 @@ export const storageAPI = {
 
   // Cập nhật thông tin Variant / SKU
   updateVariant: (id, data) => api.patch(`/api/variants/${id}`, data),
+
+
 };
 
 export default api;

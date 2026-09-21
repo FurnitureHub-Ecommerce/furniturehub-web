@@ -54,45 +54,8 @@ const ImportExportStock = () => {
 
         setDanhSachSanPham(products);
 
-        // Nếu localStorage chưa có dữ liệu, ta sinh dữ liệu mẫu từ sản phẩm thật của API
-        if (initialImport.length === 0 && initialExport.length === 0 && products.length > 0) {
-          for (const prod of products) {
-            const prodId = prod._id || prod.id;
-            try {
-              const variantsRes = await productAPI.getProductVariants(prodId);
-              let variants = Array.isArray(variantsRes) ? variantsRes : (variantsRes?.data || []);
-
-              variants.forEach((v, idx) => {
-                const skuCode = v.sku || v._id || `SKU-${idx}`;
-                initialImport.push({
-                  code: `IMP-${skuCode.slice(-4)}`,
-                  date: '2026-06-04 10:30',
-                  supplier: 'Nhà cung cấp chính hãng',
-                  items: `${prod.name} (${v.color || 'Mặc định'} - SL: ${v.stock ?? 10})`,
-                  status: 'Hoàn Thành'
-                });
-
-                initialExport.push({
-                  code: `EXP-${skuCode.slice(-4)}`,
-                  date: '2026-06-04 11:15',
-                  recipient: 'Chi nhánh phân phối chính',
-                  items: `${prod.name} (${v.color || 'Mặc định'} - Xuất kho)`,
-                  status: 'Đã Xuất Kho'
-                });
-              });
-            } catch (err) {
-              console.error(err);
-            }
-          }
-        }
-
-        // Fallback nếu danh sách rỗng
-        const finalImport = initialImport.length > 0 ? initialImport : [
-          { code: 'IMP-9021', date: '2026-06-04 10:30', supplier: 'Atelier Ceramics Ltd.', items: 'LUMORA Signature Vase (x50)', status: 'Hoàn Thành' }
-        ];
-        const finalExport = initialExport.length > 0 ? initialExport : [
-          { code: 'EXP-4011', date: '2026-06-04 11:00', recipient: 'Chi nhánh Quận 1 - Showroom', items: 'Lumina Aroma Diffuser (x10)', status: 'Đã Xuất Kho' }
-        ];
+        const finalImport = initialImport;
+        const finalExport = initialExport;
 
         setChungTu({ import: finalImport, export: finalExport });
         
