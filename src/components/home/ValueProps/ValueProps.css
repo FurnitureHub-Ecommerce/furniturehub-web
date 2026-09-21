@@ -59,7 +59,7 @@
 }
 
 .value-card__title {
-  font-family: var(--font-serif);
+ font-family: 'Playfair Display', serif;
   font-size: clamp(1.55rem, 1.8vw, 1.95rem);
   font-weight: 600;
   line-height: 1.15;
