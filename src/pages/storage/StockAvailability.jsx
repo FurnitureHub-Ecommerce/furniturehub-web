@@ -27,8 +27,8 @@ const StockAvailability = () => {
   }, []);
 
   const danhSachLoc = skuProducts.filter((item) => {
-    if (boLoc === 'AVAILABLE') return item.stock > 0;
-    if (boLoc === 'OUT') return item.stock === 0;
+    if (boLoc === 'AVAILABLE') return item.stock !== null && item.stock > 0;
+    if (boLoc === 'OUT') return item.stock !== null && item.stock === 0;
     return true;
   });
 
@@ -161,7 +161,11 @@ const StockAvailability = () => {
                       <td><span className="badge">{prod.location || 'Chưa cập nhật'}</span></td>
                       <td><strong>{prod.stock === null ? 'Chưa cập nhật' : prod.stock}</strong>{prod.stock !== null && ' đơn vị'}</td>
                       <td>
-                        {prod.stock > 0 ? (
+                        {prod.stock === null ? (
+                          <span style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#78716c', fontWeight: '600', fontSize: '13px' }}>
+                            <AlertCircle size={16} /> Chưa Có Dữ Liệu Tồn
+                          </span>
+                        ) : prod.stock > 0 ? (
                           <span style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#16a34a', fontWeight: '600', fontSize: '13px' }}>
                             <CheckCircle2 size={16} /> Sẵn Sàng Xuất Kho
                           </span>
