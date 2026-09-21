@@ -24,7 +24,7 @@ const StockAdjustment = () => {
       <header className="dash-header">
         <div>
           <span className="subtitle">ĐỐI SOÁT & KIỂM KÊ KHO</span>
-          <h2>Điều Chỉnh Tồn Kho Thực Tế</h2>
+          <h2 style={{ fontFamily: "Bodoni Moda", fontSize: 'clamp(2rem, 2.5vw, 2.7rem)', color: '#1a1a1a', letterSpacing: '-0.02em', fontWeight: 600 }}>Điều Chỉnh Tồn Kho Thực Tế</h2>
           <p>Cập nhật lại số lượng hàng hóa khi có chênh lệch kiểm kê định kỳ hoặc phát sinh lỗi.</p>
         </div>
       </header>

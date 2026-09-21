@@ -62,7 +62,7 @@ const SkuManagement = () => {
       <header className="dash-header">
         <div>
           <span className="subtitle">QUẢN LÝ DANH MỤC SKU</span>
-          <h2>Quản Lý Danh Mục SKU & Biến Thể</h2>
+          <h2 style={{ fontFamily: "Bodoni Moda", fontSize: 'clamp(2rem, 2.5vw, 2.7rem)', color: '#1a1a1a', letterSpacing: '-0.02em', fontWeight: 600 }}>Quản Lý Danh Mục SKU & Biến Thể</h2>
           <p>Quản lý toàn bộ thông tin định danh sản phẩm, thuộc tính biến thể và vị trí lưu trữ trong kho.</p>
         </div>
         <div className="actions">

@@ -20,7 +20,7 @@ const ImportExportStock = () => {
       <header className="dash-header">
         <div>
           <span className="subtitle">QUẢN LÝ DÒNG CHẢY HÀNG HÓA</span>
-          <h2>Quản Lý Nhập Kho & Xuất Kho</h2>
+          <h2 style={{ fontFamily: "Bodoni Moda", fontSize: 'clamp(2rem, 2.5vw, 2.7rem)', color: '#1a1a1a', letterSpacing: '-0.02em', fontWeight: 600 }}>Quản Lý Nhập Kho & Xuất Kho</h2>
           <p>Theo dõi các chứng từ, biên bản giao nhận và lịch sử dòng chảy hàng hóa ra vào hệ thống kho.</p>
         </div>
         <div className="actions">

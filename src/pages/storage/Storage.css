@@ -1,6 +1,6 @@
-/* Áp dụng font Playfair Display cho toàn bộ các trang trong module Storage */
+/* Áp dụng font Inter cho toàn bộ các trang trong module Storage */
 .dashboard-main {
-  font-family: 'Playfair Display', serif;
+  font-family: 'Inter', sans-serif;
   font-weight: 600;
 }
 
@@ -9,7 +9,7 @@
 .dashboard-main h3, 
 .dashboard-main h4,
 .storage-table th {
-  font-family: 'Playfair Display', serif;
+  font-family: 'Inter', sans-serif;
 }
 
 .storage-container {
@@ -115,6 +115,7 @@
   letter-spacing: 0.12em;
   text-transform: uppercase;
 }
+
 
 .actions button {
   padding: 10px 16px;

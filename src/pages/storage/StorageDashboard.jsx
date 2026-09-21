@@ -61,7 +61,7 @@ const StorageDashboard = () => {
       <header className="dash-header">
         <div>
           <span className="subtitle">QUẢN LÝ DANH MỤC & HỆ THỐNG KHO</span>
-          <h2>Quản Lý SKU, Biến Thể & Tồn Kho Thực Tế</h2>
+          <h2 style={{ fontFamily: "Bodoni Moda", fontSize: 'clamp(2rem, 2.5vw, 2.7rem)', color: '#1a1a1a', letterSpacing: '-0.02em', fontWeight: 600 }}>Quản Lý SKU, Biến Thể & Tồn Kho Thực Tế</h2>
           <p>Theo dõi số lượng thực tế, tình trạng lưu trữ theo từng khu vực kho và thông số bảo quản thời gian thực.</p>
         </div>
         <div className="actions">
