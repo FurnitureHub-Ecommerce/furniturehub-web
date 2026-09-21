@@ -16,8 +16,6 @@ export function FeaturedCategories({
   const displayCategories =
     categories && categories.length > 0
       ? categories
-      : !isLoading && !error && categories !== null && categories.length === 0
-      ? []
       : MOCK_CATEGORIES;
 
   const handleScroll = (direction) => {

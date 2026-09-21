@@ -24,15 +24,24 @@ export function ProductShowcase({
 
   const { wishlist, toggleWishlist, addToCart, setQuickViewProduct } = useShop();
 
-  const allProducts =
-    products && products.length > 0
-      ? products
-      : !isLoading && !error && products !== null && products.length === 0
-      ? []
-      : MOCK_PRODUCTS;
+  // 1. Xử lý bóc tách dữ liệu an toàn từ API (hỗ trợ mảng trực tiếp hoặc các biến thể object)
+  const rawProducts = Array.isArray(products)
+    ? products
+    : products?.data || products?.items || [];
 
-  // Filter products by tab if tab field exists, or fallback
-  const filteredProducts = allProducts.filter((p) => (p.tab ? p.tab === activeTab : true));
+  // Nếu API có dữ liệu thì dùng, nếu đang tải thì để trống, ngược lại dùng mock data
+  const allProducts = rawProducts.length > 0 
+    ? rawProducts 
+    : (isLoading ? [] : MOCK_PRODUCTS);
+
+  // 2. Lọc sản phẩm theo tab linh hoạt
+  const filteredProducts = allProducts.filter((p) => {
+    if (!p.tab) {
+      // Nếu sản phẩm từ API không có trường tab, mặc định hiển thị hết hoặc khớp theo điều kiện bạn muốn
+      return true;
+    }
+    return p.tab === activeTab;
+  });
 
   const handleAddToCart = (product) => {
     addToCart(product);
@@ -79,7 +88,7 @@ export function ProductShowcase({
             <h3 style={{ fontSize: '1.3rem', fontFamily: 'var(--font-serif)', marginBottom: '8px' }}>Không thể kết nối danh sách sản phẩm API</h3>
             <p style={{ color: 'var(--lumora-text-muted)', fontSize: '0.95rem', marginBottom: '20px' }}>{error}</p>
             {onRetry && (
-              <button onClick={onRetry} style={{ padding: '12px 24px', backgroundColor: 'var(--lumora-text-main)', color: '#FFF', borderRadius: 'var(--radius-md)', gap: '8px', cursor: 'pointer' }}>
+              <button onClick={onRetry} style={{ padding: '12px 24px', backgroundColor: 'var(--lumora-text-main)', color: '#FFF', borderRadius: 'var(--radius-md)', gap: '8px', cursor: 'pointer', display: 'inline-flex', alignItems: 'center' }}>
                 <RefreshCw size={18} />
                 <span>Thử Lại Lấy Dữ Liệu API</span>
               </button>

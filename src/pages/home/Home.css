@@ -72,3 +72,19 @@
 .toast-close:hover {
   color: #FFFFFF;
 }
+
+/* --- HIỆU ỨNG CUỘN XUỐNG VÀ LƯỚT LÊN CỰC KỲ RÕ NÉT --- */
+.scroll-fade-section {
+  opacity: 0;
+  /* Tăng độ trượt từ dưới lên (120px) và thu nhỏ nhẹ (scale 0.95) để tạo chiều sâu rõ rệt */
+  transform: translateY(120px) scale(0.95); 
+  transition: opacity 1.2s cubic-bezier(0.16, 1, 0.3, 1), 
+              transform 1.2s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: opacity, transform;
+}
+
+.scroll-fade-section.is-visible {
+  opacity: 1;
+  /* Trở về kích thước chuẩn và vị trí gốc khi cuộn đến */
+  transform: translateY(0) scale(1);
+}
