@@ -61,4 +61,25 @@ export const authAPI = {
   register: (data) => api.post('/api/auth/register', data),
 };
 
+
+export const storageAPI = {
+  // Lấy danh sách tất cả sản phẩm đang hoạt động
+  getProducts: () => api.get('/api/products'),
+
+  // Lấy tất cả sản phẩm dành cho admin (nếu cần xem chi tiết hơn)
+  getProductsAdmin: () => api.get('/api/products/admin'),
+
+  // Lấy danh sách Variant (biến thể / SKU) theo productId
+  getVariantsByProduct: (productId) => api.get(`/api/products/${productId}/variants`),
+
+  // Lấy toàn bộ variant của sản phẩm dành cho admin (bao gồm cả đã vô hiệu hóa)
+  getVariantsAdmin: (productId) => api.get(`/api/products/${productId}/variants/admin`),
+
+  // Lấy chi tiết 1 Variant theo ID
+  getVariantById: (id) => api.get(`/api/variants/${id}`),
+
+  // Cập nhật thông tin Variant / SKU
+  updateVariant: (id, data) => api.patch(`/api/variants/${id}`, data),
+};
+
 export default api;

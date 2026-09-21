@@ -1,15 +1,61 @@
-import React, { useState } from 'react';
-import { skuProducts } from '../../data/storageData';
+import React, { useState, useEffect } from 'react';
+import { productAPI } from '../../services/api'; // Điều chỉnh đường dẫn tương ứng đến file api.js của bạn
 import { Search, Filter, Plus, Edit, Trash2 } from 'lucide-react';
 
 const SkuManagement = () => {
+  const [skuProducts, setSkuProducts] = useState([]);
   const [tuKhoaTimKiem, setTuKhoaTimKiem] = useState('');
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchRealInventory = async () => {
+      try {
+        setLoading(true);
+        // Gọi API lấy danh sách sản phẩm
+        const productsRes = await productAPI.getProducts();
+        const products = productsRes.data || productsRes;
+
+        let allVariants = [];
+        // Duyệt qua từng sản phẩm để lấy các biến thể (SKU) của nó
+        for (const prod of products) {
+          const prodId = prod._id || prod.id;
+          try {
+            const variantsRes = await productAPI.getProductVariants(prodId);
+            const variants = variantsRes.data || variantsRes;
+
+            const mapped = variants.map((v) => ({
+              id: v.sku || v._id || v.id,
+              name: prod.name,
+              specs: `${v.color || ''} - ${v.size || ''} - ${v.material || ''}`.trim(),
+              location: v.location || 'Kho A - Mặc định', // Nếu API chưa có location, dùng giá trị mặc định
+              stock: v.stock ?? 10, // Nếu API chưa có stock, mặc định hiển thị để test
+              price: v.price
+            }));
+            allVariants = [...allVariants, ...mapped];
+          } catch (err) {
+            console.error(`Lỗi lấy biến thể của sản phẩm ${prod.name}:`, err);
+          }
+        }
+        setSkuProducts(allVariants);
+      } catch (error) {
+        console.error('Lỗi khi tải dữ liệu kho:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchRealInventory();
+  }, []);
 
   const danhSachLoc = skuProducts.filter(
     (item) =>
       item.name.toLowerCase().includes(tuKhoaTimKiem.toLowerCase()) ||
       item.id.toLowerCase().includes(tuKhoaTimKiem.toLowerCase())
   );
+
+  if (loading) {
+    return <div className="dashboard-main" style={{ padding: '20px' }}>Đang đồng bộ dữ liệu SKU từ hệ thống...</div>;
+  }
 
   return (
     <div className="dashboard-main">

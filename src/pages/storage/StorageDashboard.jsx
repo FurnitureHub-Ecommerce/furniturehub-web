@@ -1,8 +1,61 @@
-import React from 'react';
-import { storageMetrics, skuProducts } from '../../data/storageData';
+import React, { useState, useEffect } from 'react';
+import { productAPI } from '../../services/api'; // Điều chỉnh đường dẫn tương ứng đến file api.js của bạn
 import { Layers } from 'lucide-react';
 
 const StorageDashboard = () => {
+  const [skuProducts, setSkuProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        setLoading(true);
+        const productsRes = await productAPI.getProducts();
+        const products = productsRes.data || productsRes;
+
+        let allVariants = [];
+        for (const prod of products) {
+          const prodId = prod._id || prod.id;
+          try {
+            const variantsRes = await productAPI.getProductVariants(prodId);
+            const variants = variantsRes.data || variantsRes;
+
+            const mapped = variants.map((v) => ({
+              id: v.sku || v._id || v.id,
+              name: prod.name,
+              specs: `${v.color || ''} - ${v.size || ''}`.trim(),
+              location: v.location || 'Kho A - Vịnh 04',
+              stock: v.stock ?? 30,
+            }));
+            allVariants = [...allVariants, ...mapped];
+          } catch (err) {
+            console.error(err);
+          }
+        }
+        setSkuProducts(allVariants);
+      } catch (error) {
+        console.error('Lỗi tải Dashboard kho:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchDashboardData();
+  }, []);
+
+  const totalStock = skuProducts.reduce((acc, item) => acc + (item.stock || 0), 0);
+  const lowStockCount = skuProducts.filter((item) => item.stock <= 15).length;
+
+  const storageMetrics = [
+    { label: 'TỔNG SỐ SKU', value: skuProducts.length, sub: 'Đang quản lý trong hệ thống' },
+    { label: 'HÀNG TỒN KHO (TỔNG)', value: totalStock.toLocaleString(), sub: 'Sản phẩm sẵn sàng lưu trữ' },
+    { label: 'VỊ TRÍ LƯU TRỮ', value: '45 Vịnh', sub: 'Khu vực kho A & Kho B' },
+    { label: 'CẢNH BÁO TỒN THẤP', value: `${lowStockCount} SKU`, sub: 'Dưới mức tồn kho tối thiểu' }
+  ];
+
+  if (loading) {
+    return <div className="dashboard-main" style={{ padding: '20px' }}>Đang tải tổng quan hệ thống kho...</div>;
+  }
+
   return (
     <div className="dashboard-main">
       <header className="dash-header">
