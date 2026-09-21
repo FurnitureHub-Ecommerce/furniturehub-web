@@ -40,21 +40,26 @@ api.interceptors.response.use(
   }
 );
 
-// Service API Helpers
-export const categoryAPI = {
-  getCategories: () => api.get('/api/categories'),
-  getCategoryById: (id) => api.get(`/api/categories/${id}`),
-};
-
 export const productAPI = {
   getProducts: (params = {}) => api.get('/api/products', { params }),
+  // Dùng api/products/admin nếu bạn cần xem tất cả sản phẩm hệ thống kho
+  getProductsAdmin: (params = {}) => api.get('/api/products/admin', { params }),
   getProductById: (id) => api.get(`/api/products/${id}`),
+  
+  // Lấy variant theo productId (dùng /admin để lấy cả các variant đã vô hiệu hóa nếu cần)
   getProductVariants: (productId) => api.get(`/api/products/${productId}/variants`),
+  getProductVariantsAdmin: (productId) => api.get(`/api/products/${productId}/variants/admin`),
+};
+
+export const categoryAPI = {
+  getCategories: (params = {}) => api.get('/api/categories', { params }),
+  getCategoryById: (id) => api.get(`/api/categories/${id}`),
 };
 
 export const brandAPI = {
   getBrands: () => api.get('/api/brands'),
 };
+
 
 export const authAPI = {
   login: (data) => api.post('/api/auth/login', data),
