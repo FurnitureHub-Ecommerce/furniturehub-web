@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, ChevronLeft, ChevronRight, Sparkles, TreeDeciduous, Truck, ShieldCheck, Leaf } from 'lucide-react';
 import { HERO_BANNERS, USP_ITEMS } from '../../../data/lumoraData';
@@ -15,16 +15,44 @@ const ICON_MAP = {
 export function HeroBanner({ isLoading = false }) {
   const [activeIndex, setActiveIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
+  const [imagesLoaded, setImagesLoaded] = useState(false);
 
+  // Preload toàn bộ ảnh banner để triệt tiêu hiện tượng load chậm / chớp hình
+  useEffect(() => {
+    if (isLoading) return;
+    let isMounted = true;
+    const imagePromises = HERO_BANNERS.map((banner) => {
+      return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.src = banner.image;
+        img.onload = resolve;
+        img.onerror = reject;
+      });
+    });
+
+    Promise.all(imagePromises)
+      .then(() => {
+        if (isMounted) setImagesLoaded(true);
+      })
+      .catch(() => {
+        if (isMounted) setImagesLoaded(true); // Vẫn cho hiện nếu lỗi mạng nhẹ
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [isLoading]);
+
+  // Bộ đếm thời gian chuyển slide tự động
   useEffect(() => {
     if (isLoading || isPaused) return;
     const timer = setInterval(() => {
       setActiveIndex((prev) => (prev + 1) % HERO_BANNERS.length);
-    }, 6000);
+    }, 2500);
     return () => clearInterval(timer);
   }, [isLoading, isPaused]);
 
-  if (isLoading) {
+  if (isLoading || !imagesLoaded) {
     return <HeroSkeleton />;
   }
 
@@ -46,7 +74,7 @@ export function HeroBanner({ isLoading = false }) {
       aria-roledescription="carousel"
       onMouseLeave={() => setIsPaused(false)}
     >
-      {/* Background Banner Slides */}
+      {/* Background Banner Slides với hiệu ứng Crossfade mượt mà */}
       <div className="hero__slides">
         {HERO_BANNERS.map((banner, index) => {
           const isActive = index === activeIndex;
@@ -73,19 +101,19 @@ export function HeroBanner({ isLoading = false }) {
           <div className="hero__meta">
             <span className="hero__badge">{currentBanner.badge}</span>
             <span className="hero__tag">
-              <Sparkles size={12} style={{ display: 'inline', marginRight: 4 }} />
+              <Sparkles size={13} style={{ display: 'inline', marginRight: 5 }} />
               {currentBanner.tag}
             </span>
           </div>
 
-          {/* Title & Subtitle */}
+          {/* Title & Subtitle (Font chữ Serif tinh tế, sang trọng) */}
           <h1 className="hero__title">{currentBanner.title}</h1>
           <p className="hero__subtitle">{currentBanner.subtitle}</p>
 
           {/* Price Snippet & CTAs */}
           <div className="hero__actions-row">
             <div className="hero__price-box">
-              <span className="hero__price-label">Giá bắt đầu</span>
+              <span className="hero__price-label">Giá khởi điểm</span>
               <span className="hero__price-value">{currentBanner.priceSnippet}</span>
             </div>
 
@@ -140,7 +168,7 @@ export function HeroBanner({ isLoading = false }) {
 
       {/* USP Ticker Bar */}
       <div className="hero__usp-bar">
-        <div className="container hero__usp-container">
+        <div className="container hero__usp-container">          
           {USP_ITEMS.map((item) => {
             const IconComp = ICON_MAP[item.icon] || Leaf;
             return (

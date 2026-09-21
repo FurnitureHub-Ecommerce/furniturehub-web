@@ -2,6 +2,19 @@
   background-color: var(--lumora-bg-primary);
 }
 
+.section-heading__title{
+  font-family: 'Playfair Display', serif; /* Thay tên font bạn muốn ở đây (Ví dụ: Lora, Cinzel, Merriweather) */
+  font-size: clamp(2.2rem, 3vw, 3.2rem);
+  font-weight: 600;
+  color: var(--lumora-text-main);
+  letter-spacing: -0.02em;
+  line-height: 1.08;
+}
+
+.section-heading__subtitle,
+.section-heading__badge {
+  font-family: 'Playfair Display', serif;
+}
 /* Tabs */
 .product-showcase__tabs {
   display: flex;
@@ -237,8 +250,8 @@
 }
 
 .product-card__title {
-  font-family: var(--font-serif);
-  font-size: clamp(1.4rem, 2vw, 1.9rem);
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(1.2rem, 2vw, 1.7em);
   font-weight: 600;
   line-height: 1.14;
   margin-bottom: 14px;
