@@ -56,13 +56,16 @@ const StorageDashboard = () => {
   };
 
   const totalStock = skuProducts.reduce((acc, item) => acc + (item.stock || 0), 0);
-  const lowStockCount = skuProducts.filter((item) => item.stock !== null && item.stock <= 15).length;
+  const stockItems = skuProducts.filter((item) => item.stock !== null);
+  const lowStockCount = stockItems.filter((item) => item.stock <= 15).length;
+  const hasStockData = stockItems.length > 0;
+  const locations = new Set(skuProducts.map((item) => item.location).filter(Boolean));
 
   const storageMetrics = [
     { label: 'TỔNG SỐ SKU', value: skuProducts.length, sub: 'Đang quản lý trong hệ thống' },
-    { label: 'HÀNG TỒN KHO (TỔNG)', value: totalStock.toLocaleString(), sub: 'Sản phẩm sẵn sàng lưu trữ' },
-    { label: 'VỊ TRÍ LƯU TRỮ', value: 'Chưa cập nhật', sub: 'API chưa trả về vị trí lưu trữ' },
-    { label: 'CẢNH BÁO TỒN THẤP', value: `${lowStockCount} SKU`, sub: 'Dưới mức tồn kho tối thiểu' }
+    { label: 'HÀNG TỒN KHO (TỔNG)', value: hasStockData ? totalStock.toLocaleString() : 'Chưa cập nhật', sub: hasStockData ? 'Sản phẩm sẵn sàng lưu trữ' : 'API variant chưa trả về số lượng tồn' },
+    { label: 'VỊ TRÍ LƯU TRỮ', value: locations.size || 'Chưa cập nhật', sub: locations.size ? 'Khu vực đang được sử dụng' : 'API variant chưa trả về vị trí lưu trữ' },
+    { label: 'CẢNH BÁO TỒN THẤP', value: hasStockData ? `${lowStockCount} SKU` : 'Chưa cập nhật', sub: hasStockData ? 'Dưới mức tồn kho tối thiểu' : 'Không thể tính khi API chưa có số lượng tồn' }
   ];
 
   if (loading) {
@@ -131,14 +134,14 @@ const StorageDashboard = () => {
                   <td><strong>{prod.stock === null ? 'Chưa cập nhật' : prod.stock}</strong>{prod.stock !== null && ' chiếc'}</td>
                   <td>
                     <span style={{
-                      background: prod.stock === 0 ? '#fef2f2' : prod.stock <= 15 ? '#fffbeb' : '#f0fdf4',
-                      color: prod.stock === 0 ? '#dc2626' : prod.stock <= 15 ? '#d97706' : '#16a34a',
+                      background: prod.stock === null ? '#f5f5f4' : prod.stock === 0 ? '#fef2f2' : prod.stock <= 15 ? '#fffbeb' : '#f0fdf4',
+                      color: prod.stock === null ? '#78716c' : prod.stock === 0 ? '#dc2626' : prod.stock <= 15 ? '#d97706' : '#16a34a',
                       padding: '4px 8px',
                       borderRadius: '4px',
                       fontSize: '11px',
                       fontWeight: '700'
                     }}>
-                      {prod.stock === 0 ? 'HẾT HÀNG' : prod.stock <= 15 ? 'SẮP HẾT' : 'ỔN ĐỊNH'}
+                      {prod.stock === null ? 'CHƯA CÓ DỮ LIỆU TỒN' : prod.stock === 0 ? 'HẾT HÀNG' : prod.stock <= 15 ? 'SẮP HẾT' : 'ỔN ĐỊNH'}
                     </span>
                   </td>
                 </tr>

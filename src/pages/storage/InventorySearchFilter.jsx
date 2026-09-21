@@ -293,19 +293,23 @@ const InventorySearchFilter = () => {
                     <span className="badge">{prod.location || "Chưa cập nhật"}</span>
                   </td>
                   <td>
-                    <strong>{prod.stock}</strong> chiếc
+                    <strong>{prod.stock === null ? "Chưa cập nhật" : prod.stock}</strong>{prod.stock !== null && " chiếc"}
                   </td>
                   <td>
                     <span
                       style={{
                         background:
-                          prod.stock === 0
+                          prod.stock === null
+                            ? "#f5f5f4"
+                            : prod.stock === 0
                             ? "#fef2f2"
                             : prod.stock <= 15
                               ? "#fffbeb"
                               : "#f0fdf4",
                         color:
-                          prod.stock === 0
+                          prod.stock === null
+                            ? "#78716c"
+                            : prod.stock === 0
                             ? "#dc2626"
                             : prod.stock <= 15
                               ? "#d97706"
@@ -316,7 +320,9 @@ const InventorySearchFilter = () => {
                         fontWeight: "700",
                       }}
                     >
-                      {prod.stock === 0
+                      {prod.stock === null
+                        ? "CHƯA CÓ DỮ LIỆU TỒN"
+                        : prod.stock === 0
                         ? "HẾT HÀNG"
                         : prod.stock <= 15
                           ? "SẮP HẾT"

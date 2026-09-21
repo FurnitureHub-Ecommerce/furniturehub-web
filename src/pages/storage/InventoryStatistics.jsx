@@ -3,17 +3,22 @@ import { loadStorageVariants } from '../../services/storageData';
 import { BarChart3, ShieldCheck } from 'lucide-react';
 
 const InventoryStatistics = () => {
-  const [skuCount, setSkuCount] = useState(null);
+  const [inventory, setInventory] = useState(null);
 
   useEffect(() => {
-    loadStorageVariants().then((variants) => setSkuCount(variants.length));
+    loadStorageVariants().then((variants) => setInventory(variants));
   }, []);
 
+  const variants = inventory || [];
+  const stockItems = variants.filter((variant) => variant.stock !== null);
+  const totalStock = stockItems.reduce((total, variant) => total + variant.stock, 0);
+  const locations = new Set(variants.map((variant) => variant.location).filter(Boolean));
+
   const storageMetrics = [
-    { label: 'TỔNG SỐ SKU', value: skuCount === null ? 'Đang tải...' : skuCount, sub: 'Đồng bộ từ API sản phẩm và biến thể' },
-    { label: 'HÀNG TỒN KHO (TỔNG)', value: 'Chưa cập nhật', sub: 'API variant chưa trả về stock' },
-    { label: 'VỊ TRÍ LƯU TRỮ', value: 'Chưa cập nhật', sub: 'API variant chưa trả về location' },
-    { label: 'CẢNH BÁO TỒN THẤP', value: 'Chưa cập nhật', sub: 'Không thể tính khi API chưa có stock' },
+    { label: 'TỔNG SỐ SKU', value: inventory === null ? 'Đang tải...' : variants.length, sub: 'Đồng bộ từ API sản phẩm và biến thể' },
+    { label: 'HÀNG TỒN KHO (TỔNG)', value: stockItems.length ? totalStock.toLocaleString() : 'Chưa cập nhật', sub: stockItems.length ? 'Tổng số lượng từ API variant' : 'API variant chưa trả về số lượng tồn' },
+    { label: 'VỊ TRÍ LƯU TRỮ', value: locations.size || 'Chưa cập nhật', sub: locations.size ? 'Khu vực đang được sử dụng' : 'API variant chưa trả về vị trí lưu trữ' },
+    { label: 'CẢNH BÁO TỒN THẤP', value: stockItems.length ? `${stockItems.filter((variant) => variant.stock <= 15).length} SKU` : 'Chưa cập nhật', sub: stockItems.length ? 'Dưới mức tồn kho tối thiểu' : 'Không thể tính khi API chưa có số lượng tồn' },
   ];
 
   return (

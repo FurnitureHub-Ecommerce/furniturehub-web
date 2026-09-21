@@ -10,8 +10,22 @@ const getArrayFromResponse = (response, keys = []) => {
   return [];
 };
 
+const getNumberOrNull = (...values) => {
+  const value = values.find((item) => typeof item === 'number');
+  return value ?? null;
+};
+
+const getVariantLabel = (variant) =>
+  [variant.color, variant.size, variant.material].filter(Boolean).join(' - ') || 'Chưa cập nhật';
+
 export const loadStorageVariants = async () => {
-  const productsResponse = await productAPI.getProducts();
+  let productsResponse;
+  try {
+    productsResponse = await productAPI.getProductsAdmin();
+  } catch (error) {
+    productsResponse = await productAPI.getProducts();
+  }
+
   const products = getArrayFromResponse(productsResponse, ['products', 'data', 'content']);
 
   const variantGroups = await Promise.all(
@@ -20,15 +34,29 @@ export const loadStorageVariants = async () => {
       if (!productId) return [];
 
       try {
-        const variantsResponse = await productAPI.getProductVariants(productId);
+        let variantsResponse;
+        try {
+          variantsResponse = await productAPI.getProductVariantsAdmin(productId);
+        } catch (error) {
+          variantsResponse = await productAPI.getProductVariants(productId);
+        }
+
         const variants = getArrayFromResponse(variantsResponse, ['variants', 'data', 'content']);
 
         return variants.map((variant) => ({
           id: variant.sku || variant._id || variant.id,
-          name: product.name,
-          specs: [variant.color, variant.size, variant.material].filter(Boolean).join(' - '),
-          location: variant.location || null,
-          stock: typeof variant.stock === 'number' ? variant.stock : null,
+          productId,
+          name: product.name || 'Sản phẩm chưa đặt tên',
+          specs: getVariantLabel(variant),
+          location: variant.location || variant.inventory?.location || null,
+          stock: getNumberOrNull(
+            variant.stock,
+            variant.stockQuantity,
+            variant.quantity,
+            variant.inventory?.quantity,
+            variant.inventory?.stock,
+            variant.inventory?.availableStock
+          ),
           price: variant.price,
         }));
       } catch (error) {
