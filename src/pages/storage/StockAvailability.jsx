@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { productAPI } from '../../services/api';
+import { loadStorageVariants } from '../../services/storageData';
 import { PackageCheck, CheckCircle2, AlertCircle, ChevronLeft, ChevronRight } from 'lucide-react';
 
 const StockAvailability = () => {
@@ -15,58 +15,7 @@ const StockAvailability = () => {
     const fetchStockAvailability = async () => {
       try {
         setLoading(true);
-        const productsRes = await productAPI.getProducts();
-
-        let products = [];
-        if (Array.isArray(productsRes)) {
-          products = productsRes;
-        } else if (Array.isArray(productsRes?.products)) {
-          products = productsRes.products;
-        } else if (Array.isArray(productsRes?.data)) {
-          products = productsRes.data;
-        } else if (Array.isArray(productsRes?.data?.content)) {
-          products = productsRes.data.content;
-        } else {
-          products = [];
-        }
-
-        // 🚀 Dùng Promise.all để gọi song song tất cả các API biến thể cùng một lúc (tốc độ cực nhanh)
-        const variantPromises = products.map(async (prod) => {
-          const prodId = prod._id || prod.id;
-          if (!prodId) return [];
-
-          try {
-            const variantsRes = await productAPI.getProductVariants(prodId);
-
-            let variants = [];
-            if (Array.isArray(variantsRes)) {
-              variants = variantsRes;
-            } else if (Array.isArray(variantsRes?.variants)) {
-              variants = variantsRes.variants;
-            } else if (Array.isArray(variantsRes?.data)) {
-              variants = variantsRes.data;
-            } else {
-              variants = [];
-            }
-
-            return variants.map((v) => ({
-              id: v.sku || v._id || v.id,
-              name: prod.name,
-              specs: `${v.color || ''} - ${v.size || ''} - ${v.material || ''}`.trim(),
-              location: v.location || 'Kho A - Vịnh Mặc Định',
-              stock: v.stock ?? 20,
-            }));
-          } catch (err) {
-            console.error(`Lỗi khi lấy biến thể của sản phẩm ${prodId}:`, err);
-            return [];
-          }
-        });
-
-        // Chờ tất cả các request song song hoàn tất
-        const allResults = await Promise.all(variantPromises);
-        const allVariants = allResults.flat(); // Gộp phẳng các mảng kết quả lại
-
-        setSkuProducts(allVariants);
+        setSkuProducts(await loadStorageVariants());
       } catch (error) {
         console.error('Lỗi tải dữ liệu tình trạng sẵn có:', error);
       } finally {
@@ -209,8 +158,8 @@ const StockAvailability = () => {
                         <small style={{ color: '#888' }}>{prod.id}</small>
                       </td>
                       <td>{prod.specs}</td>
-                      <td><span className="badge">{prod.location}</span></td>
-                      <td><strong>{prod.stock}</strong> đơn vị</td>
+                      <td><span className="badge">{prod.location || 'Chưa cập nhật'}</span></td>
+                      <td><strong>{prod.stock === null ? 'Chưa cập nhật' : prod.stock}</strong>{prod.stock !== null && ' đơn vị'}</td>
                       <td>
                         {prod.stock > 0 ? (
                           <span style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#16a34a', fontWeight: '600', fontSize: '13px' }}>

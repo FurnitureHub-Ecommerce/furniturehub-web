@@ -1,8 +1,21 @@
-import React from 'react';
-import { storageMetrics } from '../../data/storageData';
+import React, { useEffect, useState } from 'react';
+import { loadStorageVariants } from '../../services/storageData';
 import { BarChart3, ShieldCheck } from 'lucide-react';
 
 const InventoryStatistics = () => {
+  const [skuCount, setSkuCount] = useState(null);
+
+  useEffect(() => {
+    loadStorageVariants().then((variants) => setSkuCount(variants.length));
+  }, []);
+
+  const storageMetrics = [
+    { label: 'TỔNG SỐ SKU', value: skuCount === null ? 'Đang tải...' : skuCount, sub: 'Đồng bộ từ API sản phẩm và biến thể' },
+    { label: 'HÀNG TỒN KHO (TỔNG)', value: 'Chưa cập nhật', sub: 'API variant chưa trả về stock' },
+    { label: 'VỊ TRÍ LƯU TRỮ', value: 'Chưa cập nhật', sub: 'API variant chưa trả về location' },
+    { label: 'CẢNH BÁO TỒN THẤP', value: 'Chưa cập nhật', sub: 'Không thể tính khi API chưa có stock' },
+  ];
+
   return (
     <div className="dashboard-main">
       <header className="dash-header">
@@ -33,21 +46,21 @@ const InventoryStatistics = () => {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginTop: '20px' }}>
             <div>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', marginBottom: '6px', fontWeight: '600' }}>
-                <span>Kho A (Gốm sứ & Đồ trang trí)</span>
-                <span>82% Sức Chứa</span>
+                <span>Kho A</span>
+                <span>Chưa cập nhật</span>
               </div>
               <div style={{ width: '100%', height: '8px', background: '#eaeaea', borderRadius: '4px', overflow: 'hidden' }}>
-                <div style={{ width: '82%', height: '100%', background: '#1c1c1c' }}></div>
+                <div style={{ width: '0%', height: '100%', background: '#1c1c1c' }}></div>
               </div>
             </div>
 
             <div>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', marginBottom: '6px', fontWeight: '600' }}>
-                <span>Kho B (Vải lanh & Phụ kiện mềm)</span>
-                <span>64% Sức Chứa</span>
+                <span>Kho B</span>
+                <span>Chưa cập nhật</span>
               </div>
               <div style={{ width: '100%', height: '8px', background: '#eaeaea', borderRadius: '4px', overflow: 'hidden' }}>
-                <div style={{ width: '64%', height: '100%', background: '#555' }}></div>
+                <div style={{ width: '0%', height: '100%', background: '#555' }}></div>
               </div>
             </div>
           </div>
@@ -60,13 +73,13 @@ const InventoryStatistics = () => {
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', fontSize: '13px', color: '#444' }}>
             <div style={{ padding: '12px', background: '#fff', border: '1px solid #eaeaea', borderRadius: '6px' }}>
-              <strong>Tỷ lệ thất thoát:</strong> &lt; 0.05% (Đạt chuẩn)
+              <strong>Tỷ lệ thất thoát:</strong> Chưa có dữ liệu API
             </div>
             <div style={{ padding: '12px', background: '#fff', border: '1px solid #eaeaea', borderRadius: '6px' }}>
-              <strong>Thời gian xử lý đơn:</strong> Trung bình 12 phút/lệnh
+              <strong>Thời gian xử lý đơn:</strong> Chưa có dữ liệu API
             </div>
             <div style={{ padding: '12px', background: '#fff', border: '1px solid #eaeaea', borderRadius: '6px' }}>
-              <strong>Độ chính xác kiểm kê:</strong> 99.8%
+              <strong>Độ chính xác kiểm kê:</strong> Chưa có dữ liệu API
             </div>
           </div>
         </section>

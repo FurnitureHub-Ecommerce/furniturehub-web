@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { productAPI } from "../../services/api";
+import { loadStorageVariants } from "../../services/storageData";
 import { Search, SlidersHorizontal, RotateCcw } from "lucide-react";
 
 const InventorySearchFilter = () => {
@@ -15,41 +15,7 @@ const InventorySearchFilter = () => {
     const fetchInventoryData = async () => {
       try {
         setLoading(true);
-        const productsRes = await productAPI.getProducts();
-
-        // Kiểm tra an toàn để đảm bảo products luôn là một mảng
-        let products = [];
-        if (Array.isArray(productsRes)) {
-          products = productsRes;
-        } else if (Array.isArray(productsRes?.data)) {
-          products = productsRes.data;
-        } else if (Array.isArray(productsRes?.data?.content)) {
-          products = productsRes.data.content;
-        } else {
-          products = [];
-        }
-
-        let allVariants = [];
-        for (const prod of products) {
-          const prodId = prod._id || prod.id;
-          try {
-            const variantsRes = await productAPI.getProductVariants(prodId);
-            const variants = variantsRes.data || variantsRes;
-
-            const mapped = variants.map((v) => ({
-              id: v.sku || v._id || v.id,
-              name: prod.name,
-              specs:
-                `${v.color || ""} - ${v.size || ""} - ${v.material || ""}`.trim(),
-              location: v.location || "Kho A", // Giá trị mặc định nếu backend chưa lưu vị trí
-              stock: v.stock ?? 20, // Giá trị mặc định để test hiển thị trạng thái tồn
-            }));
-            allVariants = [...allVariants, ...mapped];
-          } catch (err) {
-            console.error(`Lỗi lấy biến thể của sản phẩm ${prod.name}:`, err);
-          }
-        }
-        setSkuProducts(allVariants);
+        setSkuProducts(await loadStorageVariants());
       } catch (error) {
         console.error("Lỗi khi tải dữ liệu tra cứu tồn kho:", error);
       } finally {
@@ -66,15 +32,15 @@ const InventorySearchFilter = () => {
       item.id.toLowerCase().includes(tuKhoa.toLowerCase()) ||
       item.specs.toLowerCase().includes(tuKhoa.toLowerCase());
 
-    const khopKhuVuc = khuVucKho === "ALL" || item.location.includes(khuVucKho);
+    const khopKhuVuc = khuVucKho === "ALL" || item.location?.includes(khuVucKho);
 
     let khopTrangThai = true;
     if (trangThaiTon === "LOW") {
-      khopTrangThai = item.stock <= 15 && item.stock > 0;
+      khopTrangThai = item.stock !== null && item.stock <= 15 && item.stock > 0;
     } else if (trangThaiTon === "OUT") {
       khopTrangThai = item.stock === 0;
     } else if (trangThaiTon === "NORMAL") {
-      khopTrangThai = item.stock > 15;
+      khopTrangThai = item.stock !== null && item.stock > 15;
     }
 
     return khopTuKhoa && khopKhuVuc && khopTrangThai;
@@ -324,7 +290,7 @@ const InventorySearchFilter = () => {
                   </td>
                   <td>{prod.specs}</td>
                   <td>
-                    <span className="badge">{prod.location}</span>
+                    <span className="badge">{prod.location || "Chưa cập nhật"}</span>
                   </td>
                   <td>
                     <strong>{prod.stock}</strong> chiếc
