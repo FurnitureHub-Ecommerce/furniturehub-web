@@ -1,10 +1,53 @@
-import React from 'react';
-import { skuProducts } from '../../data/storageData';
+import React, { useState, useEffect } from 'react';
+import { productAPI } from '../../services/api';
 import { ShieldAlert, ArrowUpRight } from 'lucide-react';
 
 const LowStockAlerts = () => {
+  const [skuProducts, setSkuProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
   const nguongCanhBao = 15;
+
+  useEffect(() => {
+    const fetchInventory = async () => {
+      try {
+        setLoading(true);
+        const productsRes = await productAPI.getProducts();
+        const products = productsRes.data || productsRes;
+
+        let allVariants = [];
+        for (const prod of products) {
+          const prodId = prod._id || prod.id;
+          try {
+            const variantsRes = await productAPI.getProductVariants(prodId);
+            const variants = variantsRes.data || variantsRes;
+
+            const mapped = variants.map((v) => ({
+              id: v.sku || v._id || v.id,
+              name: prod.name,
+              specs: `${v.color || ''} - ${v.size || ''}`.trim(),
+              location: v.location || 'Kho A',
+              stock: v.stock ?? 8, 
+            }));
+            allVariants = [...allVariants, ...mapped];
+          } catch (err) {
+            console.error(err);
+          }
+        }
+        setSkuProducts(allVariants);
+      } catch (error) {
+        console.error('Lỗi tải dữ liệu cảnh báo:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchInventory();
+  }, []);
+
   const danhSachCanhBao = skuProducts.filter((item) => item.stock <= nguongCanhBao);
+
+  if (loading) {
+    return <div className="dashboard-main" style={{ padding: '20px' }}>Đang quét dữ liệu tồn kho...</div>;
+  }
 
   return (
     <div className="dashboard-main">

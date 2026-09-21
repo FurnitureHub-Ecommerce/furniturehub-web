@@ -1,51 +1,97 @@
-import React, { useState } from 'react';
-import { skuProducts } from '../../data/storageData';
-import { PackageCheck, CheckCircle2, AlertCircle } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { productAPI } from '../../services/api';
+import { ShieldAlert, ArrowUpRight } from 'lucide-react';
 
-const StockAvailability = () => {
-  const [boLoc, setBoLoc] = useState('ALL');
+const LowStockAlerts = () => {
+  const [skuProducts, setSkuProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const nguongCanhBao = 15;
 
-  const danhSachLoc = skuProducts.filter((item) => {
-    if (boLoc === 'AVAILABLE') return item.stock > 0;
-    if (boLoc === 'OUT') return item.stock === 0;
-    return true;
-  });
+  useEffect(() => {
+    const fetchInventory = async () => {
+      try {
+        setLoading(true);
+        const productsRes = await productAPI.getProducts();
+
+        // Kiểm tra và đảm bảo products luôn là một mảng
+        let products = [];
+        if (Array.isArray(productsRes)) {
+          products = productsRes;
+        } else if (Array.isArray(productsRes?.data)) {
+          products = productsRes.data;
+        } else if (Array.isArray(productsRes?.data?.content)) {
+          products = productsRes.data.content;
+        } else {
+          products = []; 
+        }
+
+        let allVariants = [];
+        for (const prod of products) {
+          const prodId = prod._id || prod.id;
+          try {
+            const variantsRes = await productAPI.getProductVariants(prodId);
+            const variants = variantsRes.data || variantsRes;
+
+            const mapped = variants.map((v) => ({
+              id: v.sku || v._id || v.id,
+              name: prod.name,
+              specs: `${v.color || ''} - ${v.size || ''}`.trim(),
+              location: v.location || 'Kho A',
+              stock: v.stock ?? 8, 
+            }));
+            allVariants = [...allVariants, ...mapped];
+          } catch (err) {
+            console.error(err);
+          }
+        }
+        setSkuProducts(allVariants);
+      } catch (error) {
+        console.error('Lỗi tải dữ liệu cảnh báo:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchInventory();
+  }, []);
+
+  const danhSachCanhBao = skuProducts.filter((item) => item.stock <= nguongCanhBao);
+
+  if (loading) {
+    return <div className="dashboard-main" style={{ padding: '20px', fontFamily: "'Playfair Display', serif" }}>Đang quét dữ liệu tồn kho...</div>;
+  }
 
   return (
-    <div className="dashboard-main">
+    <div className="dashboard-main" style={{ fontFamily: "'Playfair Display', serif" }}>
       <header className="dash-header">
         <div>
-          <span className="subtitle">TÌNH TRẠNG SẴN CÓ THỜI GIAN THỰC</span>
-          <h2>Kiểm Tra Tình Trạng Sẵn Có Của Hàng Hóa</h2>
-          <p>Theo dõi nhanh số lượng hàng có thể xuất bán hoặc phân bổ ngay tại các vị trí trong kho.</p>
+          <span className="subtitle">GIÁM SÁT TỒN KHO NGUY CƠ</span>
+          <h2>Cảnh Báo Tồn Thấp & Hết Hàng</h2>
+          <p>Danh sách các mã SKU cần được bổ sung gấp để đảm bảo chuỗi cung ứng hoạt động thông suốt.</p>
         </div>
         <div className="actions">
-          <button 
-            className={`btn-secondary ${boLoc === 'ALL' ? 'active' : ''}`}
-            onClick={() => setBoLoc('ALL')}
-          >
-            Tất Cả
-          </button>
-          <button 
-            className={`btn-secondary ${boLoc === 'AVAILABLE' ? 'active' : ''}`}
-            onClick={() => setBoLoc('AVAILABLE')}
-          >
-            Còn Hàng Sẵn Sàng
-          </button>
-          <button 
-            className={`btn-secondary ${boLoc === 'OUT' ? 'active' : ''}`}
-            onClick={() => setBoLoc('OUT')}
-          >
-            Hết Hàng
-          </button>
+          <button className="btn-primary">Tạo Lệnh Nhập Hàng Bổ Sung</button>
         </div>
       </header>
 
-      {/* Bảng hiển thị tình trạng sẵn có */}
+      {/* Thẻ thống kê */}
+      <div className="metrics-grid" style={{ gridTemplateColumns: 'repeat(2, 1fr)' }}>
+        <div className="metric-card" style={{ borderLeft: '4px solid #dc2626' }}>
+          <h4>SẢN PHẨM DƯỚI NGƯỠNG AN TOÀN</h4>
+          <div className="metric-val" style={{ color: '#dc2626' }}>{danhSachCanhBao.length} SKU</div>
+          <p>Cần lên kế hoạch đặt hàng với nhà cung cấp ngay lập tức.</p>
+        </div>
+        <div className="metric-card" style={{ borderLeft: '4px solid #f59e0b' }}>
+          <h4>TRẠNG THÁI GIÁM SÁT</h4>
+          <div className="metric-val" style={{ color: '#f59e0b' }}>Hoạt Động</div>
+          <p>Tự động cập nhật thời gian thực từ hệ thống kho.</p>
+        </div>
+      </div>
+
+      {/* Bảng cảnh báo */}
       <section className="sku-section">
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
-          <PackageCheck size={20} color="#1c1c1c" />
-          <h3 style={{ margin: 0 }}>Ma Trận Hàng Sẵn Sàng</h3>
+          <ShieldAlert size={20} color="#dc2626" />
+          <h3 style={{ margin: 0 }}>Danh Sách SKU Cần Chú Ý Đặc Biệt</h3>
         </div>
 
         <table className="storage-table">
@@ -53,13 +99,14 @@ const StockAvailability = () => {
             <tr>
               <th>MÃ SKU & TÊN SẢN PHẨM</th>
               <th>QUY CÁCH</th>
-              <th>VỊ TRÍ LƯU TRỮ</th>
-              <th>SỐ LƯỢNG KHẢ DỤNG</th>
-              <th>TRẠNG THÁI GIAO DỊCH</th>
+              <th>VỊ TRÍ KHO</th>
+              <th>TỒN KHO HIỆN TẠI</th>
+              <th>TRẠNG THÁI</th>
+              <th>THAO TÁC</th>
             </tr>
           </thead>
           <tbody>
-            {danhSachLoc.map((prod) => (
+            {danhSachCanhBao.map((prod) => (
               <tr key={prod.id}>
                 <td>
                   <strong>{prod.name}</strong>
@@ -68,17 +115,16 @@ const StockAvailability = () => {
                 </td>
                 <td>{prod.specs}</td>
                 <td><span className="badge">{prod.location}</span></td>
-                <td><strong>{prod.stock}</strong> đơn vị</td>
+                <td><strong style={{ color: '#dc2626' }}>{prod.stock} chiếc</strong></td>
                 <td>
-                  {prod.stock > 0 ? (
-                    <span style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#16a34a', fontWeight: '600', fontSize: '13px' }}>
-                      <CheckCircle2 size={16} /> Sẵn Sàng Xuất Kho
-                    </span>
-                  ) : (
-                    <span style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#dc2626', fontWeight: '600', fontSize: '13px' }}>
-                      <AlertCircle size={16} /> Chờ Nhập Bổ Sung
-                    </span>
-                  )}
+                  <span style={{ background: '#fef2f2', color: '#dc2626', padding: '4px 8px', borderRadius: '4px', fontSize: '11px', fontWeight: '700' }}>
+                    {prod.stock === 0 ? 'HẾT HÀNG' : 'SẮP HẾT'}
+                  </span>
+                </td>
+                <td>
+                  <button className="btn-secondary" style={{ padding: '6px 12px', fontSize: '12px' }}>
+                    Nhập Hàng <ArrowUpRight size={14} style={{ verticalAlign: 'middle' }} />
+                  </button>
                 </td>
               </tr>
             ))}
@@ -89,4 +135,4 @@ const StockAvailability = () => {
   );
 };
 
-export default StockAvailability;
+export default LowStockAlerts;

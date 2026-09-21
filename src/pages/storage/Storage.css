@@ -1,3 +1,17 @@
+/* Áp dụng font Playfair Display cho toàn bộ các trang trong module Storage */
+.dashboard-main {
+  font-family: 'Playfair Display', serif;
+  font-weight: 600;
+}
+
+/* Đảm bảo các tiêu đề và bảng hiển thị sắc nét hơn với font serif */
+.dashboard-main h2, 
+.dashboard-main h3, 
+.dashboard-main h4,
+.storage-table th {
+  font-family: 'Playfair Display', serif;
+}
+
 .storage-container {
   display: flex;
   min-height: 100vh;
