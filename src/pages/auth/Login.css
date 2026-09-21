@@ -1,167 +1,264 @@
+/* --- BIẾN MÀU SẮC & CẤU HÌNH GIAO DIỆN SÁNG SỦA, SANG TRỌNG --- */
 :root {
-  --sand-50: #fbf9f5;
-  --sand-100: #f5f0eb;
-  --sand-200: #e8ded2;
-  --sand-300: #d6c5b3;
-  --sand-700: #57483b;
-  --sand-900: #2c241d;
-  --accent-wood: #8c6d46;
+  --primary-color: #1c1c1c;
+  --accent-gold: #b8976b; /* Màu đồng nội thất cao cấp */
+  --bg-wrapper: #f3f4f6;  /* Nền tổng thể sáng sủa ngoài cùng */
+  --card-bg: #ffffff;     /* Nền khung card trắng tinh tế */
+  --text-main: #1c1c1c;
+  --text-muted: #6b7280;
+  --border-color: #e5e7eb;
+  --radius-lg: 20px;
+  --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+/* --- HIỆU ỨNG CHUYỂN TRANG MƯỢT MÀ --- */
+@keyframes pageEntrance {
+  from {
+    opacity: 0;
+    transform: scale(0.97) translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* --- LỚP BACKGROUND TỔNG THỂ NGOÀI CÙNG (SÁNG SỦA) --- */
 .auth-wrapper {
-  display: flex;
-  min-height: 100vh;
-  background-color: var(--sand-50);
-  font-family: var(--font-sans);
-}
-
-/* Cột hình ảnh minh họa nội thất bên trái */
-.auth-banner {
-  flex: 1;
-  background: linear-gradient(rgba(0, 0, 0, 0.25), rgba(0, 0, 0, 0.25)),
-              url('https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?q=80&w=1200&auto=format&fit=crop') center/cover no-repeat;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  padding: 48px;
-  color: #ffffff;
-}
-
-.banner-brand {
-  font-family: var(--font-serif);
-  font-size: 2.1rem;
-  font-weight: 600;
-  letter-spacing: 0.18em;
-}
-
-.banner-quote h3 {
-  font-family: var(--font-serif);
-  font-size: clamp(2.1rem, 3vw, 3rem);
-  font-weight: 600;
-  line-height: 1.15;
-  letter-spacing: -0.02em;
-  margin-bottom: 12px;
-}
-
-.banner-quote p {
-  font-size: 0.95rem;
-  line-height: 1.7;
-  opacity: 0.9;
-}
-
-/* Form Đăng nhập bên phải */
-.auth-form-container {
-  width: 480px;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 40px;
-  background-color: #ffffff;
+  min-height: 100vh;
+  width: 100vw;
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  padding: 30px;
+  box-sizing: border-box;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  animation: pageEntrance 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* --- KHUNG CARD CHÍNH NẰM TRÊN LỚP BACKGROUND --- */
+.auth-main-card {
+  display: flex;
+  width: 100%;
+  max-width: 1050px;
+  height: 620px;
+  background: var(--card-bg);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.12), 0 0 0 1px rgba(0, 0, 0, 0.04);
+}
+
+/* --- BANNER BÊN TRÁI (ẢNH NỘI THẤT SÁNG SỦA, KHÔNG TỐI THUI) --- */
+.auth-banner {
+  flex: 1.1;
+  /* Sử dụng ảnh nội thất phòng khách hiện đại, sáng sủa, tone màu ấm áp kết hợp lớp phủ gradient trong suốt vừa đủ */
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0.1)), 
+              url('https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?q=80&w=1400&auto=format&fit=crop') center/cover no-repeat;
+  color: #ffffff;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 50px;
+  position: relative;
+}
+
+.banner-brand {
+  font-size: 24px;
+  font-weight: 800;
+  letter-spacing: 5px;
+  color: #ffffff;
+  z-index: 1;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+
+.banner-quote {
+  z-index: 1;
+  max-width: 400px;
+}
+
+.banner-quote h3 {
+  font-size: 34px;
+  font-weight: 700;
+  line-height: 1.25;
+  margin-bottom: 12px;
+  color: #ffffff;
+  text-shadow: 0 2px 6px rgba(0,0,0,0.4);
+}
+
+.banner-quote p {
+  font-size: 15px;
+  color: #f3f4f6;
+  line-height: 1.5;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.4);
+}
+
+/* --- KHUNG FORM BÊN PHẢI (NỀN TRẮNG SÁNG, GỌN GÀNG) --- */
+.auth-form-container {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 50px;
+  background: #ffffff;
+  overflow-y: auto;
 }
 
 .auth-card {
   width: 100%;
-  max-width: 360px;
+  max-width: 380px;
 }
 
 .auth-header {
-  margin-bottom: 32px;
+  margin-bottom: 24px;
 }
 
 .auth-header h2 {
-  font-family: var(--font-serif);
-  font-size: clamp(2rem, 2.6vw, 2.6rem);
-  font-weight: 600;
-  letter-spacing: -0.02em;
-  color: var(--sand-900);
-  margin-bottom: 8px;
+  font-size: 46px;
+  font-weight: 800;
+  color: var(--text-main);
+  margin-bottom: 6px;
+  letter-spacing: -0.5px;
 }
 
 .auth-header p {
-  font-size: 0.92rem;
-  line-height: 1.6;
-  color: var(--sand-700);
+  font-size: 14px;
+  color: var(--text-muted);
 }
 
+/* --- THÔNG BÁO LỖI --- */
+.error-badge {
+  background-color: #fef2f2;
+  color: #dc2626;
+  border: 1px solid #fecaca;
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  margin-bottom: 18px;
+  animation: shake 0.4s ease-in-out;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-4px); }
+  75% { transform: translateX(4px); }
+}
+
+/* --- FORM INPUTS --- */
 .form-group {
-  margin-bottom: 20px;
+  margin-bottom: 16px;
 }
 
 .form-group label {
   display: block;
-  font-size: 0.76rem;
+  font-size: 12px;
   font-weight: 700;
-  letter-spacing: 0.04em;
+  color: var(--text-main);
+  margin-bottom: 6px;
   text-transform: uppercase;
-  color: var(--sand-900);
-  margin-bottom: 8px;
+  letter-spacing: 0.5px;
 }
 
 .form-input {
   width: 100%;
-  padding: 12px 16px;
-  border: 1px solid var(--sand-200);
+  padding: 12px 14px;
+  font-size: 14px;
+  border: 1.5px solid var(--border-color);
   border-radius: 8px;
-  background-color: var(--sand-50);
-  font-size: 0.95rem;
-  color: var(--sand-900);
+  background-color: #f9fafb;
+  color: var(--text-main);
+  transition: var(--transition);
   outline: none;
-  transition: all 0.2s ease;
+}
+
+.form-input:hover {
+  border-color: #cbd5e1;
 }
 
 .form-input:focus {
-  border-color: var(--accent-wood);
+  border-color: var(--primary-color);
   background-color: #ffffff;
-  box-shadow: 0 0 0 3px rgba(140, 109, 70, 0.12);
+  box-shadow: 0 0 0 3px rgba(28, 28, 28, 0.08);
 }
 
-.error-badge {
-  padding: 10px 14px;
-  background-color: #fdf2f2;
-  border: 1px solid #f8b4b4;
-  color: #9b1c1c;
-  border-radius: 6px;
-  font-size: 13px;
-  margin-bottom: 20px;
-}
-
+/* --- NÚT SUBMIT --- */
 .btn-submit {
   width: 100%;
-  padding: 14px;
-  background-color: var(--sand-900);
+  padding: 13px;
+  background-color: var(--primary-color);
   color: #ffffff;
+  font-size: 14px;
+  font-weight: 600;
   border: none;
   border-radius: 8px;
-  font-size: 0.9rem;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
   cursor: pointer;
-  transition: background-color 0.2s ease;
-  display: flex;
-  justify-content: center;
-  align-items: center;
+  transition: var(--transition);
+  margin-top: 6px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
 }
 
-.btn-submit:hover {
-  background-color: var(--accent-wood);
+.btn-submit:hover:not(:disabled) {
+  background-color: #333333;
+  transform: translateY(-1px);
 }
 
+.btn-submit:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+/* --- FOOTER & LINKS --- */
 .auth-footer {
   margin-top: 24px;
   text-align: center;
-  font-size: 0.9rem;
-  color: var(--sand-700);
+  font-size: 13px;
+  color: var(--text-muted);
 }
 
 .auth-footer a {
-  color: var(--accent-wood);
+  color: var(--primary-color);
   font-weight: 600;
   text-decoration: none;
+  transition: var(--transition);
 }
 
-/* Responsive */
-@media (max-width: 850px) {
-  .auth-banner { display: none; }
-  .auth-form-container { width: 100%; }
+.auth-footer a:hover {
+  color: var(--accent-gold);
+  text-decoration: underline;
+}
+
+/* --- RESPONSIVE CHO MOBILE --- */
+@media (max-width: 900px) {
+  .auth-main-card {
+    height: auto;
+    max-width: 450px;
+  }
+  .auth-banner {
+    display: none;
+  }
+}
+
+/* --- NÚT BACK VỀ TRANG CHỦ (DẠNG MŨI TÊN) --- */
+.btn-back-home {
+  position: absolute;
+  margin-top: -50px;
+  margin-left: 0px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background-color: #f3f4f6;
+  color: #1c1c1c;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.btn-back-home:hover {
+  background-color: #1c1c1c;
+  color: #ffffff;
+  transform: translateX(-3px); /* Hiệu ứng dịch chuyển nhẹ khi rê chuột */
 }
