@@ -8,7 +8,7 @@ const InventoryStatistics = () => {
       <header className="dash-header">
         <div>
           <span className="subtitle">THỐNG KÊ & TỔNG HỢP HỆ THỐNG</span>
-          <h2>Thống Kê Nâng Cao & Tổng Hợp Tồn Kho</h2>
+          <h2 style={{ fontFamily: "Bodoni Moda", fontSize: 'clamp(2rem, 2.5vw, 2.7rem)', color: '#1a1a1a', letterSpacing: '-0.02em', fontWeight: 600 }}>Thống Kê Nâng Cao & Tổng Hợp Tồn Kho</h2>
           <p>Phân tích xu hướng biến động, hiệu suất sử dụng không gian kho và các chỉ số vận hành quan trọng.</p>
         </div>
       </header>

@@ -57,15 +57,15 @@ const LowStockAlerts = () => {
   const danhSachCanhBao = skuProducts.filter((item) => item.stock <= nguongCanhBao);
 
   if (loading) {
-    return <div className="dashboard-main" style={{ padding: '20px', fontFamily: "'Playfair Display', serif" }}>Đang quét dữ liệu tồn kho...</div>;
+    return <div className="dashboard-main" style={{ padding: '20px', fontFamily: "'Inter', sans-serif" }}>Đang quét dữ liệu tồn kho...</div>;
   }
 
   return (
-    <div className="dashboard-main" style={{ fontFamily: "'Playfair Display', serif" }}>
+    <div className="dashboard-main" style={{ fontFamily: "'Inter', sans-serif" }}>
       <header className="dash-header">
         <div>
           <span className="subtitle">GIÁM SÁT TỒN KHO NGUY CƠ</span>
-          <h2>Cảnh Báo Tồn Thấp & Hết Hàng</h2>
+          <h2 style={{ fontFamily: "Bodoni Moda", fontSize: 'clamp(2rem, 2.5vw, 2.7rem)', color: '#1a1a1a', letterSpacing: '-0.02em', fontWeight: 600 }}>Cảnh Báo Tồn Thấp & Hết Hàng</h2>
           <p>Danh sách các mã SKU cần được bổ sung gấp để đảm bảo chuỗi cung ứng hoạt động thông suốt.</p>
         </div>
         <div className="actions">

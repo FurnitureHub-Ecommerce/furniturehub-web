@@ -14,7 +14,7 @@ const InventoryTestingIntegration = () => {
       <header className="dash-header">
         <div>
           <span className="subtitle">KIỂM THỬ HỆ THỐNG & TÍCH HỢP</span>
-          <h2>Kiểm Thử Luồng Kho & Tích Hợp Hệ Thống</h2>
+          <h2 style={{ fontFamily: "Bodoni Moda", fontSize: 'clamp(2rem, 2.5vw, 2.7rem)', color: '#1a1a1a', letterSpacing: '-0.02em', fontWeight: 600 }}>Kiểm Thử Luồng Kho & Tích Hợp Hệ Thống</h2>
           <p>Kiểm tra trạng thái kết nối API, đồng bộ dữ liệu giữa các phân hệ và vận hành toàn trình.</p>
         </div>
       </header>
