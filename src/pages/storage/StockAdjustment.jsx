@@ -1,12 +1,20 @@
-import React, { useState } from 'react';
-import { skuProducts } from '../../data/storageData';
+import React, { useEffect, useState } from 'react';
+import { loadStorageVariants } from '../../services/storageData';
 import { Sliders } from 'lucide-react';
 
 const StockAdjustment = () => {
-  const [skuChon, setSkuChon] = useState(skuProducts[0]?.id || '');
+  const [skuProducts, setSkuProducts] = useState([]);
+  const [skuChon, setSkuChon] = useState('');
   const [soLuong, setSoLuong] = useState('');
   const [lyDo, setLyDo] = useState('');
   const [thongBao, setThongBao] = useState('');
+
+  useEffect(() => {
+    loadStorageVariants().then((variants) => {
+      setSkuProducts(variants);
+      setSkuChon(variants[0]?.id || '');
+    }).catch(() => setThongBao('Không thể tải danh sách SKU từ hệ thống.'));
+  }, []);
 
   const xuLyGui = (e) => {
     e.preventDefault();

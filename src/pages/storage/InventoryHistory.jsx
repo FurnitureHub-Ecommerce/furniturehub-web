@@ -2,11 +2,7 @@ import React from 'react';
 import { History } from 'lucide-react';
 
 const InventoryHistory = () => {
-  const nhatKy = [
-    { id: 'LOG-501', time: '2026-06-04 15:30', sku: 'SKU-8821', type: 'Nhập Kho', change: '+50', staff: 'Vy Đặng', note: 'Nhập hàng từ nhà cung cấp Atelier' },
-    { id: 'LOG-502', time: '2026-06-04 11:15', sku: 'SKU-8824', type: 'Xuất Kho', change: '-2', staff: 'Vy Đặng', note: 'Xuất đơn hàng trực tuyến #881' },
-    { id: 'LOG-503', time: '2026-06-03 09:40', sku: 'SKU-8822', type: 'Điều Chỉnh', change: '-1', staff: 'Vy Đặng', note: 'Hàng lỗi vỡ trong quá trình sắp xếp' },
-  ];
+  const nhatKy = [];
 
   return (
     <div className="dashboard-main">
@@ -37,7 +33,9 @@ const InventoryHistory = () => {
             </tr>
           </thead>
           <tbody>
-            {nhatKy.map((log) => (
+            {nhatKy.length === 0 ? (
+              <tr><td colSpan="7" style={{ textAlign: 'center', padding: '30px', color: '#666' }}>Backend chưa cung cấp API lịch sử biến động kho.</td></tr>
+            ) : nhatKy.map((log) => (
               <tr key={log.id}>
                 <td><strong>{log.id}</strong></td>
                 <td>{log.time}</td>
