@@ -13,7 +13,7 @@ const InventoryHistory = () => {
       <header className="dash-header">
         <div>
           <span className="subtitle">NHẬT KÝ KIỂM SOÁT KHO</span>
-          <h2>Lịch Sử Biến Động Kho</h2>
+          <h2 style={{ fontFamily: "Bodoni Moda", fontSize: 'clamp(2rem, 2.5vw, 2.7rem)', color: '#1a1a1a', letterSpacing: '-0.02em', fontWeight: 600 }}>Lịch Sử Biến Động Kho</h2>
           <p>Nhật ký chi tiết các giao dịch nhập, xuất và điều chỉnh số lượng của từng mã SKU.</p>
         </div>
       </header>

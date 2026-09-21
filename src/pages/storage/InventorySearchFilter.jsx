@@ -38,7 +38,7 @@ const InventorySearchFilter = () => {
       <header className="dash-header">
         <div>
           <span className="subtitle">TÌM KIẾM & BỘ LỌC NÂNG CAO</span>
-          <h2>Tra Cứu & Lọc Dữ Liệu Tồn Kho</h2>
+          <h2 style={{ fontFamily: "Bodoni Moda", fontSize: 'clamp(2rem, 2.5vw, 2.7rem)', color: '#1a1a1a', letterSpacing: '-0.02em', fontWeight: 600 }}>Tra Cứu & Lọc Dữ Liệu Tồn Kho</h2>
           <p>Tra cứu nhanh chóng thông tin sản phẩm, vị trí lưu trữ và trạng thái hàng hóa theo tiêu chí đa chiều.</p>
         </div>
         <div className="actions">

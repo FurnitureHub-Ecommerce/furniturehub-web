@@ -54,7 +54,7 @@ const LowStockAlerts = () => {
       <header className="dash-header">
         <div>
           <span className="subtitle">GIÁM SÁT TỒN KHO NGUY CƠ</span>
-          <h2>Cảnh Báo Tồn Thấp & Hết Hàng</h2>
+          <h2 style={{ fontFamily: "Bodoni Moda", fontSize: 'clamp(2rem, 2.5vw, 2.7rem)', color: '#1a1a1a', letterSpacing: '-0.02em', fontWeight: 600 }}>Cảnh Báo Tồn Thấp & Hết Hàng</h2>
           <p>Danh sách các mã SKU cần được bổ sung gấp để đảm bảo chuỗi cung ứng hoạt động thông suốt.</p>
         </div>
         <div className="actions">
