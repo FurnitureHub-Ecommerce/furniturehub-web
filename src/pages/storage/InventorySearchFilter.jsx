@@ -32,7 +32,8 @@ const InventorySearchFilter = () => {
       item.id.toLowerCase().includes(tuKhoa.toLowerCase()) ||
       item.specs.toLowerCase().includes(tuKhoa.toLowerCase());
 
-    const khopKhuVuc = khuVucKho === "ALL" || item.location?.includes(khuVucKho);
+    const khopKhuVuc =
+      khuVucKho === "ALL" || item.location?.includes(khuVucKho);
 
     let khopTrangThai = true;
     if (trangThaiTon === "LOW") {
@@ -263,18 +264,29 @@ const InventorySearchFilter = () => {
             marginBottom: "12px",
           }}
         >
-          <h3 style={{ margin: 0, fontFamily: "'Inter', sans-serif" }}>Kết Quả Tra Cứu</h3>
-          <span style={{ fontSize: "13px", color: "#666", fontFamily: "'Inter', sans-serif" }}>
+          <h3 style={{ margin: 0, fontFamily: "'Inter', sans-serif" }}>
+            Kết Quả Tra Cứu
+          </h3>
+          <span
+            style={{
+              fontSize: "13px",
+              color: "#666",
+              fontFamily: "'Inter', sans-serif",
+            }}
+          >
             Tìm thấy <strong>{ketQuaLoc.length}</strong> kết quả phù hợp
           </span>
         </div>
 
-        <table className="storage-table" style={{ fontFamily: "'Inter', sans-serif" }}>
+        <table
+          className="storage-table"
+          style={{ fontFamily: "'Inter', sans-serif" }}
+        >
           <thead>
             <tr>
               <th>MÃ SKU & TÊN SẢN PHẨM</th>
               <th>QUY CÁCH & BIẾN THỂ</th>
-              <th>VỊ TRÍ LƯU TRỮ</th>
+
               <th>SỐ LƯỢNG TỒN</th>
               <th>TRẠNG THÁI</th>
             </tr>
@@ -289,11 +301,12 @@ const InventorySearchFilter = () => {
                     <small style={{ color: "#888" }}>{prod.id}</small>
                   </td>
                   <td>{prod.specs}</td>
+
                   <td>
-                    <span className="badge">{prod.location || "Chưa cập nhật"}</span>
-                  </td>
-                  <td>
-                    <strong>{prod.stock === null ? "Chưa cập nhật" : prod.stock}</strong>{prod.stock !== null && " chiếc"}
+                    <strong>
+                      {prod.stock === null ? "Chưa cập nhật" : prod.stock}
+                    </strong>
+                    {prod.stock !== null && " chiếc"}
                   </td>
                   <td>
                     <span
@@ -302,18 +315,18 @@ const InventorySearchFilter = () => {
                           prod.stock === null
                             ? "#f5f5f4"
                             : prod.stock === 0
-                            ? "#fef2f2"
-                            : prod.stock <= 15
-                              ? "#fffbeb"
-                              : "#f0fdf4",
+                              ? "#fef2f2"
+                              : prod.stock <= 15
+                                ? "#fffbeb"
+                                : "#f0fdf4",
                         color:
                           prod.stock === null
                             ? "#78716c"
                             : prod.stock === 0
-                            ? "#dc2626"
-                            : prod.stock <= 15
-                              ? "#d97706"
-                              : "#16a34a",
+                              ? "#dc2626"
+                              : prod.stock <= 15
+                                ? "#d97706"
+                                : "#16a34a",
                         padding: "4px 8px",
                         borderRadius: "4px",
                         fontSize: "11px",
@@ -323,10 +336,10 @@ const InventorySearchFilter = () => {
                       {prod.stock === null
                         ? "CHƯA CÓ DỮ LIỆU TỒN"
                         : prod.stock === 0
-                        ? "HẾT HÀNG"
-                        : prod.stock <= 15
-                          ? "SẮP HẾT"
-                          : "ỔN ĐỊNH"}
+                          ? "HẾT HÀNG"
+                          : prod.stock <= 15
+                            ? "SẮP HẾT"
+                            : "ỔN ĐỊNH"}
                     </span>
                   </td>
                 </tr>
