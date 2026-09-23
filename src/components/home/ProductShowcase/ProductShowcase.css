@@ -3,12 +3,16 @@
 }
 
 .section-heading__title{
-  font-family: 'Playfair Display', serif; /* Thay tên font bạn muốn ở đây (Ví dụ: Lora, Cinzel, Merriweather) */
+  font-family: "Bodoni Moda", serif; /* Thay tên font bạn muốn ở đây (Ví dụ: Lora, Cinzel, Merriweather) */
   font-size: clamp(2.2rem, 3vw, 3.2rem);
   font-weight: 600;
   color: var(--lumora-text-main);
   letter-spacing: -0.02em;
   line-height: 1.08;
+}
+.section-heading__title,
+.product-card__title {
+  font-family: "Bodoni Moda", serif;
 }
 
 .section-heading__subtitle,
@@ -22,18 +26,21 @@
   gap: 12px;
   margin-bottom: var(--space-xl);
   flex-wrap: wrap;
+  ;
 }
 
 .product-showcase__tab {
   padding: 10px 22px;
   font-size: 0.82rem;
   font-weight: 600;
+  font-family: "Bodoni Moda", serif;
   letter-spacing: 0.04em;
   color: var(--lumora-text-muted);
   border-radius: var(--radius-full);
   border: 1px solid var(--lumora-border);
   background-color: var(--lumora-card-white);
   transition: all var(--transition-fast);
+  
 }
 
 .product-showcase__tab:hover {
@@ -250,7 +257,6 @@
 }
 
 .product-card__title {
-  font-family: 'Playfair Display', serif;
   font-size: clamp(1.2rem, 2vw, 1.7em);
   font-weight: 600;
   line-height: 1.14;
@@ -310,4 +316,20 @@
 .product-card__cart-btn--added {
   background-color: #2E6B40;
   color: #FFFFFF;
+}
+
+/* Hiệu ứng chuyển động mượt mà cho grid sản phẩm */
+.product-showcase__grid {
+  animation: fadeInProducts 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+@keyframes fadeInProducts {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
