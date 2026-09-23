@@ -86,7 +86,7 @@ const StockAvailability = () => {
           <h2 style={{ fontFamily: "Bodoni Moda", fontSize: 'clamp(2rem, 2.5vw, 2.7rem)', color: '#1a1a1a', letterSpacing: '-0.02em', fontWeight: 600 }}>
             Kiểm Tra Tình Trạng Sẵn Có Của Hàng Hóa
           </h2>
-          <p>Theo dõi nhanh số lượng hàng có thể xuất bán hoặc phân bổ ngay tại các vị trí trong kho.</p>
+          <p>Theo dõi nhanh số lượng hàng có thể xuất bán hoặc phân bổ ngay tại các sản phẩm trong hệ thống.</p>
         </div>
 
         <div className="actions" style={{ display: 'flex', gap: '8px' }}>
@@ -143,7 +143,6 @@ const StockAvailability = () => {
                 <tr>
                   <th>MÃ SKU & TÊN SẢN PHẨM</th>
                   <th>QUY CÁCH</th>
-                  <th>VỊ TRÍ LƯU TRỮ</th>
                   <th>SỐ LƯỢNG KHẢ DỤNG</th>
                   <th>TRẠNG THÁI GIAO DỊCH</th>
                 </tr>
@@ -158,7 +157,6 @@ const StockAvailability = () => {
                         <small style={{ color: '#888' }}>{prod.id}</small>
                       </td>
                       <td>{prod.specs}</td>
-                      <td><span className="badge">{prod.location || 'Chưa cập nhật'}</span></td>
                       <td><strong>{prod.stock === null ? 'Chưa cập nhật' : prod.stock}</strong>{prod.stock !== null && ' đơn vị'}</td>
                       <td>
                         {prod.stock === null ? (
@@ -179,7 +177,7 @@ const StockAvailability = () => {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan="5" style={{ textAlign: 'center', padding: '30px', color: '#666' }}>
+                    <td colSpan="4" style={{ textAlign: 'center', padding: '30px', color: '#666' }}>
                       Không tìm thấy sản phẩm nào phù hợp với bộ lọc hiện tại.
                     </td>
                   </tr>
