@@ -66,8 +66,6 @@ const LowStockAlerts = () => {
             <tr>
               <th>MÃ SKU & TÊN SẢN PHẨM</th>
               <th>QUY CÁCH</th>
-              <th>VỊ TRÍ KHO</th>
-              <th>TỒN KHO HIỆN TẠI</th>
               <th>TRẠNG THÁI</th>
               <th>THAO TÁC</th>
             </tr>
@@ -82,8 +80,6 @@ const LowStockAlerts = () => {
                     <small style={{ color: '#888' }}>{prod.id}</small>
                   </td>
                   <td>{prod.specs}</td>
-                  <td><span className="badge">{prod.location || 'Chưa cập nhật'}</span></td>
-                  <td><strong style={{ color: '#dc2626' }}>{prod.stock} chiếc</strong></td>
                   <td>
                     <span style={{ background: '#fef2f2', color: '#dc2626', padding: '4px 8px', borderRadius: '4px', fontSize: '11px', fontWeight: '700' }}>
                       {prod.stock === 0 ? 'HẾT HÀNG' : 'SẮP HẾT'}
@@ -98,7 +94,7 @@ const LowStockAlerts = () => {
               ))
             ) : (
               <tr>
-                <td colSpan="6" style={{ textAlign: 'center', padding: '30px', color: '#666' }}>
+                <td colSpan="4" style={{ textAlign: 'center', padding: '30px', color: '#666' }}>
                   Tuyệt vời! Không có sản phẩm nào nằm dưới ngưỡng tồn kho an toàn.
                 </td>
               </tr>

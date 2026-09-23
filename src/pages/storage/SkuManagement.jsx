@@ -46,10 +46,9 @@ const SkuManagement = () => {
         <div>
           <span className="subtitle">QUẢN LÝ DANH MỤC SKU</span>
           <h2 style={{ fontFamily: "Bodoni Moda", fontSize: 'clamp(2rem, 2.5vw, 2.7rem)', color: '#1a1a1a', letterSpacing: '-0.02em', fontWeight: 600 }}>Quản Lý Danh Mục SKU & Biến Thể</h2>
-          <p>Quản lý toàn bộ thông tin định danh sản phẩm, thuộc tính biến thể và vị trí lưu trữ trong kho.</p>
+          <p>Quản lý toàn bộ thông tin định danh sản phẩm và thuộc tính biến thể trong kho.</p>
         </div>
         
-        {/* Đã gỡ bỏ nút Thêm SKU mới, chỉ giữ lại cụm bộ lọc thao tác */}
         <div className="actions" style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
           <span style={{ fontSize: '13px', color: '#666', display: 'flex', alignItems: 'center', gap: '4px' }}>
             <Filter size={14} /> Lọc trạng thái:
@@ -91,7 +90,6 @@ const SkuManagement = () => {
             <tr>
               <th>MÃ SKU & TÊN SẢN PHẨM</th>
               <th>QUY CÁCH & THUỘC TÍNH</th>
-              <th>VỊ TRÍ LƯU TRỮ</th>
               <th>TỒN KHO</th>
               <th>TRẠNG THÁI</th>
               <th>THAO TÁC</th>
@@ -107,7 +105,6 @@ const SkuManagement = () => {
                     <small style={{ color: '#888' }}>{prod.id}</small>
                   </td>
                   <td>{prod.specs}</td>
-                  <td><span className="badge">{prod.location || 'Chưa cập nhật'}</span></td>
                   <td><strong>{prod.stock === null ? 'Chưa cập nhật' : prod.stock}</strong>{prod.stock !== null && ' chiếc'}</td>
                   <td>
                     <span style={{
@@ -135,7 +132,7 @@ const SkuManagement = () => {
               ))
             ) : (
               <tr>
-                <td colSpan="6" style={{ textAlign: 'center', padding: '30px', color: '#666' }}>
+                <td colSpan="5" style={{ textAlign: 'center', padding: '30px', color: '#666' }}>
                   Không tìm thấy SKU nào phù hợp với bộ lọc.
                 </td>
               </tr>
