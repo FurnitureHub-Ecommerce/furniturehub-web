@@ -6,12 +6,16 @@
   letter-spacing: 0.05em;
   padding-block: 8px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  font-family: "Bodoni Moda", serif;
 }
 
 .header__topbar-inner {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  max-width: 1350px;
+  margin: 0 auto;
+  padding-inline: 24px;
 }
 
 .header__topbar-text {
@@ -72,11 +76,15 @@
   box-shadow: var(--shadow-subtle);
 }
 
+/* Khung bọc giới hạn độ rộng và căn giữa hoàn toàn */
 .header__inner {
   height: var(--header-height);
   display: flex;
   align-items: center;
   justify-content: space-between;
+  max-width: 1350px;
+  margin: 0 auto;
+  padding-inline: 24px;
 }
 
 /* Logo */
@@ -257,35 +265,6 @@
   display: flex;
   flex-direction: column;
   gap: 18px;
-}
-
-.header__mobile-nav-link {
-  font-size: 0.9rem;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: var(--lumora-text-main);
-}
-
-.header__mobile-drawer-footer {
-  margin-top: auto;
-  padding-top: 20px;
-  border-top: 1px solid var(--lumora-border);
-  color: var(--lumora-text-muted);
-  font-size: 0.82rem;
-  line-height: 1.7;
-}
-
-.header__mobile-phone {
-  display: inline-block;
-  margin-top: 6px;
-  font-weight: 600;
-  color: var(--lumora-accent-wood);
-}
-
-.header__mobile-hours {
-  display: block;
-  margin-top: 4px;
 }
 
 .header__mobile-nav-link {

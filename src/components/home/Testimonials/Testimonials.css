@@ -30,14 +30,14 @@
 }
 
 .testimonials__quote {
-  font-family: var(--font-serif);
-  font-size: clamp(1.5rem, 2.3vw, 2.2rem);
-  font-weight: 500;
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(1.5rem, 2.3vw, 2rem);
+  font-weight: 600;
   line-height: 1.35;
   color: var(--lumora-text-main);
   margin-block: 20px 32px;
   font-style: italic;
-  letter-spacing: -0.01em;
+ 
 }
 
 .testimonials__author-box {

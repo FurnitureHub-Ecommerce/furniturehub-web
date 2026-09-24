@@ -1,0 +1,201 @@
+/* Quick View Modal Overlay & Window */
+.quickview-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1100;
+  background-color: rgba(37, 37, 37, 0.6);
+  backdrop-filter: blur(8px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+  animation: fadeIn 0.25s ease-out;
+}
+
+.quickview-card {
+  width: 100%;
+  max-width: 860px;
+  background-color: var(--lumora-bg-primary);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--lumora-border);
+  box-shadow: var(--shadow-floating);
+  overflow: hidden;
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr;
+  animation: scaleUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@media (min-width: 768px) {
+  .quickview-card {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@keyframes scaleUp {
+  from { transform: scale(0.95); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+.quickview-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  z-index: 10;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background-color: #FFFFFF;
+  border: 1px solid var(--lumora-border);
+  color: var(--lumora-text-main);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--shadow-subtle);
+  transition: all var(--transition-fast);
+}
+
+.quickview-close:hover {
+  background-color: var(--lumora-accent-wood);
+  color: #FFFFFF;
+  border-color: var(--lumora-accent-wood);
+}
+
+.quickview-gallery {
+  position: relative;
+  background-color: #F0EAE1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 340px;
+}
+
+.quickview-main-img {
+  width: 100%;
+  height: 100%;
+  max-height: 480px;
+  object-fit: cover;
+}
+
+.quickview-details {
+  padding: 32px 28px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.quickview-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.quickview-badge {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--lumora-accent-wood);
+}
+
+.quickview-title {
+  font-family: var(--font-serif);
+  font-size: 1.8rem;
+  font-weight: 600;
+  color: var(--lumora-text-main);
+  line-height: 1.15;
+  margin-bottom: 8px;
+}
+
+.quickview-variant {
+  font-size: 0.85rem;
+  color: var(--lumora-text-muted);
+  margin-bottom: 16px;
+}
+
+.quickview-price-box {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.quickview-price {
+  font-family: var(--font-serif);
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--lumora-text-main);
+}
+
+.quickview-old-price {
+  font-size: 1.05rem;
+  color: var(--lumora-text-light);
+  text-decoration: line-through;
+}
+
+.quickview-desc {
+  font-size: 0.88rem;
+  color: var(--lumora-text-muted);
+  line-height: 1.6;
+  margin-bottom: 24px;
+}
+
+.quickview-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.quickview-qty {
+  display: flex;
+  align-items: center;
+  border: 1px solid var(--lumora-border);
+  border-radius: var(--radius-md);
+  background-color: #FFFFFF;
+  height: 48px;
+}
+
+.quickview-qty-btn {
+  padding: 0 12px;
+  height: 100%;
+}
+
+.quickview-qty-val {
+  padding-inline: 12px;
+  font-weight: 600;
+}
+
+.quickview-add-btn {
+  flex: 1;
+  height: 48px;
+  background-color: var(--lumora-text-main);
+  color: #FFFFFF;
+  border-radius: var(--radius-md);
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  justify-content: center;
+  gap: 8px;
+  transition: background-color var(--transition-fast);
+}
+
+.quickview-add-btn:hover {
+  background-color: var(--lumora-accent-wood);
+}
+
+.quickview-wishlist-btn {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--lumora-border);
+  background-color: #FFFFFF;
+  justify-content: center;
+  transition: all var(--transition-fast);
+}
+
+.quickview-wishlist-btn:hover {
+  border-color: var(--lumora-accent-wood);
+  color: var(--lumora-accent-wood);
+}

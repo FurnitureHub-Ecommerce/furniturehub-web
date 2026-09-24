@@ -1,23 +1,56 @@
+/* Tận dụng lại các biến và style chung từ Login.css */
 @import './Login.css';
 
-/* Tối ưu lại padding cho form đăng ký vì có nhiều trường thông tin hơn */
+/* Tối ưu riêng chiều cao khung card cho trang Đăng Ký (vì có nhiều input hơn) */
+.auth-main-card {
+  height: auto;
+  min-height: 680px;
+}
+
+/* Tối ưu hóa padding và khoảng cách bên trong form đăng ký */
+.auth-form-container {
+  padding: 30px 40px;
+}
+
 .register-card {
-  max-width: 400px;
+  max-width: 380px;
 }
 
 .register-card .auth-header {
-  margin-bottom: 20px;
+  margin-bottom: 16px;
+}
+
+.register-card .auth-header h2 {
+  font-size: 46px;
 }
 
 .register-card .form-group {
-  margin-bottom: 14px;
+  margin-bottom: 12px;
+}
+
+.register-card .form-group label {
+  font-size: 11px;
+  margin-bottom: 4px;
 }
 
 .register-card .form-input {
   padding: 10px 14px;
+  font-size: 13px;
+}
+
+.register-card .error-badge {
+  padding: 8px 12px;
+  font-size: 12px;
+  margin-bottom: 12px;
 }
 
 .register-card .btn-submit {
-  margin-top: 8px;
-  padding: 12px;
+  margin-top: 4px;
+  padding: 11px;
+  font-size: 14px;
+}
+
+.register-card .auth-footer {
+  margin-top: 16px;
+  font-size: 13px;
 }

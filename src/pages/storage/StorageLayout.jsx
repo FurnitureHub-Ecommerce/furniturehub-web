@@ -19,7 +19,7 @@ const StorageLayout = () => {
   };
 
   return (
-    <div className="storage-container">
+    <div className="storage-container" style={{ fontFamily: "'Inter', sans-serif" }}>
       <aside className="storage-sidebar">
         <div className="sidebar-top">
           <div className="brand-logo">
@@ -27,17 +27,17 @@ const StorageLayout = () => {
           </div>
 
           <div className="nav-group">
-            <p className="nav-label">TỔNG QUAN & DỮ LIỆU KHO</p>
-            <ul>
+            <p className="nav-label" style={{ fontFamily: "'Inter', sans-serif", fontWeight: 600 }}>TỔNG QUAN & DỮ LIỆU KHO</p>
+            <ul style={{ fontFamily: "'Inter', sans-serif", fontWeight: 600, fontSize: '15px' }}>
               {/* Dùng end cho đường dẫn trang chủ /storage để không bị nhận diện nhầm với các trang con khác */}
               <li><NavLink to="/storage" end>Tổng Quan Tồn Kho</NavLink></li>
-              <li><NavLink to="/storage/statistics">Thống Kê & Báo Cáo</NavLink></li>
+              <li><NavLink to="/storage/statistics">Thống Kê và Báo Cáo</NavLink></li>
             </ul>
           </div>
 
           <div className="nav-group">
-            <p className="nav-label">VẬN HÀNH KHO</p>
-            <ul>
+            <p className="nav-label" style={{ fontFamily: "'Inter', sans-serif", fontWeight: 600 }}>VẬN HÀNH KHO</p>
+            <ul style={{ fontFamily: "'Inter', sans-serif", fontWeight: 600, fontSize: '15px' }}>
               <li><NavLink to="/storage/inbound-outbound">Nhập & Xuất Kho</NavLink></li>
               <li><NavLink to="/storage/availability">Tình Trạng Sẵn Có</NavLink></li>
               <li><NavLink to="/storage/adjustment">Điều Chỉnh Kiểm Kê</NavLink></li>
@@ -45,8 +45,8 @@ const StorageLayout = () => {
           </div>
 
           <div className="nav-group">
-            <p className="nav-label">DANH MỤC & CẢNH BÁO</p>
-            <ul>
+            <p className="nav-label" style={{ fontFamily: "'Inter', sans-serif", fontWeight: 600 }}>DANH MỤC & CẢNH BÁO</p>
+            <ul style={{ fontFamily: "'Inter', sans-serif", fontWeight: 600, fontSize: '15px' }}>
               <li><NavLink to="/storage/skus">Quản Lý SKU & Biến Thể</NavLink></li>
               <li><NavLink to="/storage/alerts">Cảnh Báo Tồn Thấp</NavLink></li>
               <li><NavLink to="/storage/search">Tìm Kiếm & Bộ Lọc</NavLink></li>

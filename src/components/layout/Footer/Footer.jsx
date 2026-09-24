@@ -110,9 +110,9 @@ export function Footer() {
         <div className="container footer__bottom-inner">
           <p>© {new Date().getFullYear()} LUMORA Studio Inc. Bảo lưu mọi quyền.</p>
           <div className="footer__bottom-links">
-            <a href="#privacy">Chính Sách Bảo Mật</a>
-            <a href="#terms">Điều Khoản Chế Tác</a>
-            <a href="#accessibility">Khả Năng Tiếp Cận</a>
+            <Link to="/privacy">Chính Sách Bảo Mật</Link>
+            <Link to="/terms">Điều Khoản Chế Tác</Link>
+            <Link to="/collections">Bộ Sưu Tập</Link>
           </div>
         </div>
       </div>

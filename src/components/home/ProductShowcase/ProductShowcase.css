@@ -2,6 +2,23 @@
   background-color: var(--lumora-bg-primary);
 }
 
+.section-heading__title{
+  font-family: "Bodoni Moda", serif; /* Thay tên font bạn muốn ở đây (Ví dụ: Lora, Cinzel, Merriweather) */
+  font-size: clamp(2.2rem, 3vw, 3.2rem);
+  font-weight: 600;
+  color: var(--lumora-text-main);
+  letter-spacing: -0.02em;
+  line-height: 1.08;
+}
+.section-heading__title,
+.product-card__title {
+  font-family: "Bodoni Moda", serif;
+}
+
+.section-heading__subtitle,
+.section-heading__badge {
+  font-family: 'Playfair Display', serif;
+}
 /* Tabs */
 .product-showcase__tabs {
   display: flex;
@@ -9,18 +26,21 @@
   gap: 12px;
   margin-bottom: var(--space-xl);
   flex-wrap: wrap;
+  ;
 }
 
 .product-showcase__tab {
   padding: 10px 22px;
   font-size: 0.82rem;
   font-weight: 600;
+  font-family: "Bodoni Moda", serif;
   letter-spacing: 0.04em;
   color: var(--lumora-text-muted);
   border-radius: var(--radius-full);
   border: 1px solid var(--lumora-border);
   background-color: var(--lumora-card-white);
   transition: all var(--transition-fast);
+  
 }
 
 .product-showcase__tab:hover {
@@ -140,27 +160,40 @@
 /* Wishlist Button */
 .product-card__wishlist-btn {
   position: absolute;
-  top: 14px;
-  right: 14px;
-  z-index: 2;
-  width: 36px;
-  height: 36px;
+  top: 12px;
+  right: 12px;
+  z-index: 5;
+  width: 38px;
+  height: 38px;
   border-radius: 50%;
-  background-color: rgba(255, 255, 255, 0.9);
-  backdrop-filter: blur(4px);
-  color: var(--lumora-text-main);
-  transition: all var(--transition-fast);
-  box-shadow: var(--shadow-subtle);
+  background-color: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(6px);
+  border: 1px solid var(--lumora-border);
+  color: var(--lumora-text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(37, 37, 37, 0.12);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  cursor: pointer;
 }
 
 .product-card__wishlist-btn:hover {
-  transform: scale(1.1);
+  transform: scale(1.12);
   background-color: #FFFFFF;
-  color: var(--lumora-accent-wood);
+  box-shadow: 0 6px 16px rgba(37, 37, 37, 0.18);
+  color: #E53E3E;
+}
+
+.product-card__wishlist-btn:active {
+  transform: scale(0.9);
 }
 
 .product-card__wishlist-btn--active {
-  color: var(--lumora-accent-wood);
+  background-color: #FFFFFF;
+  border-color: #FEB2B2;
+  color: #E53E3E;
+  box-shadow: 0 4px 14px rgba(229, 62, 62, 0.25);
 }
 
 /* Quick Actions Overlay */
@@ -224,8 +257,7 @@
 }
 
 .product-card__title {
-  font-family: var(--font-serif);
-  font-size: clamp(1.4rem, 2vw, 1.9rem);
+  font-size: clamp(1.2rem, 2vw, 1.7em);
   font-weight: 600;
   line-height: 1.14;
   margin-bottom: 14px;
@@ -284,4 +316,20 @@
 .product-card__cart-btn--added {
   background-color: #2E6B40;
   color: #FFFFFF;
+}
+
+/* Hiệu ứng chuyển động mượt mà cho grid sản phẩm */
+.product-showcase__grid {
+  animation: fadeInProducts 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+@keyframes fadeInProducts {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }

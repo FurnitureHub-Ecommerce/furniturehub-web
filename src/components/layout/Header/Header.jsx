@@ -1,6 +1,7 @@
-import { useState, useEffect } from "react";
-import { Link, useLocation } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Search, Heart, ShoppingBag, Menu, X, User } from "lucide-react";
+import { useShop } from "../../../context/ShopContext";
 import "./Header.css";
 import logoImg from "../../../assets/images/logo.jpg";
 
@@ -14,10 +15,18 @@ const NAV_LINKS = [
   { label: "Lookbook", to: "/lookbook" },
 ];
 
-export function Header({ wishlistCount = 2, cartCount = 3 }) {
+export function Header() {
+  const {
+    cartCount,
+    wishlistCount,
+    setIsSearchOpen,
+    setIsCartOpen,
+  } = useShop();
+
   const [mobileOpen, setMobileOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const { pathname } = useLocation();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -34,8 +43,7 @@ export function Header({ wishlistCount = 2, cartCount = 3 }) {
         <div className="container header__topbar-inner">
           <p className="header__topbar-text">
             <span>
-              Miễn Phí Giao Hàng Cao Cấp & Lắp Ráp Cho Đơn Hàng Trên
-              $2,000
+              Miễn Phí Giao Hàng Cao Cấp & Lắp Ráp Cho Đơn Hàng Trên $2,000
             </span>
             <span className="header__topbar-divider">•</span>
             <span className="header__topbar-highlight">
@@ -54,7 +62,7 @@ export function Header({ wishlistCount = 2, cartCount = 3 }) {
         className={`header ${scrolled ? "header--scrolled" : ""}`}
         role="banner"
       >
-        <div className="container header__inner">
+        <div className="header__inner">
           {/* Mobile Menu Toggle */}
           <button
             id="header-mobile-toggle"
@@ -112,6 +120,7 @@ export function Header({ wishlistCount = 2, cartCount = 3 }) {
               className="header__action-btn"
               aria-label="Tìm Kiếm Danh Mục"
               type="button"
+              onClick={() => setIsSearchOpen(true)}
             >
               <Search size={20} />
             </button>
@@ -121,6 +130,7 @@ export function Header({ wishlistCount = 2, cartCount = 3 }) {
               className="header__action-btn header__user-btn"
               aria-label="Tài Khoản Khách Hàng"
               type="button"
+              onClick={() => navigate("/login")}
             >
               <User size={20} />
             </button>
@@ -130,6 +140,7 @@ export function Header({ wishlistCount = 2, cartCount = 3 }) {
               className="header__action-btn"
               aria-label={`Sản phẩm yêu thích, ${wishlistCount} mục đã lưu`}
               type="button"
+              onClick={() => setIsCartOpen(true)}
             >
               <Heart size={20} />
               {wishlistCount > 0 && (
@@ -144,6 +155,7 @@ export function Header({ wishlistCount = 2, cartCount = 3 }) {
               className="header__action-btn header__cart-btn"
               aria-label={`Giỏ hàng, ${cartCount} sản phẩm`}
               type="button"
+              onClick={() => setIsCartOpen(true)}
             >
               <ShoppingBag size={20} />
               {cartCount > 0 && (
