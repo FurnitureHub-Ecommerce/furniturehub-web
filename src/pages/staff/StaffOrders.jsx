@@ -17,16 +17,16 @@ const StaffOrders = () => {
         <div className="role-guard__left">
           <div className="role-guard__status">
             <span className="role-guard__dot" />
-            <span className="role-guard__label">STAFF ROLE GUARD ACTIVE</span>
+            <span className="role-guard__label">CHẾ ĐỘ BẢO VỆ VAI TRÒ NHÂN VIÊN ĐANG HOẠT ĐỘNG</span>
           </div>
           <span className="role-guard__scope">
-            <strong>AuthScope:</strong> staff.fulfillment.manage — Verified station Desk Terminal A-04.
+            <strong>Phạm vi xác thực:</strong> staff.fulfillment.manage — Trạm xác nhận đã được kiểm định: Desk Terminal A-04.
           </span>
         </div>
         <div className="role-guard__right">
           <span className="sla-badge">
             <Clock size={14} />
-            Shift A active
+            Ca A đang hoạt động
           </span>
         </div>
       </div>
@@ -35,17 +35,17 @@ const StaffOrders = () => {
       <div className="staff-page-header">
         <div className="staff-page-header__info">
           <p className="staff-breadcrumb">
-            OPERATIONS PROTOCOL // ROUTE /STAFF / ROTTERDAM CENTRAL HUB
+            PROTOCOL VẬN HÀNH // TUYẾN ĐƯỜNG /STAFF / TRUNG TÂM ROTTERDAM
           </p>
-          <h1>Order Verification & Fulfillment Desk</h1>
+          <h1>Bàn Kiểm Tra & Hoàn Tất Đơn Hàng</h1>
         </div>
         <div className="staff-page-header__actions">
           <span className="sla-badge">
             <Shield size={14} />
-            SLA Window: 48m Rem
+            Cửa Sổ SLA: Còn 48 phút
           </span>
           <button className="batch-release-btn">
-            Batch Release (4)
+            Phát Hành Theo Lô (4)
           </button>
         </div>
       </div>
@@ -69,20 +69,20 @@ const StaffOrders = () => {
             <div className="order-inspection__header">
               <div>
                 <span className="order-inspection__title">
-                  ORDER INSPECTION &nbsp; /staff/orders/:id
+                  KIỂM TRA ĐƠN HÀNG &nbsp; /staff/orders/:id
                 </span>
                 <div className="order-inspection__id">{selectedOrder.id}</div>
               </div>
               <div className="order-inspection__priority">
-                <span className="order-inspection__priority-label">PRIORITY SLA</span>
-                <span className="order-inspection__priority-value">Express White-Glove</span>
+                <span className="order-inspection__priority-label">ƯU TIÊN SLA</span>
+                <span className="order-inspection__priority-value">Giao Hàng Trọn Gói Nhanh</span>
               </div>
             </div>
 
             {/* Line Items */}
             <div className="order-inspection__section">
               <span className="order-inspection__section-title">
-                LINE ITEMS ({selectedOrder.items.length})
+                SẢN PHẨM ({selectedOrder.items.length})
               </span>
               {selectedOrder.items.map((item, idx) => (
                 <div key={idx} className="line-item">
@@ -102,7 +102,7 @@ const StaffOrders = () => {
               <div className="order-inspection__section">
                 <div className="client-directive">
                   <span className="client-directive__label">
-                    ✦ CUSTOM ATELIER CLIENT DIRECTIVES
+                    ✦ HƯỚNG DẪN TÙY CHỈNH CỦA KHÁCH HÀNG
                   </span>
                   "{selectedOrder.clientDirective}"
                 </div>
@@ -111,7 +111,7 @@ const StaffOrders = () => {
 
             {/* Delivery Specification */}
             <div className="order-inspection__section">
-              <span className="order-inspection__section-title">DELIVERY SPECIFICATION</span>
+              <span className="order-inspection__section-title">THÔNG SỐ GIAO HÀNG</span>
               <div className="delivery-spec">
                 <div className="delivery-spec__icon">
                   <MapPin size={16} />
@@ -121,10 +121,10 @@ const StaffOrders = () => {
                   <div className="delivery-spec__city">{selectedOrder.delivery.city}</div>
                   <div className="delivery-spec__notes">
                     <span>
-                      <strong>Service:</strong> {selectedOrder.delivery.serviceNote}
+                      <strong>Dịch vụ:</strong> {selectedOrder.delivery.serviceNote}
                     </span>
                     <span>
-                      <strong>Access Window:</strong> {selectedOrder.delivery.accessWindow}
+                      <strong>Thời gian tiếp cận:</strong> {selectedOrder.delivery.accessWindow}
                     </span>
                   </div>
                 </div>
@@ -135,16 +135,16 @@ const StaffOrders = () => {
             <div className="order-actions">
               <button className="btn-approve">
                 <Check size={16} />
-                APPROVE & ALLOCATE
+                DUYỆT & PHÂN BỔ
               </button>
-              <button className="btn-decline">DECLINE / FLAG</button>
+              <button className="btn-decline">TỪ CHỐI / CẨN CÁO</button>
             </div>
 
             {/* Lifecycle Progress Stepper */}
             <div className="lifecycle-stepper">
-              <div className="lifecycle-stepper__title">Lifecycle Progress Stepper</div>
+              <div className="lifecycle-stepper__title">Tiến Trình Quy Trình</div>
               <div className="lifecycle-stepper__subtitle">
-                /staff/orders/{selectedOrder.id}/status &nbsp;&nbsp; Live Pipeline Status
+                /staff/orders/{selectedOrder.id}/status &nbsp;&nbsp; Trạng Thái Đường Ống Hoạt Động
               </div>
               <div className="lifecycle-steps">
                 {selectedOrder.lifecycle.map((step) => (
@@ -166,7 +166,7 @@ const StaffOrders = () => {
             <div className="client-crm">
               <div className="client-crm__header">
                 <div>
-                  <div className="client-crm__title">Client CRM Profile</div>
+                  <div className="client-crm__title">Hồ Sơ CRM Khách Hàng</div>
                   <div className="client-crm__route">/staff/customers/{selectedOrder.client.id}</div>
                 </div>
                 <span className="client-crm__tier">{selectedOrder.client.tier}</span>
@@ -184,7 +184,7 @@ const StaffOrders = () => {
                   <span className="client-crm__contact">{selectedOrder.client.phone}</span>
                 </div>
                 <div className="client-crm__ltv">
-                  <span className="client-crm__ltv-label">LIFETIME LTV</span>
+                  <span className="client-crm__ltv-label">GIÁ TRỊ ĐỜI SỐNG KHÁCH HÀNG</span>
                   <span className="client-crm__ltv-value">{selectedOrder.client.lifetimeValue}</span>
                 </div>
               </div>
@@ -193,7 +193,7 @@ const StaffOrders = () => {
               {selectedOrder.conciergeNotes.length > 0 && (
                 <div>
                   <span className="concierge-notes__title">
-                    RECENT DIALOGUE & CONCIERGE NOTES
+                    THOẠI THOẢNG GẦN ĐÂY & GHI CHÚ CONCIERGE
                   </span>
                   {selectedOrder.conciergeNotes.map((note, idx) => (
                     <div key={idx} className="concierge-note">
@@ -213,10 +213,10 @@ const StaffOrders = () => {
               <div className="dispatch-notification">
                 <div className="dispatch-notification__content">
                   <span className="dispatch-notification__title">
-                    DISPATCH HANDSHAKE VALIDATED
+                    XÁC NHẬN CHỐT KẾT NỐI GIAO HÀNG
                   </span>
                   <span className="dispatch-notification__text">
-                    Order {selectedOrder.id} confirmed and sent to Storage Ops.
+                    Đơn hàng {selectedOrder.id} đã được xác nhận và gửi tới bộ phận kho.
                   </span>
                 </div>
                 <button

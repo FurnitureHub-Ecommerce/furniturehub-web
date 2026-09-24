@@ -5,12 +5,12 @@ import "./Header.css";
 import logoImg from "../../../assets/images/logo.jpg";
 
 const NAV_LINKS = [
-  { label: "Home", to: "/" },
-  { label: "Collections", to: "/collections" },
-  { label: "Living", to: "/category/living-room" },
-  { label: "Dining", to: "/category/dining-room" },
-  { label: "Bedroom", to: "/category/bedroom" },
-  { label: "Lighting & Decor", to: "/category/lighting-decor" },
+  { label: "Trang Chủ", to: "/" },
+  { label: "Bộ Sưu Tập", to: "/collections" },
+  { label: "Phòng Khách", to: "/category/living-room" },
+  { label: "Phòng Ăn", to: "/category/dining-room" },
+  { label: "Phòng Ngủ", to: "/category/bedroom" },
+  { label: "Đèn & Trang Trí", to: "/category/lighting-decor" },
   { label: "Lookbook", to: "/lookbook" },
 ];
 
@@ -34,17 +34,17 @@ export function Header({ wishlistCount = 2, cartCount = 3 }) {
         <div className="container header__topbar-inner">
           <p className="header__topbar-text">
             <span>
-              Complimentary White-Glove Delivery & Assembly on Orders Over
+              Miễn Phí Giao Hàng Cao Cấp & Lắp Ráp Cho Đơn Hàng Trên
               $2,000
             </span>
             <span className="header__topbar-divider">•</span>
             <span className="header__topbar-highlight">
-              FSC® Certified Sustainable Timber
+              Gỗ Bền Vững Đạt Chuẩn FSC®
             </span>
           </p>
           <div className="header__topbar-links">
             <a href="#currency">USD ($)</a>
-            <a href="#support">Concierge</a>
+            <a href="#support">Hỗ Trợ</a>
           </div>
         </div>
       </div>
@@ -60,7 +60,7 @@ export function Header({ wishlistCount = 2, cartCount = 3 }) {
             id="header-mobile-toggle"
             className="header__mobile-toggle"
             aria-label={
-              mobileOpen ? "Close Navigation Menu" : "Open Navigation Menu"
+              mobileOpen ? "Đóng Menu Điều Hướng" : "Mở Menu Điều Hướng"
             }
             aria-expanded={mobileOpen}
             onClick={() => setMobileOpen((prev) => !prev)}
@@ -73,17 +73,17 @@ export function Header({ wishlistCount = 2, cartCount = 3 }) {
           <Link
             to="/"
             className="header__logo"
-            aria-label="LUMORA Luxury Furniture - Home"
+            aria-label="Nội Thất Cao Cấp LUMORA - Trang Chủ"
           >
             <img
               src={logoImg}
-              alt="LUMORA Luxury Furniture"
+              alt="Nội Thất Cao Cấp LUMORA"
               className="header__logo-img"
             />
           </Link>
 
           {/* Desktop Navigation */}
-          <nav className="header__nav" aria-label="Main Navigation">
+          <nav className="header__nav" aria-label="Điều Hướng Chính">
             <ul className="header__nav-list">
               {NAV_LINKS.map(({ label, to }) => {
                 const isActive = pathname === to;
@@ -105,12 +105,12 @@ export function Header({ wishlistCount = 2, cartCount = 3 }) {
           <div
             className="header__actions"
             role="toolbar"
-            aria-label="Header Utilities"
+            aria-label="Tiện Ích Tiêu Đề"
           >
             <button
               id="header-search-btn"
               className="header__action-btn"
-              aria-label="Search Catalog"
+              aria-label="Tìm Kiếm Danh Mục"
               type="button"
             >
               <Search size={20} />
@@ -119,7 +119,7 @@ export function Header({ wishlistCount = 2, cartCount = 3 }) {
             <button
               id="header-user-btn"
               className="header__action-btn header__user-btn"
-              aria-label="Customer Account"
+              aria-label="Tài Khoản Khách Hàng"
               type="button"
             >
               <User size={20} />
@@ -128,7 +128,7 @@ export function Header({ wishlistCount = 2, cartCount = 3 }) {
             <button
               id="header-wishlist-btn"
               className="header__action-btn"
-              aria-label={`Wishlist, ${wishlistCount} saved items`}
+              aria-label={`Sản phẩm yêu thích, ${wishlistCount} mục đã lưu`}
               type="button"
             >
               <Heart size={20} />
@@ -142,7 +142,7 @@ export function Header({ wishlistCount = 2, cartCount = 3 }) {
             <button
               id="header-cart-btn"
               className="header__action-btn header__cart-btn"
-              aria-label={`Shopping Bag, ${cartCount} items`}
+              aria-label={`Giỏ hàng, ${cartCount} sản phẩm`}
               type="button"
             >
               <ShoppingBag size={20} />
@@ -166,16 +166,16 @@ export function Header({ wishlistCount = 2, cartCount = 3 }) {
             id="header-mobile-drawer"
             className="header__mobile-drawer"
             onClick={(e) => e.stopPropagation()}
-            aria-label="Mobile Menu"
+            aria-label="Menu Di Động"
           >
             <div className="header__mobile-drawer-header">
-              <Link to="/" onClick={() => setMobileOpen(false)} className="header__logo" aria-label="LUMORA Luxury Furniture - Home">
-                <img src={logoImg} alt="LUMORA Luxury Furniture" className="header__logo-img header__logo-img--mobile" />
+              <Link to="/" onClick={() => setMobileOpen(false)} className="header__logo" aria-label="Nội Thất Cao Cấp LUMORA - Trang Chủ">
+                <img src={logoImg} alt="Nội Thất Cao Cấp LUMORA" className="header__logo-img header__logo-img--mobile" />
               </Link>
               <button
                 className="header__mobile-close"
                 onClick={() => setMobileOpen(false)}
-                aria-label="Close menu"
+                aria-label="Đóng menu"
               >
                 <X size={22} />
               </button>
@@ -194,12 +194,12 @@ export function Header({ wishlistCount = 2, cartCount = 3 }) {
               ))}
             </ul>
             <div className="header__mobile-drawer-footer">
-              <p>Need Design Assistance?</p>
+              <p>Bạn Cần Tư Vấn Thiết Kế?</p>
               <a href="tel:+18005866721" className="header__mobile-phone">
                 +1 (800) 586-6721
               </a>
               <span className="header__mobile-hours">
-                Mon - Sat: 9:00 AM - 6:00 PM EST
+                Thứ Hai - Thứ Bảy: 9:00 AM - 6:00 PM EST
               </span>
             </div>
           </nav>

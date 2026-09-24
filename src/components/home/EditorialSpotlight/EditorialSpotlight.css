@@ -10,23 +10,19 @@
 
 .editorial-spotlight__title {
   font-family: var(--font-serif);
-  font-size: 2.25rem;
-  font-weight: 500;
+  font-size: clamp(2.2rem, 3vw, 3.2rem);
+  font-weight: 600;
   color: var(--lumora-text-main);
-  letter-spacing: -0.01em;
-  margin-block: 4px 8px;
-}
-
-@media (min-width: 768px) {
-  .editorial-spotlight__title {
-    font-size: 2.75rem;
-  }
+  letter-spacing: -0.02em;
+  line-height: 1.08;
+  margin-block: 6px 10px;
 }
 
 .editorial-spotlight__subtitle {
-  font-size: 0.95rem;
+  font-size: 1rem;
   color: var(--lumora-text-muted);
-  font-weight: 300;
+  font-weight: 400;
+  line-height: 1.7;
 }
 
 /* Split View */
@@ -127,9 +123,9 @@
 }
 
 .editorial-spotlight__spot-tag {
-  font-size: 0.75rem;
-  font-weight: 600;
-  letter-spacing: 0.15em;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--lumora-accent-wood);
 }
@@ -171,21 +167,24 @@
   font-size: 0.7rem;
   color: var(--lumora-text-light);
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.08em;
+  font-weight: 600;
 }
 
 .hotspot-featured-card__name {
   font-family: var(--font-serif);
-  font-size: 1.25rem;
-  font-weight: 500;
+  font-size: clamp(1.3rem, 2vw, 1.8rem);
+  font-weight: 600;
+  line-height: 1.1;
   color: var(--lumora-text-main);
-  margin-block: 2px 4px;
+  margin-block: 4px 6px;
 }
 
 .hotspot-featured-card__material {
-  font-size: 0.75rem;
+  font-size: 0.8rem;
   color: var(--lumora-text-muted);
-  margin-bottom: 10px;
+  line-height: 1.5;
+  margin-bottom: 12px;
 }
 
 .hotspot-featured-card__footer {
@@ -196,7 +195,7 @@
 
 .hotspot-featured-card__price {
   font-family: var(--font-sans);
-  font-size: 1.1rem;
+  font-size: 1.12rem;
   font-weight: 700;
   color: var(--lumora-text-main);
 }
@@ -205,7 +204,7 @@
   padding: 8px 14px;
   background-color: var(--lumora-accent-wood);
   color: #FFFFFF;
-  font-size: 0.75rem;
+  font-size: 0.78rem;
   font-weight: 600;
   border-radius: var(--radius-full);
   gap: 6px;
@@ -226,9 +225,9 @@
 }
 
 .hotspot-list-title {
-  font-size: 0.85rem;
-  font-weight: 600;
-  letter-spacing: 0.05em;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--lumora-text-main);
   margin-bottom: 12px;
@@ -274,18 +273,20 @@
 }
 
 .hotspot-list-name {
-  font-size: 0.85rem;
+  font-size: 0.9rem;
   font-weight: 600;
+  line-height: 1.4;
   color: var(--lumora-text-main);
 }
 
 .hotspot-list-material {
-  font-size: 0.725rem;
+  font-size: 0.74rem;
   color: var(--lumora-text-muted);
+  line-height: 1.5;
 }
 
 .hotspot-list-price {
-  font-size: 0.85rem;
+  font-size: 0.88rem;
   font-weight: 700;
   color: var(--lumora-accent-wood);
 }
@@ -295,8 +296,8 @@
   align-items: center;
   gap: 8px;
   font-size: 0.85rem;
-  font-weight: 600;
-  letter-spacing: 0.05em;
+  font-weight: 700;
+  letter-spacing: 0.04em;
   color: var(--lumora-accent-wood);
   margin-top: 10px;
   transition: gap var(--transition-fast);

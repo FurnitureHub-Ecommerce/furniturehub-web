@@ -17,6 +17,16 @@ import AdminBrands from "./pages/admin/brands/AdminBrands";
 import AdminOrderDetail from "./pages/admin/orders/AdminOrderDetail";
 import AdminInventoryDetail from "./pages/admin/inventory/AdminInventoryDetail";
 
+import SkuManagement from "./pages/storage/SkuManagement";
+import LowStockAlerts from "./pages/storage/LowStockAlerts";
+import InventorySearchFilter from "./pages/storage/InventorySearchFilter";
+import StockAvailability from "./pages/storage/StockAvailability";
+import ImportExportStock from "./pages/storage/ImportExportStock";
+import StockAdjustment from "./pages/storage/StockAdjustment";
+import InventoryHistory from "./pages/storage/InventoryHistory";
+import InventoryStatistics from "./pages/storage/InventoryStatistics";
+import InventoryTestingIntegration from "./pages/storage/InventoryTestingIntegration";
+
 import StaffLayout from "./pages/staff/StaffLayout";
 import StaffDashboard from "./pages/staff/StaffDashboard";
 import StaffList from "./pages/staff/StaffList";
@@ -56,6 +66,15 @@ function App() {
 
         <Route path="/storage" element={<StorageLayout />}>
           <Route index element={<StorageDashboard />} />
+          <Route path="skus" element={<SkuManagement />} />
+          <Route path="alerts" element={<LowStockAlerts />} />
+          <Route path="search" element={<InventorySearchFilter />} />
+          <Route path="availability" element={<StockAvailability />} />
+          <Route path="inbound-outbound" element={<ImportExportStock />} />
+          <Route path="adjustment" element={<StockAdjustment />} />
+          <Route path="history" element={<InventoryHistory />} />
+          <Route path="statistics" element={<InventoryStatistics />} />
+          <Route path="testing" element={<InventoryTestingIntegration />} />
         </Route>
 
         <Route path="/staff" element={<StaffLayout />}>

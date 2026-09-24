@@ -2,14 +2,14 @@
   display: flex;
   min-height: 100vh;
   background-color: #f7f6f3;
-  font-family: 'Helvetica Neue', sans-serif;
+  font-family: var(--font-sans);
 }
 
 /* Sidebar Styling */
 .storage-sidebar {
   width: 260px;
-  background: #f2efe9;
-  border-right: 1px solid #e2ded4;
+  background: #f4f1ea;
+  border-right: 1px solid #e3ded3;
   padding: 24px 16px;
   
   /* Flexbox giúp đẩy phần dư xuống dưới */
@@ -32,11 +32,12 @@
 }
 
 .nav-label {
-  font-size: 11px;
+  font-size: 0.7rem;
   font-weight: 700;
-  color: #8c857b;
+  color: #8a7f72;
   margin-bottom: 10px;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
 }
 
 .nav-group ul {
@@ -45,19 +46,32 @@
   margin: 0;
 }
 
+/* Định nghĩa giao diện cho mục đang chọn trong Sidebar */
 .nav-group li a {
   display: block;
-  padding: 8px 12px;
-  color: #3d3b38;
+  padding: 9px 12px;
+  color: #3b3734;
   text-decoration: none;
-  font-size: 13px;
-  border-radius: 4px;
+  font-size: 0.82rem;
+  font-weight: 500;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  border: 1px solid transparent;
 }
 
-.nav-group li.active a,
+/* Hiệu ứng khi rê chuột */
 .nav-group li a:hover {
-  background-color: #e5e0d8;
+  background-color: #e5dfd3;
+  color: #1a1816;
+}
+
+/* Hiệu ứng khi đang ở trang đó (Active) - Tạo khung viền giống ảnh mẫu */
+.nav-group li a.active {
+  background-color: #e5dfd3; /* Màu nền nổi bật */
+  color: #1a1816;
   font-weight: 600;
+  border: 1px solid #b8b0a2; /* Màu viền khung bao quanh */
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05); /* Đổ bóng nhẹ cho sắc nét */
 }
 
 /* Main Content Styling */
@@ -74,15 +88,18 @@
 }
 
 .dash-header h2 {
-  font-size: 26px;
+  font-family: var(--font-serif);
+  font-size: clamp(2rem, 2.5vw, 2.7rem);
   margin: 6px 0;
   color: #1a1a1a;
+  letter-spacing: -0.02em;
 }
 
 .subtitle {
-  font-size: 11px;
+  font-size: 0.72rem;
   color: #999;
-  letter-spacing: 1px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
 }
 
 .actions button {
@@ -120,21 +137,26 @@
 }
 
 .metric-card h4 {
-  font-size: 11px;
+  font-size: 0.69rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
   color: #888;
   margin: 0 0 8px 0;
 }
 
 .metric-val {
-  font-size: 24px;
+  font-size: 2rem;
   font-weight: 700;
   color: #222;
+  line-height: 1.1;
 }
 
 .metric-card p {
-  font-size: 12px;
+  font-size: 0.76rem;
   color: #777;
   margin: 6px 0 0 0;
+  line-height: 1.6;
 }
 
 /* Table Styling */
@@ -156,7 +178,7 @@
   padding: 12px 16px;
   text-align: left;
   border-bottom: 1px solid #eee;
-  font-size: 13px;
+  font-size: 0.82rem;
 }
 
 .badge {
@@ -198,8 +220,8 @@
 }
 
 .user-name {
-  font-size: 14px;
-  font-weight: 600;
+  font-size: 0.9rem;
+  font-weight: 700;
   color: #1a1a1a;
 }
 

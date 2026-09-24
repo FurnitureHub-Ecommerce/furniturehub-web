@@ -23,7 +23,7 @@
 
 .value-card {
   background-color: var(--lumora-card-white);
-  padding: 32px 24px;
+  padding: 30px 24px 26px;
   border-radius: var(--radius-md);
   border: 1px solid var(--lumora-border-subtle);
   box-shadow: var(--shadow-subtle);
@@ -40,8 +40,8 @@
 }
 
 .value-card__icon-box {
-  width: 52px;
-  height: 52px;
+  width: 56px;
+  height: 56px;
   border-radius: var(--radius-sm);
   background-color: var(--lumora-bg-secondary);
   color: var(--lumora-accent-wood);
@@ -50,6 +50,7 @@
   justify-content: center;
   margin-bottom: 20px;
   transition: all var(--transition-fast);
+  font-size: 1.25rem;
 }
 
 .value-card:hover .value-card__icon-box {
@@ -59,15 +60,17 @@
 
 .value-card__title {
   font-family: var(--font-serif);
-  font-size: 1.35rem;
-  font-weight: 500;
+  font-size: clamp(1.55rem, 1.8vw, 1.95rem);
+  font-weight: 600;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
   color: var(--lumora-text-main);
   margin-bottom: 10px;
 }
 
 .value-card__desc {
-  font-size: 0.875rem;
+  font-size: 0.94rem;
   color: var(--lumora-text-muted);
-  line-height: 1.6;
-  font-weight: 300;
+  line-height: 1.75;
+  font-weight: 400;
 }

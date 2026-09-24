@@ -2,10 +2,10 @@ import React from 'react';
 import './OrderStatusBadge.css';
 
 const statusConfig = {
-  'Needs Confirmation': { className: 'badge--amber', label: 'Needs Confirmation' },
-  'Swatch Review':      { className: 'badge--blue',  label: 'Swatch Review' },
-  'Allocated':          { className: 'badge--green', label: 'Allocated' },
-  'Dispatched':         { className: 'badge--grey',  label: 'Dispatched' },
+  'Needs Confirmation': { className: 'badge--amber', label: 'Cần Xác Nhận' },
+  'Swatch Review':      { className: 'badge--blue',  label: 'Xét Mẫu Vải' },
+  'Allocated':          { className: 'badge--green', label: 'Đã Phân Bổ' },
+  'Dispatched':         { className: 'badge--grey',  label: 'Đã Giao' },
 };
 
 const OrderStatusBadge = ({ status }) => {

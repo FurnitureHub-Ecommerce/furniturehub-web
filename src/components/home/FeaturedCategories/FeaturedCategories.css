@@ -12,23 +12,19 @@
 
 .categories__title {
   font-family: var(--font-serif);
-  font-size: 2.25rem;
-  font-weight: 500;
+  font-size: clamp(2.2rem, 3vw, 3.2rem);
+  font-weight: 600;
   color: var(--lumora-text-main);
-  letter-spacing: -0.01em;
-}
-
-@media (min-width: 768px) {
-  .categories__title {
-    font-size: 2.75rem;
-  }
+  letter-spacing: -0.02em;
+  line-height: 1.08;
 }
 
 .categories__subtitle {
-  font-size: 0.95rem;
+  font-size: 1rem;
   color: var(--lumora-text-muted);
-  margin-top: 6px;
-  font-weight: 300;
+  margin-top: 8px;
+  font-weight: 400;
+  line-height: 1.7;
   max-width: 520px;
 }
 
@@ -166,8 +162,8 @@
 }
 
 .category-card__count {
-  font-size: 0.75rem;
-  font-weight: 600;
+  font-size: 0.72rem;
+  font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   background-color: rgba(255, 255, 255, 0.2);
@@ -200,18 +196,18 @@
 
 .category-card__name {
   font-family: var(--font-serif);
-  font-size: 1.65rem;
-  font-weight: 500;
-  margin-bottom: 4px;
-
+  font-size: clamp(1.5rem, 2vw, 2rem);
+  font-weight: 600;
+  line-height: 1.1;
+  margin-bottom: 6px;
 }
 
 .category-card__desc {
-  font-size: 0.825rem;
+  font-size: 0.84rem;
   color: #E2DBD0;
-  font-weight: 300;
-  line-height: 1.4;
-  opacity: 0.9;
+  font-weight: 400;
+  line-height: 1.55;
+  opacity: 0.95;
 }
 
 .category-card-skeleton {

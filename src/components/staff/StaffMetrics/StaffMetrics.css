@@ -28,7 +28,7 @@
   font-size: 10px;
   font-weight: 700;
   color: #8c857b;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 
@@ -49,13 +49,14 @@
   color: #1a1a1a;
   line-height: 1;
   margin-bottom: 6px;
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: var(--font-sans);
 }
 
 .staff-metric-card__sub {
   font-size: 12px;
   color: #8c857b;
   margin: 0;
+  line-height: 1.6;
 }
 
 /* Highlight variants */

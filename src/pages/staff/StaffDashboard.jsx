@@ -11,9 +11,9 @@ const StaffDashboard = () => {
     <div className="staff-dashboard">
       <div className="staff-page-header">
         <div className="staff-page-header__info">
-          <p className="staff-breadcrumb">OPERATIONS PROTOCOL // ROUTE /STAFF / OVERVIEW</p>
-          <h1>Staff Operations Overview</h1>
-          <p>Monitor team performance, shift coverage, and recent activity across all departments.</p>
+          <p className="staff-breadcrumb">PROTOCOL VẬN HÀNH // TUYẾN ĐƯỜNG /STAFF / TỔNG QUAN</p>
+          <h1>Tổng Quan Hoạt Động Nhân Viên</h1>
+          <p>Theo dõi hiệu suất đội ngũ, ca làm việc và hoạt động gần đây trên toàn bộ các phòng ban.</p>
         </div>
       </div>
 
@@ -22,7 +22,7 @@ const StaffDashboard = () => {
 
       {/* Active Staff Cards */}
       <h3 style={{ fontSize: '16px', fontWeight: 700, color: '#1a1a1a', marginBottom: '16px' }}>
-        Active Team Members
+        Thành Viên Đang Hoạt Động
       </h3>
       <div className="staff-dashboard-grid">
         {activeStaff.map((member) => (
@@ -32,7 +32,7 @@ const StaffDashboard = () => {
 
       {/* Recent Activity Timeline */}
       <div className="activity-timeline">
-        <h3>Recent Activity</h3>
+        <h3>Hoạt Động Gần Đây</h3>
         {recentActivity.map((item) => (
           <div key={item.id} className="activity-item">
             <div className={`activity-item__dot activity-item__dot--${item.type}`} />

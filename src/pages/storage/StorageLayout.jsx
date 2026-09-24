@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link, Outlet, useNavigate } from 'react-router-dom';
+import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { Settings, User, LogOut } from 'lucide-react';
 import logo from '../../assets/logo.jpg';
 import './Storage.css';
@@ -9,13 +9,12 @@ const StorageLayout = () => {
   const navigate = useNavigate();
 
   const currentUser = {
-    name: 'Vy Dang',
-    role: 'STORAGE OPS DIRECTOR',
+    name: 'Vy Đặng',
+    role: 'GIÁM ĐỐC VẬN HÀNH KHO',
     avatar: 'https://ui-avatars.com/api/?name=Vy+Dang&background=1c1c1c&color=fff'
   };
 
   const handleLogout = () => {
-    // Thêm logic xóa token/session ở đây nếu có
     navigate('/login');
   };
 
@@ -30,26 +29,29 @@ const StorageLayout = () => {
           <div className="nav-group">
             <p className="nav-label">TỔNG QUAN & DỮ LIỆU KHO</p>
             <ul>
-              <li className="active"><Link to="/storage">Inventory Telemetry</Link></li>
-              <li><Link to="/storage/reports">Báo cáo tồn kho</Link></li>
+              {/* Dùng end cho đường dẫn trang chủ /storage để không bị nhận diện nhầm với các trang con khác */}
+              <li><NavLink to="/storage" end>Tổng Quan Tồn Kho</NavLink></li>
+              <li><NavLink to="/storage/statistics">Thống Kê & Báo Cáo</NavLink></li>
             </ul>
           </div>
 
           <div className="nav-group">
             <p className="nav-label">VẬN HÀNH KHO</p>
             <ul>
-              <li><Link to="/storage/inbound">Nhập kho - Inbound Manifest</Link></li>
-              <li><Link to="/storage/outbound">Xuất kho - Outbound Dispatch</Link></li>
-              <li><Link to="/storage/audit">Điều chỉnh kiểm kê - Stock Audit</Link></li>
+              <li><NavLink to="/storage/inbound-outbound">Nhập & Xuất Kho</NavLink></li>
+              <li><NavLink to="/storage/availability">Tình Trạng Sẵn Có</NavLink></li>
+              <li><NavLink to="/storage/adjustment">Điều Chỉnh Kiểm Kê</NavLink></li>
             </ul>
           </div>
 
           <div className="nav-group">
             <p className="nav-label">DANH MỤC & CẢNH BÁO</p>
             <ul>
-              <li><Link to="/storage/skus">Quản lý SKU & Biến thể</Link></li>
-              <li><Link to="/storage/alerts">Cảnh báo tồn thấp</Link></li>
-              <li><Link to="/storage/history">Lịch sử biến động kho</Link></li>
+              <li><NavLink to="/storage/skus">Quản Lý SKU & Biến Thể</NavLink></li>
+              <li><NavLink to="/storage/alerts">Cảnh Báo Tồn Thấp</NavLink></li>
+              <li><NavLink to="/storage/search">Tìm Kiếm & Bộ Lọc</NavLink></li>
+              <li><NavLink to="/storage/history">Lịch Sử Biến Động Kho</NavLink></li>
+              <li><NavLink to="/storage/testing">Kiểm Thử Hệ Thống</NavLink></li>
             </ul>
           </div>
         </div>
@@ -75,13 +77,13 @@ const StorageLayout = () => {
           {/* Settings Dropdown Menu */}
           {showSettingsMenu && (
             <div className="settings-dropdown">
-              <Link to="/storage/profile" onClick={() => setShowSettingsMenu(false)}>
+              <NavLink to="/storage/profile" onClick={() => setShowSettingsMenu(false)}>
                 <User size={18} />
-                Profile cá nhân
-              </Link>
+                Hồ Sơ Cá Nhân
+              </NavLink>
               <button onClick={handleLogout} className="logout-btn">
                 <LogOut size={18} />
-                Đăng xuất
+                Đăng Xuất
               </button>
             </div>
           )}
