@@ -7,6 +7,8 @@ import StorageDashboard from './pages/storage/StorageDashboard';
 import AdminLayout from './pages/admin/AdminLayout';
 import AdminDashboard from './pages/admin/dashboard/AdminDashboard';
 import AdminUsers from './pages/admin/users/AdminUsers';
+import AdminCatalog from './pages/admin/catalog/AdminCatalog';
+import AdminMonitoring from './pages/admin/monitoring/AdminMonitoring';
 
 function App() {
   return (
@@ -15,6 +17,8 @@ function App() {
         <Route path="/admin" element={<AdminLayout />}>
           <Route index element={<AdminDashboard />} />
           <Route path="users" element={<AdminUsers />} />
+          <Route path="catalog" element={<AdminCatalog />} />
+          <Route path="monitoring" element={<AdminMonitoring />} />
         </Route>
         <Route
           path="/"

@@ -37,10 +37,11 @@ const navigation = [
   {
     label: "QUẢN TRỊ DANH MỤC (CATALOG)",
     items: [
-      [Sofa, "Quản Lý Sản Phẩm"],
+      [Sofa, "Quản Lý Sản Phẩm", "/admin/catalog"],
       [SlidersHorizontal, "Biến Thể & SKU"],
       [Folder, "Danh Mục & Bộ Sưu Tập"],
       [DraftingCompass, "Thương Hiệu & Xưởng Atelier"],
+      [ChartNoAxesCombined, "Giám Sát Đơn Hàng & Tồn Kho", "/admin/monitoring"],
     ],
   },
 ];
