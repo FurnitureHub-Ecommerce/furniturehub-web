@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Search, Heart, ShoppingBag, Menu, X, User } from "lucide-react";
 import { useShop } from "../../../context/ShopContext";
@@ -140,7 +140,7 @@ export function Header() {
               className="header__action-btn"
               aria-label={`Sản phẩm yêu thích, ${wishlistCount} mục đã lưu`}
               type="button"
-              onClick={() => setIsCartOpen(true)}
+              onClick={() => navigate("/wishlist")}
             >
               <Heart size={20} />
               {wishlistCount > 0 && (
