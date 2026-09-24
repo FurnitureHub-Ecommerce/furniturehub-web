@@ -25,10 +25,24 @@ const Login = () => {
     try {
       const response = await authAPI.login(payload);
 
+      // Lưu token và thông tin user vào localStorage
       localStorage.setItem("token", response.token);
       localStorage.setItem("user", JSON.stringify(response.user));
 
-      navigate("/storage");
+      // Lấy role từ thông tin user trả về (tùy cấu trúc BE có thể là response.user.role hoặc response.user.isAdmin)
+      const userRole = response.user?.role?.toUpperCase(); 
+
+      // Điều hướng dựa theo từng role cụ thể
+      if (userRole === "ADMIN") {
+        navigate("/admin/dashboard"); // Điều hướng đến trang Dashboard của Admin
+      } else if (userRole === "STORAGE" || userRole === "MANAGER") {
+        navigate("/storage"); // Điều hướng đến trang quản lý kho
+      } else if (userRole === "STAFF") {
+        navigate("/staff"); // Hoặc trang dành cho nhân viên
+      } else {
+        navigate("/"); // Mặc định cho Customer về trang chủ
+      }
+
     } catch (err) {
       const res = err.response?.data;
       if (res?.errors && res.errors.length > 0) {
@@ -45,16 +59,13 @@ const Login = () => {
     <div 
       className="auth-wrapper"
       style={{
-        /* Tăng giá trị từ 0.4 lên 0.6 (hoặc 0.7) để nền tối và mờ hơn */
         backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.8)), url(${bgImage})`,
         backgroundSize: "cover",
         backgroundPosition: "center",
         backgroundRepeat: "no-repeat"
       }}
     >
-      {/* Khung card lớn chứa cả 2 bên (ảnh và form) nằm đè trên lớp background */}
       <div className="auth-main-card">
-        {/* Banner bên trái: Ảnh nội thất sáng sủa, sang trọng */}
         <div className="auth-banner">
           <div className="banner-brand">LUMORA</div>
           <div className="banner-quote">
@@ -67,10 +78,8 @@ const Login = () => {
           </div>
         </div>
 
-        {/* Khung form bên phải */}
         <div className="auth-form-container">
           <div className="auth-card" style={{ position: "relative" }}>
-            {/* Nút Back về trang chủ dạng mũi tên ở góc trên */}
             <Link to="/" className="btn-back-home" title="Về trang chủ">
               <ArrowLeft size={20} />
             </Link>
