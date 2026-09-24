@@ -107,7 +107,7 @@ export function HeroBanner({ isLoading = false }) {
           </div>
 
           {/* Title & Subtitle (Font chữ Serif tinh tế, sang trọng) */}
-          <h1 className="hero__title">{currentBanner.title}</h1>
+          <h1 className="hero__title"  style={{ fontFamily: "Bodoni Moda", fontSize: 'clamp(3rem, 2.5vw, 2.7rem)', letterSpacing: '-0.02em', fontWeight: 600 }}>{currentBanner.title}</h1>
           <p className="hero__subtitle">{currentBanner.subtitle}</p>
 
           {/* Price Snippet & CTAs */}

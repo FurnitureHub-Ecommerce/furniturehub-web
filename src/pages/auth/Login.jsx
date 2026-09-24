@@ -1,7 +1,8 @@
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { authAPI } from "../../services/api";
-import { Eye, EyeOff, ArrowLeft } from "lucide-react"; // Thêm ArrowLeft
+import { Eye, EyeOff, ArrowLeft } from "lucide-react";
+import bgImage from "../../assets/background.jpg"; 
 import "./Login.css";
 
 const Login = () => {
@@ -41,7 +42,16 @@ const Login = () => {
   };
 
   return (
-    <div className="auth-wrapper">
+    <div 
+      className="auth-wrapper"
+      style={{
+        /* Tăng giá trị từ 0.4 lên 0.6 (hoặc 0.7) để nền tối và mờ hơn */
+        backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.8)), url(${bgImage})`,
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        backgroundRepeat: "no-repeat"
+      }}
+    >
       {/* Khung card lớn chứa cả 2 bên (ảnh và form) nằm đè trên lớp background */}
       <div className="auth-main-card">
         {/* Banner bên trái: Ảnh nội thất sáng sủa, sang trọng */}
@@ -66,7 +76,7 @@ const Login = () => {
             </Link>
 
             <div className="auth-header">
-              <h2>Đăng Nhập</h2>
+              <h2 style={{ fontFamily: "Bodoni Moda", fontSize: 'clamp(2rem, 2.5vw, 2.7rem)', color: '#1a1a1a', letterSpacing: '-0.02em', fontWeight: 600 }}>Đăng Nhập</h2>
               <p>Chào mừng bạn trở lại, vui lòng nhập thông tin.</p>
             </div>
 
@@ -108,7 +118,7 @@ const Login = () => {
                       position: "absolute",
                       right: "12px",
                       top: "50%",
-                      transform: "translateY(-50% )",
+                      transform: "translateY(-50%)",
                       background: "none",
                       border: "none",
                       cursor: "pointer",
