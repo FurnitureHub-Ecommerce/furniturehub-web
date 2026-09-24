@@ -24,23 +24,23 @@ const navigation = [
     label: "DASHBOARD & GOVERNANCE",
     items: [
       [LayoutDashboard, "Executive Dashboard", "/admin"],
-      [ChartNoAxesCombined, "Thống Kê & Phân Tích"],
+      [ChartNoAxesCombined, "Thống Kê & Phân Tích", "/admin/analytics"],
     ],
   },
   {
     label: "NGƯỜI DÙNG & PHÂN QUYỀN (RBAC)",
     items: [
       [Users, "Quản Lý Người Dùng", "/admin/users"],
-      [ShieldCheck, "Ma Trận Phân Quyền & Vai Trò"],
+      [ShieldCheck, "Ma Trận Phân Quyền & Vai Trò", "/admin/roles"],
     ],
   },
   {
     label: "QUẢN TRỊ DANH MỤC (CATALOG)",
     items: [
       [Sofa, "Quản Lý Sản Phẩm", "/admin/catalog"],
-      [SlidersHorizontal, "Biến Thể & SKU"],
-      [Folder, "Danh Mục & Bộ Sưu Tập"],
-      [DraftingCompass, "Thương Hiệu & Xưởng Atelier"],
+      [SlidersHorizontal, "Biến Thể & SKU", "/admin/variants"],
+      [Folder, "Danh Mục & Bộ Sưu Tập", "/admin/categories"],
+      [DraftingCompass, "Thương Hiệu & Xưởng Atelier", "/admin/brands"],
       [ChartNoAxesCombined, "Giám Sát Đơn Hàng & Tồn Kho", "/admin/monitoring"],
     ],
   },

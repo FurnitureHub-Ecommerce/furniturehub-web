@@ -1,0 +1,97 @@
+.staff-metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 28px;
+}
+
+.staff-metric-card {
+  background: #fff;
+  border: 1px solid #e5e2da;
+  border-radius: 8px;
+  padding: 20px;
+  transition: box-shadow 0.2s;
+}
+
+.staff-metric-card:hover {
+  box-shadow: 0 4px 16px rgba(37, 37, 37, 0.06);
+}
+
+.staff-metric-card__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
+
+.staff-metric-card__label {
+  font-size: 10px;
+  font-weight: 700;
+  color: #8c857b;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.staff-metric-card__icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: #f5f3ef;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #8c857b;
+}
+
+.staff-metric-card__value {
+  font-size: 32px;
+  font-weight: 800;
+  color: #1a1a1a;
+  line-height: 1;
+  margin-bottom: 6px;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+}
+
+.staff-metric-card__sub {
+  font-size: 12px;
+  color: #8c857b;
+  margin: 0;
+}
+
+/* Highlight variants */
+.staff-metric-card--green .staff-metric-card__value {
+  color: #065f46;
+}
+
+.staff-metric-card--green .staff-metric-card__icon {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.staff-metric-card--red .staff-metric-card__icon {
+  background: #fef2f2;
+  color: #dc2626;
+}
+
+.metric-critical-badge {
+  display: inline-block;
+  background: #fef2f2;
+  color: #dc2626;
+  font-weight: 700;
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  border: 1px solid #fecaca;
+}
+
+@media (max-width: 1200px) {
+  .staff-metrics-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .staff-metrics-grid {
+    grid-template-columns: 1fr;
+  }
+}
