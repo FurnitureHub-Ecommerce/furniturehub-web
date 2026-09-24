@@ -1,8 +1,8 @@
-import React from 'react';
-import { X, ShoppingBag, Plus, Minus, Trash2, ArrowRight } from 'lucide-react';
-import { useShop } from '../../../context/ShopContext';
-import { Link } from 'react-router-dom';
-import './CartDrawer.css';
+import React from "react";
+import { X, ShoppingBag, Plus, Minus, Trash2, ArrowRight } from "lucide-react";
+import { useShop } from "../../../context/ShopContext";
+import { Link } from "react-router-dom";
+import "./CartDrawer.css";
 
 export function CartDrawer() {
   const {
@@ -34,7 +34,10 @@ export function CartDrawer() {
         aria-label="Giỏ hàng của bạn"
       >
         <div className="cart-drawer-header">
-          <h2 className="cart-drawer-title">
+          <h2
+            className="cart-drawer-title"
+            style={{ fontFamily: '"Bodoni Moda", serif', fontSize: "1.8rem" }}
+          >
             <span>Giỏ Hàng</span>
             <span className="cart-drawer-badge">{cartCount}</span>
           </h2>
@@ -52,11 +55,14 @@ export function CartDrawer() {
         <div className="cart-drawer-shipping">
           {remaining > 0 ? (
             <p>
-              Mua thêm <strong>${remaining.toLocaleString()}</strong> để nhận{' '}
+              Mua thêm <strong>${remaining.toLocaleString()}</strong> để nhận{" "}
               <strong>Miễn phí Giao hàng & Lắp ráp</strong>
             </p>
           ) : (
-            <p>🎉 Bạn đã đủ điều kiện nhận <strong>Miễn phí Giao hàng Cao cấp!</strong></p>
+            <p>
+              🎉 Bạn đã đủ điều kiện nhận{" "}
+              <strong>Miễn phí Giao hàng Cao cấp!</strong>
+            </p>
           )}
           <div className="cart-shipping-bar">
             <div
@@ -71,7 +77,9 @@ export function CartDrawer() {
           {cart.length === 0 ? (
             <div className="cart-drawer-empty">
               <ShoppingBag size={48} className="cart-empty-icon" />
-              <p>Giỏ hàng của bạn đang trống</p>
+              <p style={{ fontFamily: '"Bodoni Moda", serif' }}>
+                Giỏ hàng của bạn đang trống
+              </p>
             </div>
           ) : (
             cart.map(({ product, quantity }) => (
@@ -84,7 +92,12 @@ export function CartDrawer() {
                 <div className="cart-item-details">
                   <div className="cart-item-top">
                     <div>
-                      <h3 className="cart-item-title">{product.name}</h3>
+                      <h3
+                        className="cart-item-title"
+                        style={{ fontFamily: '"Bodoni Moda", serif' }}
+                      >
+                        {product.name}
+                      </h3>
                       <span className="cart-item-variant">
                         {product.variantLabel}
                       </span>
@@ -134,26 +147,39 @@ export function CartDrawer() {
         {cart.length > 0 && (
           <div className="cart-drawer-footer">
             <div className="cart-summary-row">
-              <span>Tạm tính</span>
-              <span className="cart-total-price">
+              <span
+                style={{
+                  fontFamily: '"Bodoni Moda", serif',
+                  fontSize: "1.3rem",
+                }}
+              >
+                Tạm tính
+              </span>
+              <span
+                className="cart-total-price"
+                style={{ fontFamily: '"Bodoni Moda", serif' }}
+              >
                 ${cartSubtotal.toLocaleString()}
               </span>
             </div>
-            <Link
-              to="/cart"
-              className="cart-checkout-btn"
-              onClick={() => setIsCartOpen(false)}
-            >
-              <span>Thanh Toán Cho Giỏ Hàng</span>
-              <ArrowRight size={18} />
-            </Link>
-            <Link
-              to="/cart"
-              className="cart-view-link"
-              onClick={() => setIsCartOpen(false)}
-            >
-              Xem chi tiết giỏ hàng
-            </Link>
+            <div className="cart-actions-row">
+              <Link
+                to="/cart"
+                className="cart-checkout-btn"
+                onClick={() => setIsCartOpen(false)}
+              >
+                <span>Thanh Toán</span>
+                <ArrowRight size={16} />
+              </Link>
+
+              <Link
+                to="/cart"
+                className="cart-view-link"
+                onClick={() => setIsCartOpen(false)}
+              >
+                Chi tiết giỏ hàng
+              </Link>
+            </div>
           </div>
         )}
       </aside>

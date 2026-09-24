@@ -1,4 +1,4 @@
-import React, { Suspense, lazy } from "react";
+import { Suspense, lazy } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ShopProvider } from "./context/ShopContext";
 import MainLayout from "./components/layout/MainLayout/MainLayout";
@@ -7,6 +7,8 @@ import {
   CategoryPage,
   ProductDetailPage,
   CartPage,
+  WishlistPage,
+  CheckoutPage,
   CollectionsPage,
   LookbookPage,
 } from "./pages/customer/CustomerPages";
@@ -87,6 +89,22 @@ function App() {
             element={
               <MainLayout>
                 <CartPage />
+              </MainLayout>
+            }
+          />
+          <Route
+            path="/wishlist"
+            element={
+              <MainLayout>
+                <WishlistPage />
+              </MainLayout>
+            }
+          />
+          <Route
+            path="/checkout"
+            element={
+              <MainLayout>
+                <CheckoutPage />
               </MainLayout>
             }
           />

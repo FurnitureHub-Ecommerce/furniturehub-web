@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { authAPI } from '../../services/api';
 import { ArrowLeft, Eye, EyeOff } from 'lucide-react';
+// Import hình nền từ thư mục assets (giống như trang Login)
+import bgImage from "../../assets/background.jpg"; 
 import './Register.css';
 
 const Register = () => {
@@ -73,7 +75,16 @@ const Register = () => {
   };
 
   return (
-    <div className="auth-wrapper">
+    <div 
+      className="auth-wrapper"
+      style={{
+        /* Áp dụng hiệu ứng nền mờ và tối tương tự trang Login */
+        backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.8)), url(${bgImage})`,
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        backgroundRepeat: "no-repeat"
+      }}
+    >
       {/* Khung card lớn chứa cả 2 bên (ảnh banner và form) */}
       <div className="auth-main-card">
         
@@ -94,7 +105,7 @@ const Register = () => {
               <ArrowLeft size={20} />
             </Link>
             <div className="auth-header">
-              <h2>Tạo Tài Khoản</h2>
+              <h2  style={{ fontFamily: "Bodoni Moda", fontSize: 'clamp(2rem, 2.5vw, 2.7rem)', color: '#1a1a1a', letterSpacing: '-0.02em', fontWeight: 600 }}>Tạo Tài Khoản</h2>
               <p>Điền thông tin bên dưới để đăng ký thành viên.</p>
             </div>
 
