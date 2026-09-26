@@ -2,6 +2,7 @@
   background-color: var(--lumora-text-main);
   color: #E2DBD0;
   margin-top: auto;
+  font-family: "Bodoni Moda", serif;
 }
 
 /* Newsletter section */
@@ -32,7 +33,7 @@
 }
 
 .footer__newsletter-title {
-  font-family: var(--font-serif);
+  font-family: "Bodoni Moda", serif;
   font-size: clamp(2rem, 2.8vw, 2.8rem);
   font-weight: 600;
   line-height: 1.08;

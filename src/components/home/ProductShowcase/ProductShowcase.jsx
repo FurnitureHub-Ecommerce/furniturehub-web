@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Heart, ShoppingBag, Eye, Check, AlertCircle, RefreshCw, PackageX } from 'lucide-react';
 import { PRODUCTS as MOCK_PRODUCTS } from '../../../data/lumoraData';
@@ -21,18 +21,43 @@ export function ProductShowcase({
 }) {
   const [activeTab, setActiveTab] = useState('featured');
   const [addedItem, setAddedItem] = useState(null);
+  const [currentIndex, setCurrentIndex] = useState(0);
 
   const { wishlist, toggleWishlist, addToCart, setQuickViewProduct } = useShop();
 
-  const allProducts =
-    products && products.length > 0
-      ? products
-      : !isLoading && !error && products !== null && products.length === 0
-      ? []
-      : MOCK_PRODUCTS;
+  const rawProducts = Array.isArray(products)
+    ? products
+    : products?.data || products?.items || [];
 
-  // Filter products by tab if tab field exists, or fallback
-  const filteredProducts = allProducts.filter((p) => (p.tab ? p.tab === activeTab : true));
+  const allProducts = rawProducts.length > 0 
+    ? rawProducts 
+    : (isLoading ? [] : MOCK_PRODUCTS);
+
+  const filteredProducts = allProducts.filter((p) => {
+    if (!p.tab) return true;
+    return p.tab === activeTab;
+  });
+
+  // Reset về 0 khi đổi tab
+  useEffect(() => {
+    setCurrentIndex(0);
+  }, [activeTab, filteredProducts.length]);
+
+  // Tự động xoay vòng sản phẩm mỗi 4.5 giây
+  useEffect(() => {
+    if (filteredProducts.length <= 4 || isLoading) return;
+
+    const interval = setInterval(() => {
+      setCurrentIndex((prevIndex) => {
+        const nextIndex = prevIndex + 4;
+        return nextIndex >= filteredProducts.length ? 0 : nextIndex;
+      });
+    }, 4500);
+
+    return () => clearInterval(interval);
+  }, [filteredProducts.length, isLoading]);
+
+  const displayedProducts = filteredProducts.slice(currentIndex, currentIndex + 4);
 
   const handleAddToCart = (product) => {
     addToCart(product);
@@ -79,7 +104,7 @@ export function ProductShowcase({
             <h3 style={{ fontSize: '1.3rem', fontFamily: 'var(--font-serif)', marginBottom: '8px' }}>Không thể kết nối danh sách sản phẩm API</h3>
             <p style={{ color: 'var(--lumora-text-muted)', fontSize: '0.95rem', marginBottom: '20px' }}>{error}</p>
             {onRetry && (
-              <button onClick={onRetry} style={{ padding: '12px 24px', backgroundColor: 'var(--lumora-text-main)', color: '#FFF', borderRadius: 'var(--radius-md)', gap: '8px', cursor: 'pointer' }}>
+              <button onClick={onRetry} style={{ padding: '12px 24px', backgroundColor: 'var(--lumora-text-main)', color: '#FFF', borderRadius: 'var(--radius-md)', gap: '8px', cursor: 'pointer', display: 'inline-flex', alignItems: 'center' }}>
                 <RefreshCw size={18} />
                 <span>Thử Lại Lấy Dữ Liệu API</span>
               </button>
@@ -92,17 +117,17 @@ export function ProductShowcase({
             <p style={{ color: 'var(--lumora-text-muted)', fontSize: '0.95rem' }}>Hiện chưa có sản phẩm nào thuộc tab này trên server.</p>
           </div>
         ) : (
-          <div className="product-showcase__grid">
+          /* Thêm key={currentIndex} ở đây để kích hoạt hiệu ứng mờ dần từ dưới lên mỗi khi đổi bộ 4 sản phẩm */
+          <div className="product-showcase__grid" key={currentIndex}>
             {isLoading
               ? Array.from({ length: 4 }).map((_, idx) => <ProductCardSkeleton key={idx} />)
-              : filteredProducts.map((product) => {
+              : displayedProducts.map((product) => {
                   const prodId = String(product.id || product._id);
                   const isWishlisted = wishlist.includes(prodId);
                   const isJustAdded = addedItem === prodId;
 
                   return (
                     <article key={prodId} className="product-card">
-                      {/* Aspect-Ratio Locked Image Box */}
                       <div className="product-card__image-container">
                         <img
                           src={product.image || product.imageUrl || 'https://images.unsplash.com/photo-1567538096630-e0c55bd6374c?auto=format&fit=crop&w=800&q=80'}
@@ -117,7 +142,6 @@ export function ProductShowcase({
                           loading="lazy"
                         />
 
-                        {/* Badges */}
                         <div className="product-card__badges">
                           {product.isNew && <span className="product-badge product-badge--new">Mới</span>}
                           {product.oldPrice && product.oldPrice > product.price && (
@@ -127,7 +151,6 @@ export function ProductShowcase({
                           )}
                         </div>
 
-                        {/* Wishlist Toggle Button */}
                         <button
                           className={`product-card__wishlist-btn ${
                             isWishlisted ? 'product-card__wishlist-btn--active' : ''
@@ -151,7 +174,6 @@ export function ProductShowcase({
                           />
                         </button>
 
-                        {/* Quick Hover Actions */}
                         <div className="product-card__quick-actions">
                           <button
                             className="product-card__quick-view-btn"
@@ -165,7 +187,6 @@ export function ProductShowcase({
                         </div>
                       </div>
 
-                      {/* Content Details */}
                       <div className="product-card__details">
                         <div className="product-card__meta">
                           <span className="product-card__variant">{product.variantLabel || 'Solid Oak / Crafted'}</span>
@@ -188,7 +209,6 @@ export function ProductShowcase({
                             )}
                           </div>
 
-                          {/* Add to Cart Button */}
                           <button
                             className={`product-card__cart-btn ${
                               isJustAdded ? 'product-card__cart-btn--added' : ''

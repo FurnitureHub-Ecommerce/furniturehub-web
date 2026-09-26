@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { authAPI } from '../../services/api';
+import { ArrowLeft, Eye, EyeOff } from 'lucide-react';
+// Import hình nền từ thư mục assets (giống như trang Login)
+import bgImage from "../../assets/background.jpg"; 
 import './Register.css';
 
 const Register = () => {
@@ -11,6 +14,10 @@ const Register = () => {
     password: '',
     confirmPassword: '',
   });
+  
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
@@ -38,7 +45,6 @@ const Register = () => {
 
     setLoading(true);
 
-    // Chuẩn bị payload chuẩn theo spec BE
     const payload = {
       fullName: formData.fullName.trim(),
       email: formData.email.trim(),
@@ -49,15 +55,10 @@ const Register = () => {
       payload.phone = formData.phone.trim();
     }
 
-    console.log(' Payload gửi lên BE:', payload);
-
     try {
-      const res = await authAPI.register(payload);
-      console.log(' Kết quả đăng ký:', res.data);
+      await authAPI.register(payload);
       navigate('/login');
     } catch (err) {
-      console.error(' Lỗi từ Server:', err.response);
-      
       const res = err.response?.data;
       if (res?.errors && res.errors.length > 0) {
         const firstErr = res.errors[0];
@@ -74,98 +75,162 @@ const Register = () => {
   };
 
   return (
-    <div className="auth-wrapper">
-      <div className="auth-banner">
-        <div className="banner-brand">LUMORA</div>
-        <div className="banner-quote">
-          <h3>Trải nghiệm giải pháp<br />quản lý kho thông minh.</h3>
-          <p>Tạo tài khoản để bắt đầu quản lý danh mục nội thất của bạn.</p>
-        </div>
-      </div>
-
-      <div className="auth-form-container">
-        <div className="auth-card register-card">
-          <div className="auth-header">
-            <h2>Tạo Tài Khoản</h2>
-            <p>Điền thông tin bên dưới để đăng ký thành viên.</p>
-          </div>
-
-          {error && <div className="error-badge">{error}</div>}
-
-          <form onSubmit={handleSubmit}>
-            <div className="form-group">
-              <label>Họ và Tên</label>
-              <input
-                type="text"
-                name="fullName"
-                className="form-input"
-                placeholder="Đặng Hoàng Trúc Vy"
-                value={formData.fullName}
-                onChange={handleChange}
-                required
-              />
-            </div>
-
-            <div className="form-group">
-              <label>Email</label>
-              <input
-                type="email"
-                name="email"
-                className="form-input"
-                placeholder="danghoangtrucvy090105@gmail.com"
-                value={formData.email}
-                onChange={handleChange}
-                required
-              />
-            </div>
-
-            <div className="form-group">
-              <label>Số Điện Thoại (Tùy chọn)</label>
-              <input
-                type="tel"
-                name="phone"
-                className="form-input"
-                placeholder="0923098049"
-                value={formData.phone}
-                onChange={handleChange}
-              />
-            </div>
-
-            <div className="form-group">
-              <label>Mật Khẩu</label>
-              <input
-                type="password"
-                name="password"
-                className="form-input"
-                placeholder="Tối thiểu 6 ký tự"
-                value={formData.password}
-                onChange={handleChange}
-                required
-              />
-            </div>
-
-            <div className="form-group">
-              <label>Nhập Lại Mật Khẩu</label>
-              <input
-                type="password"
-                name="confirmPassword"
-                className="form-input"
-                placeholder="••••••••"
-                value={formData.confirmPassword}
-                onChange={handleChange}
-                required
-              />
-            </div>
-
-            <button type="submit" className="btn-submit" disabled={loading}>
-              {loading ? 'Đang xử lý...' : 'Đăng Ký'}
-            </button>
-          </form>
-
-          <div className="auth-footer">
-            Đã có tài khoản? <Link to="/login">Đăng nhập</Link>
+    <div 
+      className="auth-wrapper"
+      style={{
+        /* Áp dụng hiệu ứng nền mờ và tối tương tự trang Login */
+        backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.8)), url(${bgImage})`,
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        backgroundRepeat: "no-repeat"
+      }}
+    >
+      {/* Khung card lớn chứa cả 2 bên (ảnh banner và form) */}
+      <div className="auth-main-card">
+        
+        {/* Banner bên trái (Ảnh nội thất sáng sủa, sang trọng) */}
+        <div className="auth-banner">
+          <div className="banner-brand">LUMORA</div>
+          <div className="banner-quote">
+            <h3>Trải nghiệm giải pháp<br />quản lý kho thông minh.</h3>
+            <p>Tạo tài khoản để bắt đầu quản lý danh mục nội thất của bạn.</p>
           </div>
         </div>
+
+        {/* Khung form bên phải */}
+        <div className="auth-form-container">
+          <div className="auth-card register-card">
+             {/* Nút Back về trang chủ dạng mũi tên ở góc trên */}
+            <Link to="/" className="btn-back-home" title="Về trang chủ">
+              <ArrowLeft size={20} />
+            </Link>
+            <div className="auth-header">
+              <h2  style={{ fontFamily: "Bodoni Moda", fontSize: 'clamp(2rem, 2.5vw, 2.7rem)', color: '#1a1a1a', letterSpacing: '-0.02em', fontWeight: 600 }}>Tạo Tài Khoản</h2>
+              <p>Điền thông tin bên dưới để đăng ký thành viên.</p>
+            </div>
+
+            {error && <div className="error-badge">{error}</div>}
+
+            <form onSubmit={handleSubmit}>
+              <div className="form-group">
+                <label>Họ và Tên</label>
+                <input
+                  type="text"
+                  name="fullName"
+                  className="form-input"
+                  placeholder="Nguyễn Văn A"
+                  value={formData.fullName}
+                  onChange={handleChange}
+                  required
+                />
+              </div>
+
+              <div className="form-group">
+                <label>Email</label>
+                <input
+                  type="email"
+                  name="email"
+                  className="form-input"
+                  placeholder="customer@example.com"
+                  value={formData.email}
+                  onChange={handleChange}
+                  required
+                />
+              </div>
+
+              <div className="form-group">
+                <label>Số Điện Thoại (Tùy chọn)</label>
+                <input
+                  type="tel"
+                  name="phone"
+                  className="form-input"
+                  placeholder="09xxxxxxxx"
+                  value={formData.phone}
+                  onChange={handleChange}
+                />
+              </div>
+
+              {/* Ô Mật Khẩu */}
+              <div className="form-group">
+                <label>Mật Khẩu</label>
+                <div style={{ position: 'relative' }}>
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    name="password"
+                    className="form-input"
+                    placeholder="Tối thiểu 6 ký tự"
+                    value={formData.password}
+                    onChange={handleChange}
+                    required
+                    style={{ paddingRight: '40px' }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    style={{
+                      position: 'absolute',
+                      right: '12px',
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      background: 'none',
+                      border: 'none',
+                      cursor: 'pointer',
+                      color: '#666',
+                      display: 'flex',
+                      alignItems: 'center',
+                    }}
+                  >
+                    {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                  </button>
+                </div>
+              </div>
+
+              {/* Ô Nhập Lại Mật Khẩu */}
+              <div className="form-group">
+                <label>Nhập Lại Mật Khẩu</label>
+                <div style={{ position: 'relative' }}>
+                  <input
+                    type={showConfirmPassword ? 'text' : 'password'}
+                    name="confirmPassword"
+                    className="form-input"
+                    placeholder="••••••••"
+                    value={formData.confirmPassword}
+                    onChange={handleChange}
+                    required
+                    style={{ paddingRight: '40px' }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    style={{
+                      position: 'absolute',
+                      right: '12px',
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      background: 'none',
+                      border: 'none',
+                      cursor: 'pointer',
+                      color: '#666',
+                      display: 'flex',
+                      alignItems: 'center',
+                    }}
+                  >
+                    {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                  </button>
+                </div>
+              </div>
+
+              <button type="submit" className="btn-submit" disabled={loading}>
+                {loading ? 'Đang xử lý...' : 'Đăng Ký'}
+              </button>
+            </form>
+
+            <div className="auth-footer">
+              Đã có tài khoản? <Link to="/login">Đăng nhập</Link>
+            </div>
+          </div>
+        </div>
+
       </div>
     </div>
   );

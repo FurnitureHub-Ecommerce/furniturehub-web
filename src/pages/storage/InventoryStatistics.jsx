@@ -1,14 +1,32 @@
-import React from 'react';
-import { storageMetrics } from '../../data/storageData';
+import React, { useEffect, useState } from 'react';
+import { loadStorageVariants } from '../../services/storageData';
 import { BarChart3, ShieldCheck } from 'lucide-react';
 
 const InventoryStatistics = () => {
+  const [inventory, setInventory] = useState(null);
+
+  useEffect(() => {
+    loadStorageVariants().then((variants) => setInventory(variants));
+  }, []);
+
+  const variants = inventory || [];
+  const stockItems = variants.filter((variant) => variant.stock !== null);
+  const totalStock = stockItems.reduce((total, variant) => total + variant.stock, 0);
+  const locations = new Set(variants.map((variant) => variant.location).filter(Boolean));
+
+  const storageMetrics = [
+    { label: 'TỔNG SỐ SKU', value: inventory === null ? 'Đang tải...' : variants.length, sub: 'Đồng bộ từ API sản phẩm và biến thể' },
+    { label: 'HÀNG TỒN KHO (TỔNG)', value: stockItems.length ? totalStock.toLocaleString() : 'Chưa cập nhật', sub: stockItems.length ? 'Tổng số lượng từ API variant' : 'API variant chưa trả về số lượng tồn' },
+    { label: 'VỊ TRÍ LƯU TRỮ', value: locations.size || 'Chưa cập nhật', sub: locations.size ? 'Khu vực đang được sử dụng' : 'API variant chưa trả về vị trí lưu trữ' },
+    { label: 'CẢNH BÁO TỒN THẤP', value: stockItems.length ? `${stockItems.filter((variant) => variant.stock <= 15).length} SKU` : 'Chưa cập nhật', sub: stockItems.length ? 'Dưới mức tồn kho tối thiểu' : 'Không thể tính khi API chưa có số lượng tồn' },
+  ];
+
   return (
     <div className="dashboard-main">
       <header className="dash-header">
         <div>
           <span className="subtitle">THỐNG KÊ & TỔNG HỢP HỆ THỐNG</span>
-          <h2>Thống Kê Nâng Cao & Tổng Hợp Tồn Kho</h2>
+          <h2 style={{ fontFamily: "Bodoni Moda", fontSize: 'clamp(2rem, 2.5vw, 2.7rem)', color: '#1a1a1a', letterSpacing: '-0.02em', fontWeight: 600 }}>Thống Kê Nâng Cao & Tổng Hợp Tồn Kho</h2>
           <p>Phân tích xu hướng biến động, hiệu suất sử dụng không gian kho và các chỉ số vận hành quan trọng.</p>
         </div>
       </header>
@@ -33,21 +51,21 @@ const InventoryStatistics = () => {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginTop: '20px' }}>
             <div>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', marginBottom: '6px', fontWeight: '600' }}>
-                <span>Kho A (Gốm sứ & Đồ trang trí)</span>
-                <span>82% Sức Chứa</span>
+                <span>Kho A</span>
+                <span>Chưa cập nhật</span>
               </div>
               <div style={{ width: '100%', height: '8px', background: '#eaeaea', borderRadius: '4px', overflow: 'hidden' }}>
-                <div style={{ width: '82%', height: '100%', background: '#1c1c1c' }}></div>
+                <div style={{ width: '0%', height: '100%', background: '#1c1c1c' }}></div>
               </div>
             </div>
 
             <div>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', marginBottom: '6px', fontWeight: '600' }}>
-                <span>Kho B (Vải lanh & Phụ kiện mềm)</span>
-                <span>64% Sức Chứa</span>
+                <span>Kho B</span>
+                <span>Chưa cập nhật</span>
               </div>
               <div style={{ width: '100%', height: '8px', background: '#eaeaea', borderRadius: '4px', overflow: 'hidden' }}>
-                <div style={{ width: '64%', height: '100%', background: '#555' }}></div>
+                <div style={{ width: '0%', height: '100%', background: '#555' }}></div>
               </div>
             </div>
           </div>
@@ -60,13 +78,13 @@ const InventoryStatistics = () => {
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', fontSize: '13px', color: '#444' }}>
             <div style={{ padding: '12px', background: '#fff', border: '1px solid #eaeaea', borderRadius: '6px' }}>
-              <strong>Tỷ lệ thất thoát:</strong> &lt; 0.05% (Đạt chuẩn)
+              <strong>Tỷ lệ thất thoát:</strong> Chưa có dữ liệu API
             </div>
             <div style={{ padding: '12px', background: '#fff', border: '1px solid #eaeaea', borderRadius: '6px' }}>
-              <strong>Thời gian xử lý đơn:</strong> Trung bình 12 phút/lệnh
+              <strong>Thời gian xử lý đơn:</strong> Chưa có dữ liệu API
             </div>
             <div style={{ padding: '12px', background: '#fff', border: '1px solid #eaeaea', borderRadius: '6px' }}>
-              <strong>Độ chính xác kiểm kê:</strong> 99.8%
+              <strong>Độ chính xác kiểm kê:</strong> Chưa có dữ liệu API
             </div>
           </div>
         </section>

@@ -8,6 +8,7 @@ import Testimonials from '../../components/home/Testimonials/Testimonials';
 import { categoryAPI, productAPI } from '../../services/api';
 import { useShop } from '../../context/ShopContext';
 import { ShoppingBag, Heart, X, WifiOff, RefreshCw, Layers } from 'lucide-react';
+import { useScrollFadeIn } from '../../data/hooks/useScrollFadeIn'; // <-- Import hook scroll
 import './Home.css';
 
 export function Home() {
@@ -16,6 +17,13 @@ export function Home() {
   const [categories, setCategories] = useState(null);
   const [products, setProducts] = useState(null);
   const { toastMessage, setToastMessage, addToCart } = useShop();
+
+  // Khởi tạo ref hiệu ứng cuộn cho từng section phía sau
+  const categoryRef = useScrollFadeIn();
+  const productRef = useScrollFadeIn();
+  const editorialRef = useScrollFadeIn();
+  const valueRef = useScrollFadeIn();
+  const testimonialRef = useScrollFadeIn();
 
   const fetchHomeData = useCallback(async () => {
     setIsLoading(true);
@@ -81,7 +89,7 @@ export function Home() {
         </div>
       )}
 
-      {/* Global API Error Alert Banner if fetch fails completely */}
+      {/* Global API Error Alert Banner */}
       {apiError && (
         <div className="container" style={{ paddingTop: '20px' }}>
           <div style={{ padding: '16px 24px', backgroundColor: '#FFF5F5', border: '1px solid #FEB2B2', borderRadius: 'var(--radius-md)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
@@ -103,33 +111,43 @@ export function Home() {
         </div>
       )}
 
-      {/* 1. Hero Section */}
+      {/* 1. Hero Section (Hiển thị ngay khi mở web) */}
       <HeroBanner isLoading={isLoading} />
 
       {/* 2. Featured Categories */}
-      <FeaturedCategories
-        isLoading={isLoading}
-        error={categories === null && apiError ? apiError : null}
-        categories={categories}
-        onRetry={fetchHomeData}
-      />
+      <div ref={categoryRef} className="scroll-fade-section">
+        <FeaturedCategories
+          isLoading={isLoading}
+          error={categories === null && apiError ? apiError : null}
+          categories={categories}
+          onRetry={fetchHomeData}
+        />
+      </div>
 
-      {/* 3. Featured & New Arrivals Product Showcase */}
-      <ProductShowcase
-        isLoading={isLoading}
-        error={products === null && apiError ? apiError : null}
-        products={products}
-        onRetry={fetchHomeData}
-      />
+      {/* 3. Product Showcase */}
+      <div ref={productRef} className="scroll-fade-section">
+        <ProductShowcase
+          isLoading={isLoading}
+          error={products === null && apiError ? apiError : null}
+          products={products}
+          onRetry={fetchHomeData}
+        />
+      </div>
 
-      {/* 4. Editorial / Lookbook Spotlight */}
-      <EditorialSpotlight isLoading={isLoading} onAddToCart={addToCart} />
+      {/* 4. Editorial Spotlight */}
+      <div ref={editorialRef} className="scroll-fade-section">
+        <EditorialSpotlight isLoading={isLoading} onAddToCart={addToCart} />
+      </div>
 
       {/* 5. Value Propositions */}
-      <ValueProps />
+      <div ref={valueRef} className="scroll-fade-section">
+        <ValueProps />
+      </div>
 
       {/* 6. Customer Testimonials */}
-      <Testimonials />
+      <div ref={testimonialRef} className="scroll-fade-section">
+        <Testimonials />
+      </div>
     </main>
   );
 }

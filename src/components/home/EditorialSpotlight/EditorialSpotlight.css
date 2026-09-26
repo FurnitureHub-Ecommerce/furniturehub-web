@@ -6,10 +6,11 @@
 .editorial-spotlight__header {
   margin-bottom: var(--space-xl);
   max-width: 680px;
+  font-family: 'Playfair Display', serif;
 }
 
 .editorial-spotlight__title {
-  font-family: var(--font-serif);
+  font-family: 'Playfair Display', serif;
   font-size: clamp(2.2rem, 3vw, 3.2rem);
   font-weight: 600;
   color: var(--lumora-text-main);
@@ -47,6 +48,8 @@
   border-radius: var(--radius-md);
   overflow: hidden;
   box-shadow: var(--shadow-medium);
+  height: 479px;
+  margin-top: -15px;
 }
 
 @media (min-width: 768px) {
@@ -120,6 +123,7 @@
   display: flex;
   flex-direction: column;
   gap: 20px;
+  font-family: 'Playfair Display', serif;
 }
 
 .editorial-spotlight__spot-tag {
@@ -128,6 +132,7 @@
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--lumora-accent-wood);
+ 
 }
 
 /* Featured Card */
@@ -172,7 +177,7 @@
 }
 
 .hotspot-featured-card__name {
-  font-family: var(--font-serif);
+  font-family: 'Playfair Display', serif;
   font-size: clamp(1.3rem, 2vw, 1.8rem);
   font-weight: 600;
   line-height: 1.1;

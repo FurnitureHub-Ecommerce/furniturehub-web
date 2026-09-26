@@ -43,8 +43,7 @@ export function Header() {
         <div className="container header__topbar-inner">
           <p className="header__topbar-text">
             <span>
-              Miễn Phí Giao Hàng Cao Cấp & Lắp Ráp Cho Đơn Hàng Trên
-              $2,000
+              Miễn Phí Giao Hàng Cao Cấp & Lắp Ráp Cho Đơn Hàng Trên $2,000
             </span>
             <span className="header__topbar-divider">•</span>
             <span className="header__topbar-highlight">
@@ -63,7 +62,7 @@ export function Header() {
         className={`header ${scrolled ? "header--scrolled" : ""}`}
         role="banner"
       >
-        <div className="container header__inner">
+        <div className="header__inner">
           {/* Mobile Menu Toggle */}
           <button
             id="header-mobile-toggle"
@@ -141,7 +140,7 @@ export function Header() {
               className="header__action-btn"
               aria-label={`Sản phẩm yêu thích, ${wishlistCount} mục đã lưu`}
               type="button"
-              onClick={() => setIsCartOpen(true)}
+              onClick={() => navigate("/wishlist")}
             >
               <Heart size={20} />
               {wishlistCount > 0 && (

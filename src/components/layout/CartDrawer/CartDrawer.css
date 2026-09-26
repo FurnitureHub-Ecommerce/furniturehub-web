@@ -225,14 +225,13 @@
 
 .cart-checkout-btn {
   width: 100%;
-  padding: 14px;
+  padding: 12px;
   background-color: var(--lumora-text-main);
   color: #FFFFFF;
   border-radius: var(--radius-md);
-  font-size: 0.88rem;
+  font-size: 0.8rem;
   font-weight: 600;
   letter-spacing: 0.08em;
-  text-transform: uppercase;
   justify-content: center;
   gap: 8px;
   transition: background-color var(--transition-fast);
@@ -242,16 +241,66 @@
   background-color: var(--lumora-accent-wood);
 }
 
-.cart-view-link {
-  display: block;
-  text-align: center;
-  margin-top: 12px;
-  font-size: 0.82rem;
-  font-weight: 600;
-  color: var(--lumora-text-muted);
-  text-decoration: underline;
-}
+
 
 .cart-view-link:hover {
   color: var(--lumora-text-main);
+}
+
+/* Khung chứa 2 nút nằm trên 1 dòng */
+.cart-actions-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  gap: 12px;
+  width: 100%;
+  margin-top: 16px;
+}
+
+/* Nút Thanh toán chính (nổi bật hơn) */
+.cart-checkout-btn {
+  flex: 1; /* Chiếm phần lớn không gian */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background-color: #80603c; /* Tông màu nâu sang trọng chủ đạo của Lumora */
+  color: #fff;
+  padding: 12px 16px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 14px;
+  text-decoration: none;
+  transition: background-color 0.2s ease, transform 0.1s ease;
+  box-shadow: 0 4px 10px rgba(128, 96, 60, 0.2);
+}
+
+.cart-checkout-btn:hover {
+  background-color: #6a4f31;
+  color: #fff;
+}
+
+.cart-checkout-btn:active {
+  transform: scale(0.98);
+}
+
+/* Link Xem chi tiết giỏ hàng (phụ, gọn gàng bên cạnh) */
+.cart-view-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 16px;
+  background-color: #f3efe6; /* Nền nhạt đồng bộ tone màu trầm ấm */
+  color: #4a4a4a;
+  border-radius: 8px;
+  font-weight: 500;
+  font-size: 13px;
+  text-decoration: none;
+  white-space: nowrap; /* Không bị ngắt chữ */
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.cart-view-link:hover {
+  background-color: #e6ddd0;
+  color: #1a1a1a;
 }
