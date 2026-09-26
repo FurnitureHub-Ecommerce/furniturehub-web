@@ -5,15 +5,19 @@ import { Layers, FileSpreadsheet, Search } from 'lucide-react';
 const StorageDashboard = () => {
   const [skuProducts, setSkuProducts] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState(''); // Thêm state tìm kiếm
+  const [error, setError] = useState(null); // Thêm state bắt lỗi
+  const [searchTerm, setSearchTerm] = useState('');
 
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
+      setError(null);
       const data = await loadStorageVariants();
-      setSkuProducts(data || []);
-    } catch (error) {
-      console.error('Lỗi tải Dashboard kho:', error);
+      // Đảm bảo dữ liệu luôn là mảng
+      setSkuProducts(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error('Lỗi tải Dashboard kho:', err);
+      setError('Không thể tải dữ liệu kho từ hệ thống.');
     } finally {
       setLoading(false);
     }
@@ -24,7 +28,7 @@ const StorageDashboard = () => {
   }, []);
 
   const handleExportExcel = () => {
-    if (skuProducts.length === 0) {
+    if (!skuProducts || skuProducts.length === 0) {
       alert('Không có dữ liệu để xuất Excel!');
       return;
     }
@@ -55,11 +59,11 @@ const StorageDashboard = () => {
     document.body.removeChild(link);
   };
 
-  // Lọc danh sách SKU theo từ khóa tìm kiếm
-  const filteredProducts = skuProducts.filter((item) => 
+  // Kiểm tra an toàn trước khi filter
+  const filteredProducts = Array.isArray(skuProducts) ? skuProducts.filter((item) => 
     (item.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
     (item.id || '').toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  ) : [];
 
   const totalStock = skuProducts.reduce((acc, item) => acc + (Number(item.stock) || 0), 0);
   const stockItems = skuProducts.filter((item) => item.stock !== null && item.stock !== undefined);
@@ -74,6 +78,10 @@ const StorageDashboard = () => {
 
   if (loading) {
     return <div className="dashboard-main" style={{ padding: '40px', textAlign: 'center' }}>Đang tải tổng quan hệ thống kho...</div>;
+  }
+
+  if (error) {
+    return <div className="dashboard-main" style={{ padding: '40px', textAlign: 'center', color: '#dc2626' }}>{error}</div>;
   }
 
   return (
@@ -110,7 +118,6 @@ const StorageDashboard = () => {
             <h3 style={{ margin: 0 }}>Danh Mục SKU Master & Hiện Trạng Tồn Kho</h3>
           </div>
           
-          {/* Ô tìm kiếm nhanh */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: '#fff', padding: '6px 12px', borderRadius: '6px', border: '1px solid #ddd' }}>
             <Search size={16} color="#666" />
             <input 
@@ -137,7 +144,7 @@ const StorageDashboard = () => {
               filteredProducts.map((prod) => {
                 const stockVal = prod.stock;
                 return (
-                  <tr key={prod.id}>
+                  <tr key={prod.id || Math.random()}>
                     <td>
                       <strong>{prod.name}</strong>
                       <br />
