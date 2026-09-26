@@ -1,44 +1,66 @@
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=Noto+Sans:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap');
+@import "tailwindcss";
+
 /* ============================================================
    LUMORA – MODERN LUXURY MINIMALIST DESIGN SYSTEM
    src/index.css
    ============================================================ */
-@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=Noto+Sans:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap');
+
 
 /* ---------- Design Tokens ---------- */
 :root {
   /* Brand Palette */
-  --lumora-bg-primary:      #F7F4EE; /* Warm Ivory */
-  --lumora-bg-secondary:    #E9E1D5; /* Warm Sand / Beige */
-  --lumora-accent-wood:     #8A6A48; /* Warm Wood Brown */
-  --lumora-accent-hover:    #705437; /* Darker Wood Brown */
-  --lumora-text-main:       #252525; /* Soft Charcoal Black */
-  --lumora-text-muted:      #6E6860; /* Warm Taupe Grey */
-  --lumora-text-light:      #8F887E; /* Light Taupe */
-  --lumora-card-white:      #FFFFFF; /* Clean Surface */
-  --lumora-border:          #E2DBD0; /* Subtle Divider */
-  --lumora-border-subtle:   #F0EAE1; /* Ultra Subtle */
-  --lumora-badge-bg:        #E2D5C3; /* Warm Sand Badge */
-  --lumora-star:            #C89D5C; /* Elegant Gold Star */
-  --lumora-overlay:         rgba(37, 37, 37, 0.4);
+  --lumora-bg-primary: #F7F4EE;
+  /* Warm Ivory */
+  --lumora-bg-secondary: #E9E1D5;
+  /* Warm Sand / Beige */
+  --lumora-accent-wood: #8A6A48;
+  /* Warm Wood Brown */
+  --lumora-accent-hover: #705437;
+  /* Darker Wood Brown */
+  --lumora-text-main: #252525;
+  /* Soft Charcoal Black */
+  --lumora-text-muted: #6E6860;
+  /* Warm Taupe Grey */
+  --lumora-text-light: #8F887E;
+  /* Light Taupe */
+  --lumora-card-white: #FFFFFF;
+  /* Clean Surface */
+  --lumora-border: #E2DBD0;
+  /* Subtle Divider */
+  --lumora-border-subtle: #F0EAE1;
+  /* Ultra Subtle */
+  --lumora-badge-bg: #E2D5C3;
+  /* Warm Sand Badge */
+  --lumora-star: #C89D5C;
+  /* Elegant Gold Star */
+  --lumora-overlay: rgba(37, 37, 37, 0.4);
 
   /* Typography */
-  --font-serif:             'Cormorant Garamond', 'Times New Roman', serif;
-  --font-sans:              'Plus Jakarta Sans', 'Noto Sans', 'Segoe UI', sans-serif;
+  --font-serif: 'Cormorant Garamond', 'Times New Roman', serif;
+  --font-sans: 'Plus Jakarta Sans', 'Noto Sans', 'Segoe UI', sans-serif;
 
   /* Spacing Scale */
-  --space-xs:  0.25rem;  /* 4px */
-  --space-sm:  0.5rem;   /* 8px */
-  --space-md:  1rem;     /* 16px */
-  --space-lg:  1.5rem;   /* 24px */
-  --space-xl:  2.5rem;   /* 40px */
-  --space-2xl: 4rem;     /* 64px */
-  --space-3xl: 6rem;     /* 96px */
+  --space-xs: 0.25rem;
+  /* 4px */
+  --space-sm: 0.5rem;
+  /* 8px */
+  --space-md: 1rem;
+  /* 16px */
+  --space-lg: 1.5rem;
+  /* 24px */
+  --space-xl: 2.5rem;
+  /* 40px */
+  --space-2xl: 4rem;
+  /* 64px */
+  --space-3xl: 6rem;
+  /* 96px */
 
   /* Borders & Radius */
   --radius-none: 0px;
-  --radius-sm:   2px;
-  --radius-md:   6px;
-  --radius-lg:   12px;
+  --radius-sm: 2px;
+  --radius-md: 6px;
+  --radius-lg: 12px;
   --radius-full: 9999px;
 
   /* Elevation Shadows */
@@ -51,13 +73,15 @@
   --header-height: 80px;
 
   /* Transitions */
-  --transition-fast:   0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  --transition-fast: 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   --transition-normal: 0.35s cubic-bezier(0.16, 1, 0.3, 1);
-  --transition-slow:   0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  --transition-slow: 0.6s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 /* ---------- Reset & Base Styling ---------- */
-*, *::before, *::after {
+*,
+*::before,
+*::after {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
@@ -83,11 +107,24 @@ body {
   overflow-x: hidden;
 }
 
-p, li, span, div, label, input, textarea, select, button {
+p,
+li,
+span,
+div,
+label,
+input,
+textarea,
+select,
+button {
   font-family: inherit;
 }
 
-h1, h2, h3, h4, h5, h6 {
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
   font-family: var(--font-serif);
   line-height: 1.08;
   letter-spacing: -0.02em;
@@ -114,7 +151,8 @@ a {
   transition: color var(--transition-fast);
 }
 
-ul, ol {
+ul,
+ol {
   list-style: none;
 }
 
@@ -129,7 +167,9 @@ button {
   align-items: center;
 }
 
-input, textarea, select {
+input,
+textarea,
+select {
   font-family: inherit;
   font-size: inherit;
   color: inherit;
@@ -217,6 +257,7 @@ input, textarea, select {
   0% {
     background-position: -200% 0;
   }
+
   100% {
     background-position: 200% 0;
   }
