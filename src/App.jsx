@@ -41,9 +41,7 @@ const InventoryHistory = lazy(() => import("./pages/storage/InventoryHistory"));
 const InventoryStatistics = lazy(
   () => import("./pages/storage/InventoryStatistics"),
 );
-const InventoryTestingIntegration = lazy(
-  () => import("./pages/storage/InventoryTestingIntegration"),
-);
+
 
 // =========== STAFF PAGES (Lazy load) ===========
 const StaffLayout = lazy(() => import("./pages/staff/StaffLayout"));
@@ -169,7 +167,7 @@ function App() {
             <Route
               element={
                 <ProtectedRoute
-                  allowedRoles={["STORAGE", "ADMIN", "MANAGER"]}
+                  allowedRoles={["STORAGE", "STORAGE_MANAGER", "ADMIN", "MANAGER"]}
                 />
               }
             >
@@ -186,10 +184,7 @@ function App() {
                 <Route path="adjustment" element={<StockAdjustment />} />
                 <Route path="history" element={<InventoryHistory />} />
                 <Route path="statistics" element={<InventoryStatistics />} />
-                <Route
-                  path="testing"
-                  element={<InventoryTestingIntegration />}
-                />
+                
               </Route>
             </Route>
 

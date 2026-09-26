@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { authAPI } from "../../services/api";
 import { Eye, EyeOff, ArrowLeft } from "lucide-react";
-import bgImage from "../../assets/background.jpg"; 
+import bgImage from "../../assets/background.jpg";
 import "./Login.css";
 
 const Login = () => {
@@ -19,7 +19,6 @@ const Login = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     setError("");
     setLoading(true);
 
@@ -30,28 +29,35 @@ const Login = () => {
 
     try {
       const response = await authAPI.login(payload);
+      console.log("Dữ liệu trả về từ API login:", response); // Kiểm tra xem nó có token và user không
 
-      // Lưu token và thông tin user vào localStorage
-      localStorage.setItem("token", response.token);
-      localStorage.setItem("user", JSON.stringify(response.user));
+      // Lấy token và user (phòng hờ bị bọc qua .data của axios thì sửa thành response.data)
+      const token = response.token || response.data?.token;
+      const user = response.user || response.data?.user;
 
-      // Lấy role từ thông tin user trả về (tùy cấu trúc BE có thể là response.user.role hoặc response.user.isAdmin)
-      const userRole = response.user?.role?.toUpperCase(); 
-
-      // Điều hướng dựa theo từng role cụ thể
-      if (userRole === "ADMIN") {
-        navigate("/admin/dashboard"); // Điều hướng đến trang Dashboard của Admin
-      } else if (userRole === "STORAGE" || userRole === "MANAGER") {
-        navigate("/storage"); // Điều hướng đến trang quản lý kho
-      } else if (userRole === "STAFF") {
-        navigate("/staff"); // Hoặc trang dành cho nhân viên
-      } else {
-        navigate("/"); // Mặc định cho Customer về trang chủ
+      if (!token || !user) {
+        throw new Error("Cấu trúc phản hồi từ Server không đúng định dạng!");
       }
 
+      localStorage.setItem("token", token);
+      localStorage.setItem("user", JSON.stringify(user));
+
+      const userRole = user?.role?.toUpperCase();
+      console.log("Role nhận được:", userRole); // Kiểm tra role
+
+      if (userRole === "ADMIN") {
+        navigate("/admin/dashboard");
+      } else if (userRole === "STORAGE" || userRole === "STORAGE_MANAGER") {
+        navigate("/storage");
+      } else if (userRole === "STAFF") {
+        navigate("/staff");
+      } else {
+        navigate("/");
+      }
     } catch (err) {
+      console.error("Lỗi đăng nhập:", err);
       setError(
-        getApiErrorMessage(err, "Đăng nhập thất bại. Vui lòng thử lại!"),
+        "Đăng nhập thất bại. Vui lòng kiểm tra lại tài khoản hoặc mật khẩu!",
       );
     } finally {
       setLoading(false);
@@ -59,13 +65,13 @@ const Login = () => {
   };
 
   return (
-    <div 
+    <div
       className="auth-wrapper"
       style={{
         backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.8)), url(${bgImage})`,
         backgroundSize: "cover",
         backgroundPosition: "center",
-        backgroundRepeat: "no-repeat"
+        backgroundRepeat: "no-repeat",
       }}
     >
       <div className="auth-main-card">
@@ -90,7 +96,17 @@ const Login = () => {
             </Link>
 
             <div className="auth-header">
-              <h2 style={{ fontFamily: "Bodoni Moda", fontSize: 'clamp(2rem, 2.5vw, 2.7rem)', color: '#1a1a1a', letterSpacing: '-0.02em', fontWeight: 600 }}>Đăng Nhập</h2>
+              <h2
+                style={{
+                  fontFamily: "Bodoni Moda",
+                  fontSize: "clamp(2rem, 2.5vw, 2.7rem)",
+                  color: "#1a1a1a",
+                  letterSpacing: "-0.02em",
+                  fontWeight: 600,
+                }}
+              >
+                Đăng Nhập
+              </h2>
               <p>Chào mừng bạn trở lại, vui lòng nhập thông tin.</p>
             </div>
 

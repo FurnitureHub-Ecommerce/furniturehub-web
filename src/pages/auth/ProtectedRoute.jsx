@@ -1,10 +1,10 @@
 import React from 'react';
-import { Navigate, Outlet } from 'react-router-dom';
+import { Navigate, Outlet } from 'react-router-dom'; // <--- Đảm bảo có dòng này!
 
 export const ProtectedRoute = ({ allowedRoles }) => {
   const token = localStorage.getItem('token');
   const userJson = localStorage.getItem('user');
-  
+
   if (!token || !userJson) {
     return <Navigate to="/login" replace />;
   }
