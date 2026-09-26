@@ -3,11 +3,10 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ShopProvider } from "./context/ShopContext";
 import MainLayout from "./components/layout/MainLayout/MainLayout";
 import Home from "./pages/home/Home";
+import ProductListPage from "./pages/customer/ProductListPage";
+import ProductDetailPage from "./pages/customer/ProductDetailPage";
 import {
-  CategoryPage,
-  ProductDetailPage,
   CartPage,
-  CollectionsPage,
   LookbookPage,
 } from "./pages/customer/CustomerPages";
 
@@ -58,10 +57,18 @@ function App() {
             }
           />
           <Route
+            path="/products"
+            element={
+              <MainLayout>
+                <ProductListPage />
+              </MainLayout>
+            }
+          />
+          <Route
             path="/collections"
             element={
               <MainLayout>
-                <CollectionsPage />
+                <ProductListPage />
               </MainLayout>
             }
           />
@@ -69,7 +76,7 @@ function App() {
             path="/category/:id"
             element={
               <MainLayout>
-                <CategoryPage />
+                <ProductListPage />
               </MainLayout>
             }
           />
@@ -81,6 +88,7 @@ function App() {
               </MainLayout>
             }
           />
+
           <Route
             path="/cart"
             element={
