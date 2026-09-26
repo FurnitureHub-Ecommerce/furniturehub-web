@@ -1,14 +1,16 @@
 import { Suspense, lazy } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+
 import { ShopProvider } from "./context/ShopContext";
-import { ProtectedRoute } from "../src/pages/auth/ProtectedRoute"; // Import bảo vệ route
+import { ProtectedRoute } from "./pages/auth/ProtectedRoute";
 
 // =========== LAYOUTS & PAGES (CUSTOMER) ===========
 import MainLayout from "./components/layout/MainLayout/MainLayout";
 import Home from "./pages/home/Home";
+import ProductListPage from "./pages/customer/ProductListPage";
+import ProductDetailPage from "./pages/customer/ProductDetailPage";
 import {
   CategoryPage,
-  ProductDetailPage,
   CartPage,
   WishlistPage,
   CheckoutPage,
@@ -81,6 +83,14 @@ function App() {
               element={
                 <MainLayout>
                   <Home />
+                </MainLayout>
+              }
+            />
+            <Route
+              path="/products"
+              element={
+                <MainLayout>
+                  <ProductListPage />
                 </MainLayout>
               }
             />

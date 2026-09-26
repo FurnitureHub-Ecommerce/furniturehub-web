@@ -1,54 +1,144 @@
 import axios from "axios";
 
-// Lấy Base URL từ .env theo chuẩn Vite
-const BASE_URL =
-  import.meta.env.VITE_API_BASE_URL ||
-  "https://api-furniturehub-minhdevops.up.railway.app";
-
 const api = axios.create({
-  baseURL: BASE_URL,
+  baseURL: import.meta.env.VITE_API_BASE_URL,
   headers: {
     "Content-Type": "application/json",
   },
   timeout: 10000,
 });
 
-// Request Interceptor: Đính kèm Bearer Token nếu có
+// Tự động đính kèm Bearer Token nếu có
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem("token");
+
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+
     return config;
   },
   (error) => Promise.reject(error),
 );
 
-// Response Interceptor: Xử lý lỗi hệ thống trung tâm
+// Giữ nguyên Axios response để tránh phá contract của các service hiện tại
 api.interceptors.response.use(
-  (response) => response.data,
+  (response) => response,
   (error) => {
-    const customError = {
-      message:
-        error.response?.data?.message ||
-        error.message ||
-        "Không thể kết nối đến máy chủ. Vui lòng kiểm tra kết nối mạng.",
-      status: error.response?.status || 500,
-    };
-    return Promise.reject(customError);
+    const config = error.config;
+
+    const authorization =
+      config?.headers?.get?.("Authorization") ?? config?.headers?.Authorization;
+
+    // Không xóa phiên vì Login thất bại hoặc request cũ
+    // trả về sau một lần đăng nhập mới.
+    if (
+      error.response?.status === 401 &&
+      !config?.skipAuthSessionInvalidation
+    ) {
+      try {
+        const token = localStorage.getItem("token");
+
+        if (token && authorization === `Bearer ${token}`) {
+          localStorage.removeItem("token");
+          localStorage.removeItem("user");
+        }
+      } catch {
+        // Giữ nguyên HTTP error nếu localStorage bị chặn.
+      }
+    }
+
+    return Promise.reject(error);
   },
 );
 
+export function parseLoginResponse(data) {
+  if (
+    !data ||
+    typeof data.token !== "string" ||
+    !data.token.trim() ||
+    !data.user ||
+    typeof data.user !== "object" ||
+    Array.isArray(data.user)
+  ) {
+    throw new Error(
+      "Phản hồi đăng nhập chưa đúng cấu trúc được hỗ trợ. Vui lòng xác nhận contract Backend.",
+    );
+  }
+
+  return {
+    token: data.token,
+    user: data.user,
+  };
+}
+
+export function getApiErrorMessage(error, fallback) {
+  const data = error.response?.data;
+  const validationMessage = data?.errors?.[0]?.message;
+
+  if (typeof validationMessage === "string" && validationMessage) {
+    return validationMessage;
+  }
+
+  if (typeof data?.message === "string" && data.message) {
+    return data.message;
+  }
+
+  if (error.response?.status === 401) {
+    return "Xác thực thất bại. Vui lòng kiểm tra thông tin đăng nhập hoặc phiên đăng nhập.";
+  }
+
+  if (error.response?.status === 403) {
+    return "Bạn không có quyền thực hiện yêu cầu này.";
+  }
+
+  if (error.response?.status >= 500) {
+    return "Backend đang gặp lỗi. Vui lòng thử lại sau.";
+  }
+
+  if (!error.response && (error.request || error.code === "ERR_NETWORK")) {
+    return "Không thể kết nối Backend. Vui lòng kiểm tra kết nối và thử lại.";
+  }
+
+  return error.message || fallback;
+}
+
+// =========== AUTH API ===========
+
+export const authAPI = {
+  login: ({ email, password }) =>
+    api.post(
+      "/api/auth/login",
+      { email, password },
+      { skipAuthSessionInvalidation: true },
+    ),
+
+  register: ({ fullName, email, password, phone }) =>
+    api.post(
+      "/api/auth/register",
+      {
+        fullName,
+        email,
+        password,
+        ...(phone ? { phone } : {}),
+      },
+      { skipAuthSessionInvalidation: true },
+    ),
+};
+
+// =========== PRODUCT API ===========
+
 export const productAPI = {
   getProducts: (params = {}) => api.get("/api/products", { params }),
-  // Dùng api/products/admin nếu bạn cần xem tất cả sản phẩm hệ thống kho
+
   getProductsAdmin: (params = {}) => api.get("/api/products/admin", { params }),
+
   getProductById: (id) => api.get(`/api/products/${id}`),
 
-  // Lấy variant theo productId (dùng /admin để lấy cả các variant đã vô hiệu hóa nếu cần)
   getProductVariants: (productId) =>
     api.get(`/api/products/${productId}/variants`),
+
   getProductVariantsAdmin: (productId) =>
     api.get(`/api/products/${productId}/variants/admin`),
 
@@ -56,43 +146,40 @@ export const productAPI = {
     api.post(`/api/products/${productId}/variants`, data),
 };
 
+// =========== CATEGORY API ===========
+
 export const categoryAPI = {
   getCategories: (params = {}) => api.get("/api/categories", { params }),
+
   getCategoryById: (id) => api.get(`/api/categories/${id}`),
 };
+
+// =========== BRAND API ===========
 
 export const brandAPI = {
   getBrands: () => api.get("/api/brands"),
 };
 
-export const authAPI = {
-  login: (data) => api.post("/api/auth/login", data),
-  register: (data) => api.post("/api/auth/register", data),
-};
+// =========== STORAGE API ===========
 
 export const storageAPI = {
-  // Lấy danh sách tất cả sản phẩm đang hoạt động
   getProducts: () => api.get("/api/products"),
 
-  // Lấy tất cả sản phẩm dành cho admin (nếu cần xem chi tiết hơn)
   getProductsAdmin: () => api.get("/api/products/admin"),
 
-  // Lấy danh sách Variant (biến thể / SKU) theo productId
   getVariantsByProduct: (productId) =>
     api.get(`/api/products/${productId}/variants`),
 
-  // Lấy toàn bộ variant của sản phẩm dành cho admin (bao gồm cả đã vô hiệu hóa)
   getVariantsAdmin: (productId) =>
     api.get(`/api/products/${productId}/variants/admin`),
 
-  // Lấy chi tiết 1 Variant theo ID
   getVariantById: (id) => api.get(`/api/variants/${id}`),
 
-  // Cập nhật thông tin Variant / SKU
   updateVariant: (id, data) => api.patch(`/api/variants/${id}`, data),
 };
 
-//cho order
+// =========== ORDER API ===========
+
 export const orderAPI = {
   getOrdersById: (id) => api.get(`/api/orders/${id}`),
 
