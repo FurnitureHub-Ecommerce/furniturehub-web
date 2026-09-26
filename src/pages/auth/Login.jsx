@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { authAPI } from "../../services/api";
 import { Eye, EyeOff, ArrowLeft } from "lucide-react";
@@ -6,14 +6,20 @@ import bgImage from "../../assets/background.jpg";
 import "./Login.css";
 
 const Login = () => {
-  const [formData, setFormData] = useState({ email: "", password: "" });
+  const [formData, setFormData] = useState({
+    email: "",
+    password: "",
+  });
+
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
     setError("");
     setLoading(true);
 
@@ -44,12 +50,9 @@ const Login = () => {
       }
 
     } catch (err) {
-      const res = err.response?.data;
-      if (res?.errors && res.errors.length > 0) {
-        setError(res.errors[0].message);
-      } else {
-        setError(res?.message || "Đăng nhập thất bại. Vui lòng thử lại!");
-      }
+      setError(
+        getApiErrorMessage(err, "Đăng nhập thất bại. Vui lòng thử lại!"),
+      );
     } finally {
       setLoading(false);
     }
@@ -68,12 +71,14 @@ const Login = () => {
       <div className="auth-main-card">
         <div className="auth-banner">
           <div className="banner-brand">LUMORA</div>
+
           <div className="banner-quote">
             <h3>
               Kiến tạo không gian,
               <br />
               Nâng tầm sống hiện đại.
             </h3>
+
             <p>Hệ thống quản lý kho & phân phối nội thất cao cấp.</p>
           </div>
         </div>
@@ -94,13 +99,17 @@ const Login = () => {
             <form onSubmit={handleSubmit}>
               <div className="form-group">
                 <label>Email</label>
+
                 <input
                   type="email"
                   className="form-input"
                   placeholder="customer@example.com"
                   value={formData.email}
                   onChange={(e) =>
-                    setFormData({ ...formData, email: e.target.value })
+                    setFormData({
+                      ...formData,
+                      email: e.target.value,
+                    })
                   }
                   required
                 />
@@ -108,6 +117,7 @@ const Login = () => {
 
               <div className="form-group">
                 <label>Mật Khẩu</label>
+
                 <div style={{ position: "relative" }}>
                   <input
                     type={showPassword ? "text" : "password"}
@@ -115,11 +125,15 @@ const Login = () => {
                     placeholder="••••••••"
                     value={formData.password}
                     onChange={(e) =>
-                      setFormData({ ...formData, password: e.target.value })
+                      setFormData({
+                        ...formData,
+                        password: e.target.value,
+                      })
                     }
                     required
                     style={{ paddingRight: "40px" }}
                   />
+
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}

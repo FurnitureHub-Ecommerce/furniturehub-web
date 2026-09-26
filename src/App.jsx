@@ -1,5 +1,6 @@
 import { Suspense, lazy } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+
 import { ShopProvider } from "./context/ShopContext";
 import { ProtectedRoute } from "./pages/auth/ProtectedRoute";
 
