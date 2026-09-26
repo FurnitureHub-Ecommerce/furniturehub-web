@@ -1,13 +1,8 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
+import { authAPI } from "../../services/api";
 import { Eye, EyeOff, ArrowLeft } from "lucide-react";
-
-import {
-  authAPI,
-  parseLoginResponse,
-  getApiErrorMessage,
-} from "../../services/api";
-
+import bgImage from "../../assets/background.jpg"; 
 import "./Login.css";
 
 const Login = () => {
@@ -36,14 +31,24 @@ const Login = () => {
     try {
       const response = await authAPI.login(payload);
 
-      const { token, user } = parseLoginResponse(response.data);
+      // Lưu token và thông tin user vào localStorage
+      localStorage.setItem("token", response.token);
+      localStorage.setItem("user", JSON.stringify(response.user));
 
-      localStorage.setItem("token", token);
-      localStorage.setItem("user", JSON.stringify(user));
+      // Lấy role từ thông tin user trả về (tùy cấu trúc BE có thể là response.user.role hoặc response.user.isAdmin)
+      const userRole = response.user?.role?.toUpperCase(); 
 
-      // Role trong response chưa được xác minh.
-      // Tạm chuyển về route Storage đang tồn tại.
-      navigate("/storage");
+      // Điều hướng dựa theo từng role cụ thể
+      if (userRole === "ADMIN") {
+        navigate("/admin/dashboard"); // Điều hướng đến trang Dashboard của Admin
+      } else if (userRole === "STORAGE" || userRole === "MANAGER") {
+        navigate("/storage"); // Điều hướng đến trang quản lý kho
+      } else if (userRole === "STAFF") {
+        navigate("/staff"); // Hoặc trang dành cho nhân viên
+      } else {
+        navigate("/"); // Mặc định cho Customer về trang chủ
+      }
+
     } catch (err) {
       setError(
         getApiErrorMessage(err, "Đăng nhập thất bại. Vui lòng thử lại!"),
@@ -54,7 +59,15 @@ const Login = () => {
   };
 
   return (
-    <div className="auth-wrapper">
+    <div 
+      className="auth-wrapper"
+      style={{
+        backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.8)), url(${bgImage})`,
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        backgroundRepeat: "no-repeat"
+      }}
+    >
       <div className="auth-main-card">
         <div className="auth-banner">
           <div className="banner-brand">LUMORA</div>
@@ -77,7 +90,7 @@ const Login = () => {
             </Link>
 
             <div className="auth-header">
-              <h2>Đăng Nhập</h2>
+              <h2 style={{ fontFamily: "Bodoni Moda", fontSize: 'clamp(2rem, 2.5vw, 2.7rem)', color: '#1a1a1a', letterSpacing: '-0.02em', fontWeight: 600 }}>Đăng Nhập</h2>
               <p>Chào mừng bạn trở lại, vui lòng nhập thông tin.</p>
             </div>
 

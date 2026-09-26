@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { loadStorageVariants } from '../../services/storageData';
-import { Layers, FileSpreadsheet } from 'lucide-react';
+import { Layers, FileSpreadsheet, Search } from 'lucide-react';
 
 const StorageDashboard = () => {
   const [skuProducts, setSkuProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState(''); // Thêm state tìm kiếm
 
-  // Hàm tải dữ liệu kho
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
@@ -23,7 +23,6 @@ const StorageDashboard = () => {
     fetchDashboardData();
   }, []);
 
-  // Xuất Excel Kho (Định dạng CSV chuẩn tiếng Việt UTF-8)
   const handleExportExcel = () => {
     if (skuProducts.length === 0) {
       alert('Không có dữ liệu để xuất Excel!');
@@ -56,9 +55,15 @@ const StorageDashboard = () => {
     document.body.removeChild(link);
   };
 
-  const totalStock = skuProducts.reduce((acc, item) => acc + (item.stock || 0), 0);
+  // Lọc danh sách SKU theo từ khóa tìm kiếm
+  const filteredProducts = skuProducts.filter((item) => 
+    (item.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (item.id || '').toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const totalStock = skuProducts.reduce((acc, item) => acc + (Number(item.stock) || 0), 0);
   const stockItems = skuProducts.filter((item) => item.stock !== null && item.stock !== undefined);
-  const lowStockCount = stockItems.filter((item) => item.stock <= 15).length;
+  const lowStockCount = stockItems.filter((item) => Number(item.stock) <= 15).length;
   const hasStockData = stockItems.length > 0;
 
   const storageMetrics = [
@@ -88,7 +93,6 @@ const StorageDashboard = () => {
         </div>
       </header>
 
-      {/* Metric Cards (Đã rút gọn còn 3 ô do không có vị trí lưu trữ) */}
       <div className="metrics-grid" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
         {storageMetrics.map((item, idx) => (
           <div key={idx} className="metric-card">
@@ -99,14 +103,24 @@ const StorageDashboard = () => {
         ))}
       </div>
 
-      {/* SKU Table */}
       <section className="sku-section">
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px', flexWrap: 'wrap', gap: '12px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <Layers size={20} color="#1c1c1c" />
             <h3 style={{ margin: 0 }}>Danh Mục SKU Master & Hiện Trạng Tồn Kho</h3>
           </div>
-          <span style={{ fontSize: '13px', color: '#666' }}>Cập nhật tự động từ hệ thống</span>
+          
+          {/* Ô tìm kiếm nhanh */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: '#fff', padding: '6px 12px', borderRadius: '6px', border: '1px solid #ddd' }}>
+            <Search size={16} color="#666" />
+            <input 
+              type="text" 
+              placeholder="Tìm theo tên hoặc mã SKU..." 
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              style={{ border: 'none', outline: 'none', fontSize: '14px' }}
+            />
+          </div>
         </div>
 
         <table className="storage-table">
@@ -119,8 +133,8 @@ const StorageDashboard = () => {
             </tr>
           </thead>
           <tbody>
-            {skuProducts.length > 0 ? (
-              skuProducts.map((prod) => {
+            {filteredProducts.length > 0 ? (
+              filteredProducts.map((prod) => {
                 const stockVal = prod.stock;
                 return (
                   <tr key={prod.id}>
@@ -149,7 +163,7 @@ const StorageDashboard = () => {
             ) : (
               <tr>
                 <td colSpan="4" style={{ textAlign: 'center', padding: '30px', color: '#666' }}>
-                  Không có dữ liệu SKU nào trong kho.
+                  Không tìm thấy SKU nào phù hợp.
                 </td>
               </tr>
             )}

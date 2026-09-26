@@ -23,15 +23,15 @@ const navigation = [
   {
     label: "DASHBOARD & GOVERNANCE",
     items: [
-      [LayoutDashboard, "Executive Dashboard", "/admin"],
-      [ChartNoAxesCombined, "Thống Kê & Phân Tích", "/admin/analytics"],
+      [LayoutDashboard, "Executive Dashboard", "/admin/dashboard"], // Trỏ đúng vào /admin/dashboard
+      [ChartNoAxesCombined, "Thống Kê & Phân Tích"],
     ],
   },
   {
     label: "NGƯỜI DÙNG & PHÂN QUYỀN (RBAC)",
     items: [
-      [Users, "Quản Lý Người Dùng", "/admin/users"],
-      [ShieldCheck, "Ma Trận Phân Quyền & Vai Trò", "/admin/roles"],
+      [Users, "Quản Lý Người Dùng", "/admin/users"], // Trỏ đúng vào /admin/users
+      [ShieldCheck, "Ma Trận Phân Quyền & Vai Trò"],
     ],
   },
   {
@@ -128,10 +128,7 @@ export default function AdminLayout() {
           <X size={20} />
         </button>
         <div className="la-brand">
-          <img
-            className="la-logo-slot"
-            src={logo}
-            alt="Logo LUMORA" />
+          <img className="la-logo-slot" src={logo} alt="Logo LUMORA" />
           <div>
             LUMORA
             <small>
