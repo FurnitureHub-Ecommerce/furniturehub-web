@@ -1,29 +1,32 @@
-import { productAPI } from './api';
+import { storageAPI } from './api';
 
 const getArrayFromResponse = (response, keys = []) => {
   if (Array.isArray(response)) return response;
+  const actualData = response?.data !== undefined ? response.data : response;
+  if (Array.isArray(actualData)) return actualData;
 
   for (const key of keys) {
-    if (Array.isArray(response?.[key])) return response[key];
+    if (Array.isArray(actualData?.[key])) return actualData[key];
+    if (Array.isArray(actualData?.data?.[key])) return actualData.data[key];
   }
 
   return [];
 };
 
-const getNumberOrNull = (...values) => {
-  const value = values.find((item) => typeof item === 'number');
-  return value ?? null;
-};
-
 const getVariantLabel = (variant) =>
-  [variant.color, variant.size, variant.material].filter(Boolean).join(' - ') || 'Chưa cập nhật';
+  [variant?.color, variant?.size, variant?.material].filter(Boolean).join(' - ') || 'Tiêu chuẩn';
 
 export const loadStorageVariants = async () => {
   let productsResponse;
   try {
-    productsResponse = await productAPI.getProductsAdmin();
+    // 1. Đảo ngược lại: Ưu tiên gọi api thông thường trước để tránh dính lỗi 403 của tài khoản STORAGE
+    productsResponse = await storageAPI.getProducts();
   } catch (error) {
-    productsResponse = await productAPI.getProducts();
+    try {
+      productsResponse = await storageAPI.getProductsAdmin();
+    } catch (err) {
+      productsResponse = [];
+    }
   }
 
   const products = getArrayFromResponse(productsResponse, ['products', 'data', 'content']);
@@ -36,9 +39,10 @@ export const loadStorageVariants = async () => {
       try {
         let variantsResponse;
         try {
-          variantsResponse = await productAPI.getProductVariantsAdmin(productId);
+          // 2. Ưu tiên gọi biến thể thông thường trước
+          variantsResponse = await storageAPI.getVariantsByProduct(productId);
         } catch (error) {
-          variantsResponse = await productAPI.getProductVariants(productId);
+          variantsResponse = await storageAPI.getVariantsAdmin(productId);
         }
 
         const variants = getArrayFromResponse(variantsResponse, ['variants', 'data', 'content']);
@@ -48,16 +52,17 @@ export const loadStorageVariants = async () => {
           productId,
           name: product.name || 'Sản phẩm chưa đặt tên',
           specs: getVariantLabel(variant),
-          location: variant.location || variant.inventory?.location || null,
-          stock: getNumberOrNull(
-            variant.stock,
-            variant.stockQuantity,
-            variant.quantity,
-            variant.inventory?.quantity,
-            variant.inventory?.stock,
-            variant.inventory?.availableStock
+          location: variant.location || variant.inventory?.location || 'Kho chính',
+          stock: Number(
+            variant.stock ??
+            variant.stockQuantity ??
+            variant.quantity ??
+            variant.inventory?.quantity ??
+            variant.inventory?.stock ??
+            variant.inventory?.availableStock ??
+            0
           ),
-          price: variant.price,
+          price: variant.price || 0,
         }));
       } catch (error) {
         console.error(`Lỗi lấy biến thể của sản phẩm ${product.name}:`, error);

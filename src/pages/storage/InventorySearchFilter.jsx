@@ -7,7 +7,6 @@ const InventorySearchFilter = () => {
   const [loading, setLoading] = useState(true);
 
   const [tuKhoa, setTuKhoa] = useState("");
-  const [khuVucKho, setKhuVucKho] = useState("ALL");
   const [trangThaiTon, setTrangThaiTon] = useState("ALL");
 
   // Gọi API lấy dữ liệu thật khi component được mount
@@ -32,9 +31,6 @@ const InventorySearchFilter = () => {
       item.id.toLowerCase().includes(tuKhoa.toLowerCase()) ||
       item.specs.toLowerCase().includes(tuKhoa.toLowerCase());
 
-    const khopKhuVuc =
-      khuVucKho === "ALL" || item.location?.includes(khuVucKho);
-
     let khopTrangThai = true;
     if (trangThaiTon === "LOW") {
       khopTrangThai = item.stock !== null && item.stock <= 15 && item.stock > 0;
@@ -44,12 +40,11 @@ const InventorySearchFilter = () => {
       khopTrangThai = item.stock !== null && item.stock > 15;
     }
 
-    return khopTuKhoa && khopKhuVuc && khopTrangThai;
+    return khopTuKhoa && khopTrangThai;
   });
 
   const xuLyDatLai = () => {
     setTuKhoa("");
-    setKhuVucKho("ALL");
     setTrangThaiTon("ALL");
   };
 
@@ -93,8 +88,7 @@ const InventorySearchFilter = () => {
             Tra Cứu & Lọc Dữ Liệu Tồn Kho
           </h2>
           <p style={{ fontFamily: "'Inter', sans-serif" }}>
-            Tra cứu nhanh chóng thông tin sản phẩm, vị trí lưu trữ và trạng thái
-            hàng hóa theo tiêu chí đa chiều.
+            Tra cứu nhanh chóng thông tin sản phẩm và trạng thái hàng hóa theo tiêu chí đa chiều.
           </p>
         </div>
         <div className="actions" style={{ fontFamily: "'Inter', sans-serif" }}>
@@ -108,7 +102,7 @@ const InventorySearchFilter = () => {
         </div>
       </header>
 
-      {/* Khu vực điều khiển bộ lọc */}
+      {/* Khu vực điều khiển bộ lọc (đã bỏ khu vực kho, chia làm 2 cột) */}
       <div
         style={{
           background: "#fff",
@@ -137,7 +131,7 @@ const InventorySearchFilter = () => {
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "2fr 1fr 1fr",
+            gridTemplateColumns: "2fr 1fr",
             gap: "16px",
           }}
         >
@@ -181,40 +175,6 @@ const InventorySearchFilter = () => {
                 }}
               />
             </div>
-          </div>
-
-          <div>
-            <label
-              style={{
-                display: "block",
-                fontSize: "11px",
-                fontWeight: "700",
-                color: "#8c857b",
-                marginBottom: "6px",
-                fontFamily: "'Inter', sans-serif",
-              }}
-            >
-              KHU VỰC KHO
-            </label>
-            <select
-              value={khuVucKho}
-              onChange={(e) => setKhuVucKho(e.target.value)}
-              style={{
-                width: "100%",
-                padding: "10px 12px",
-                borderRadius: "4px",
-                border: "1px solid #e2ded4",
-                background: "#f7f6f3",
-                fontSize: "13px",
-                outline: "none",
-                cursor: "pointer",
-                fontFamily: "'Inter', sans-serif",
-              }}
-            >
-              <option value="ALL">Tất Cả Khu Vực Kho</option>
-              <option value="Kho A">Kho A</option>
-              <option value="Kho B">Kho B</option>
-            </select>
           </div>
 
           <div>
@@ -286,7 +246,6 @@ const InventorySearchFilter = () => {
             <tr>
               <th>MÃ SKU & TÊN SẢN PHẨM</th>
               <th>QUY CÁCH & BIẾN THỂ</th>
-
               <th>SỐ LƯỢNG TỒN</th>
               <th>TRẠNG THÁI</th>
             </tr>
@@ -301,7 +260,6 @@ const InventorySearchFilter = () => {
                     <small style={{ color: "#888" }}>{prod.id}</small>
                   </td>
                   <td>{prod.specs}</td>
-
                   <td>
                     <strong>
                       {prod.stock === null ? "Chưa cập nhật" : prod.stock}
@@ -347,15 +305,14 @@ const InventorySearchFilter = () => {
             ) : (
               <tr>
                 <td
-                  colSpan="5"
+                  colSpan="4"
                   style={{
                     textAlign: "center",
                     padding: "40px",
                     color: "#666",
                   }}
                 >
-                  Không tìm thấy sản phẩm nào khớp với điều kiện tìm kiếm và bộ
-                  lọc của bạn.
+                  Không tìm thấy sản phẩm nào khớp với điều kiện tìm kiếm và bộ lọc của bạn.
                 </td>
               </tr>
             )}

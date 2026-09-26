@@ -51,7 +51,6 @@ const StorageLayout = () => {
               <li><NavLink to="/storage/alerts">Cảnh Báo Tồn Thấp</NavLink></li>
               <li><NavLink to="/storage/search">Tìm Kiếm & Bộ Lọc</NavLink></li>
               <li><NavLink to="/storage/history">Lịch Sử Biến Động Kho</NavLink></li>
-              <li><NavLink to="/storage/testing">Kiểm Thử Hệ Thống</NavLink></li>
             </ul>
           </div>
         </div>

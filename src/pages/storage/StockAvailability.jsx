@@ -15,9 +15,12 @@ const StockAvailability = () => {
     const fetchStockAvailability = async () => {
       try {
         setLoading(true);
-        setSkuProducts(await loadStorageVariants());
+        const data = await loadStorageVariants();
+        // Đảm bảo luôn nhận diện dữ liệu là mảng an toàn
+        setSkuProducts(Array.isArray(data) ? data : []);
       } catch (error) {
         console.error('Lỗi tải dữ liệu tình trạng sẵn có:', error);
+        setSkuProducts([]);
       } finally {
         setLoading(false);
       }
@@ -26,11 +29,12 @@ const StockAvailability = () => {
     fetchStockAvailability();
   }, []);
 
-  const danhSachLoc = skuProducts.filter((item) => {
+  // Kiểm tra an toàn trước khi filter
+  const danhSachLoc = Array.isArray(skuProducts) ? skuProducts.filter((item) => {
     if (boLoc === 'AVAILABLE') return item.stock !== null && item.stock > 0;
     if (boLoc === 'OUT') return item.stock !== null && item.stock === 0;
     return true;
-  });
+  }) : [];
 
   const tongSoTrang = Math.ceil(danhSachLoc.length / soLuongMoiTrang) || 1;
   const chiSoBatDau = (trangHienTai - 1) * soLuongMoiTrang;
@@ -150,16 +154,16 @@ const StockAvailability = () => {
               <tbody>
                 {danhSachPhanTrang.length > 0 ? (
                   danhSachPhanTrang.map((prod) => (
-                    <tr key={prod.id}>
+                    <tr key={prod.id || Math.random()}>
                       <td>
                         <strong>{prod.name}</strong>
                         <br />
                         <small style={{ color: '#888' }}>{prod.id}</small>
                       </td>
                       <td>{prod.specs}</td>
-                      <td><strong>{prod.stock === null ? 'Chưa cập nhật' : prod.stock}</strong>{prod.stock !== null && ' đơn vị'}</td>
+                      <td><strong>{prod.stock === null || prod.stock === undefined ? 'Chưa cập nhật' : prod.stock}</strong>{prod.stock !== null && prod.stock !== undefined && ' đơn vị'}</td>
                       <td>
-                        {prod.stock === null ? (
+                        {prod.stock === null || prod.stock === undefined ? (
                           <span style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#78716c', fontWeight: '600', fontSize: '13px' }}>
                             <AlertCircle size={16} /> Chưa Có Dữ Liệu Tồn
                           </span>
