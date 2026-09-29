@@ -27,11 +27,19 @@ const StaffLayout = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
+  const userString = localStorage.getItem("user");
+
+  const savedUser = userString ? JSON.parse(userString) : null;
+
+  const formattedName = savedUser?.fullName
+    ? savedUser.fullName.split(" ").join("+")
+    : "User";
+
   const currentUser = {
-    name: "E. Van Der Bilt",
-    role: "GIÁM ĐỐC VẬN HÀNH",
-    avatar:
-      "https://ui-avatars.com/api/?name=E+Van+Der+Bilt&background=1c1c1c&color=fff",
+    name: savedUser?.fullName || "Staff",
+    role:
+      savedUser?.role === "STAFF" ? "NHAN VIEN" : savedUser?.role || "khach",
+    avatar: `https://ui-avatars.com/api/?name=${formattedName}&background=1c1c1c&color=fff`,
   };
 
   const handleLogout = () => {

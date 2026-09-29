@@ -181,6 +181,8 @@ export const storageAPI = {
 // =========== ORDER API ===========
 
 export const orderAPI = {
+  getOrders: (params = {}) => api.get("/api/orders", { params }),
+
   getOrdersById: (id) => api.get(`/api/orders/${id}`),
 
   updateOrderStatus: (id, status) =>
