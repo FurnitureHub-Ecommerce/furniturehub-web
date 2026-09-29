@@ -3,6 +3,19 @@ import OrderStatusBadge from '../OrderStatusbadge/OrderStatusBadge';
 import './OrderTable.css';
 
 const OrderTable = ({ orders, selectedOrderId, onSelectOrder }) => {
+
+  // Format VND
+  const formatVND = (amount) =>
+    new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(amount);
+
+  // Short date
+  const formatDate = (iso) =>
+    new Date(iso).toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit" });
+
+  // Vietnamese status label
+  const statusLabel = (s) =>
+    ({ pending: "Chờ xác nhận", confirmed: "Đã xác nhận", shipping: "Đang giao", delivered: "Đã giao", cancelled: "Đã hủy" }[s] || s);
+
   return (
     <div className="order-table-wrapper">
       <div className="order-table-header">
@@ -21,7 +34,7 @@ const OrderTable = ({ orders, selectedOrderId, onSelectOrder }) => {
         <thead>
           <tr>
             <th>MÃ ĐƠN</th>
-            <th>KHÁCH HÀNG & CẤP</th>
+            <th>NGƯỜI NHẬN</th>
             <th>NGÀY</th>
             <th>TỔNG</th>
             <th>TRẠNG THÁI</th>
@@ -30,23 +43,25 @@ const OrderTable = ({ orders, selectedOrderId, onSelectOrder }) => {
         <tbody>
           {orders.map((order) => (
             <tr
-              key={order.id}
-              className={`order-row ${selectedOrderId === order.id ? 'order-row--selected' : ''}`}
-              onClick={() => onSelectOrder?.(order.id)}
+              key={order._id}
+              className={`order-row ${selectedOrderId === order._id ? 'order-row--selected' : ''}`}
+              onClick={() => onSelectOrder?.(order._id)}
             >
               <td>
-                <span className="order-id-link">{order.id}</span>
+                <span className="order-id-link">
+                  ...{order._id.slice(-6)}
+                </span>
               </td>
               <td>
                 <div className="client-info">
-                  <strong>{order.clientName}</strong>
-                  <span className="client-tier">{order.clientTier}</span>
+                  <strong>{order.shippingAddress?.receiverName || "—"}</strong>
+                  <span className="client-tier">{order.shippingAddress?.phone}</span>
                 </div>
               </td>
-              <td>{order.date}</td>
-              <td><strong>{order.total}</strong></td>
+              <td>{formatDate(order.createdAt)}</td>
+              <td><strong>{formatVND(order.totalAmount)}</strong></td>
               <td>
-                <OrderStatusBadge status={order.status} />
+                <OrderStatusBadge status={statusLabel(order.status)} />
               </td>
             </tr>
           ))}
@@ -54,11 +69,10 @@ const OrderTable = ({ orders, selectedOrderId, onSelectOrder }) => {
       </table>
 
       <div className="order-table-footer">
-        <span>Hiển thị {orders.length} trong tổng số 18 đơn đang chờ</span>
+        <span>Hiển thị {orders.length} đơn hàng</span>
         <div className="pagination">
           <button className="page-btn" disabled>Trước</button>
           <button className="page-btn page-btn--active">1</button>
-          <button className="page-btn">2</button>
           <button className="page-btn">Sau</button>
         </div>
       </div>
