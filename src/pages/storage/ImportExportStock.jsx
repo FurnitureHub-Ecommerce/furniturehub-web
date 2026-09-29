@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { productAPI } from "../../services/api";
+import { storageAPI } from "../../services/api";
 import { loadStorageVariants } from "../../services/storageData";
 import {
   ArrowDownLeft,
@@ -19,7 +19,7 @@ const ImportExportStock = () => {
   const [isOpenModal, setIsOpenModal] = useState(false);
   const [danhSachSanPham, setDanhSachSanPham] = useState([]);
   const [formData, setFormData] = useState({
-    productId: "",
+    variantId: "",
     quantity: 1,
     note: "",
     partner: "",
@@ -27,102 +27,117 @@ const ImportExportStock = () => {
   const [submitting, setSubmitting] = useState(false);
   const [thongBaoThanhCong, setThongBaoThanhCong] = useState("");
 
-  // Lấy dữ liệu sản phẩm và khôi phục chứng từ đã lưu từ localStorage để không bị mất khi F5
-  // Lấy dữ liệu sản phẩm/biến thể thực tế từ hệ thống kho và khôi phục chứng từ đã lưu từ localStorage
-  useEffect(() => {
-    const fetchStockTransactions = async () => {
-      try {
-        setLoading(true);
+  const fetchData = async () => {
+    try {
+      setLoading(true);
 
-        // 1. Kiểm tra xem localStorage đã có lịch sử phiếu tự tạo trước đó chưa
-        const savedChungTu = localStorage.getItem(
-          "furniture_hub_stock_transactions",
-        );
-        let initialImport = [];
-        let initialExport = [];
+      // 1. Lấy danh sách biến thể từ BE để hiển thị trong select box
+      const productsData = await loadStorageVariants();
+      const productsArr = Array.isArray(productsData) ? productsData : [];
+      setDanhSachSanPham(productsArr);
 
-        if (savedChungTu) {
-          const parsed = JSON.parse(savedChungTu);
-          initialImport = parsed.import || [];
-          initialExport = parsed.export || [];
-        }
+      // 2. Lấy lịch sử giao dịch từ API Backend để hiển thị danh sách chứng từ
+      const txResponse = await storageAPI
+        .getInventoryTransactions()
+        .catch(() => []);
 
-        // 2. Sử dụng chung hàm loadStorageVariants để lấy danh sách sản phẩm/biến thể chuẩn xác nhất
-        const productsData = await loadStorageVariants();
-        setDanhSachSanPham(Array.isArray(productsData) ? productsData : []);
-
-        const finalImport = initialImport;
-        const finalExport = initialExport;
-
-        setChungTu({ import: finalImport, export: finalExport });
-
-        localStorage.setItem(
-          "furniture_hub_stock_transactions",
-          JSON.stringify({ import: finalImport, export: finalExport }),
-        );
-      } catch (error) {
-        console.error("Lỗi tải dữ liệu chứng từ kho:", error);
-      } finally {
-        setLoading(false);
+      let txData = [];
+      if (Array.isArray(txResponse)) {
+        txData = txResponse;
+      } else if (Array.isArray(txResponse?.data)) {
+        txData = txResponse.data;
+      } else if (Array.isArray(txResponse?.transactions)) {
+        txData = txResponse.transactions;
       }
-    };
 
-    fetchStockTransactions();
+      const importedList = [];
+      const exportedList = [];
+
+      txData.forEach((tx, index) => {
+        // Xử lý an toàn tên sản phẩm hoặc SKU
+        let prodName = "Sản phẩm kho";
+        if (typeof tx.productName === "string") prodName = tx.productName;
+        else if (tx.productName?.name) prodName = tx.productName.name;
+
+        const itemObj = {
+          code: tx.code || `TX-${tx._id?.slice(-4) || index}`,
+          date: tx.createdAt
+            ? new Date(tx.createdAt).toLocaleString()
+            : "Hôm nay",
+          partner:
+            tx.partner ||
+            (tx.note?.includes("Đối tác:")
+              ? tx.note.split("Đối tác:")[1]?.split("(")[0]?.trim()
+              : "Đối tác chính"),
+          items: `${prodName} (x${tx.quantity || 0}) - ${tx.note || ""}`,
+          status: "Hoàn Thành",
+        };
+
+        if (tx.type === "IMPORT" || tx.type?.includes("Nhập")) {
+          importedList.push(itemObj);
+        } else {
+          exportedList.push(itemObj);
+        }
+      });
+
+      setChungTu({ import: importedList, export: exportedList });
+    } catch (error) {
+      console.error("Lỗi tải dữ liệu chứng từ kho từ BE:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
   }, []);
 
-  // Xử lý khi submit form tạo phiếu mới và lưu vĩnh viễn vào localStorage
+  // Xử lý tạo phiếu và gửi request trực tiếp lên Database thông qua Backend API
   const handleTaoPhieu = async (e) => {
     e.preventDefault();
-    if (!formData.productId) {
-      alert("Vui lòng chọn sản phẩm!");
+    if (!formData.variantId) {
+      alert("Vui lòng chọn sản phẩm/biến thể!");
       return;
     }
 
     try {
       setSubmitting(true);
-      const selectedProd = danhSachSanPham.find(
-        (p) => (p._id || p.id || p.sku) === formData.productId,
-      );
 
-      // Tạm thời bỏ qua việc gọi API /import /export bị lỗi 403 trên server,
-      // tập trung lưu trực tiếp vào LocalStorage để chạy demo mượt mà không lỗi:
-      const now = new Date();
-      const dateString = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")} ${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+      // Đóng gói payload khớp hoàn hảo với schema của Backend (chỉ chứa quantity và note)
+      const partnerText = formData.partner
+        ? `Đối tác: ${formData.partner}`
+        : "";
+      const noteText = formData.note ? `${formData.note}` : "";
+      const finalNote =
+        [partnerText, noteText].filter(Boolean).join(" - ") ||
+        "Giao dịch kho hàng";
 
-      const maNgauNhien = Math.floor(1000 + Math.random() * 9000);
-      const newRecord = {
-        code: `${tabHienTai === "import" ? "IMP" : "EXP"}-${maNgauNhien}`,
-        date: dateString,
-        [tabHienTai === "import" ? "supplier" : "recipient"]:
-          formData.partner ||
-          (tabHienTai === "import" ? "NCC Chính Hãng" : "Showroom Trung Tâm"),
-        items: `${selectedProd?.name || "Sản phẩm kho"} (x${formData.quantity}) - ${formData.note || "Giao dịch mới"}`,
-        status: tabHienTai === "import" ? "Hoàn Thành" : "Đã Xuất Kho",
+      const payload = {
+        quantity: Number(formData.quantity),
+        note: finalNote,
       };
 
-      const updatedList = [newRecord, ...chungTu[tabHienTai]];
-      const newChungTuState = {
-        ...chungTu,
-        [tabHienTai]: updatedList,
-      };
-
-      setChungTu(newChungTuState);
-      localStorage.setItem(
-        "furniture_hub_stock_transactions",
-        JSON.stringify(newChungTuState),
-      );
+      if (tabHienTai === "import") {
+        await storageAPI.importInventory(formData.variantId, payload);
+      } else {
+        await storageAPI.exportInventory(formData.variantId, payload);
+      }
 
       setThongBaoThanhCong(
-        `Tạo phiếu ${tabHienTai === "import" ? "nhập" : "xuất"} kho thành công!`,
+        `Tạo phiếu ${tabHienTai === "import" ? "nhập" : "xuất"} kho thành công và lưu vào Database!`,
       );
+
+      // Load lại dữ liệu mới nhất từ Database
+      await fetchData();
+
       setTimeout(() => {
         setThongBaoThanhCong("");
         setIsOpenModal(false);
-        setFormData({ productId: "", quantity: 1, note: "", partner: "" });
+        setFormData({ variantId: "", quantity: 1, note: "", partner: "" });
       }, 1500);
     } catch (err) {
-      console.error("Lỗi tạo phiếu:", err);
-      alert("Có lỗi xảy ra!");
+      console.error("Lỗi tạo phiếu lên BE:", err);
+      alert("Có lỗi xảy ra khi lưu vào Database từ Backend!");
     } finally {
       setSubmitting(false);
     }
@@ -134,41 +149,6 @@ const ImportExportStock = () => {
       style={{ fontFamily: "'Inter', sans-serif" }}
     >
       <style>{`
-        @keyframes pageFadeIn {
-          from { opacity: 0; transform: translateY(12px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        @keyframes modalScaleUp {
-          from { opacity: 0; transform: scale(0.95); }
-          to { opacity: 1; transform: scale(1); }
-        }
-        @keyframes spin {
-          0% { transform: rotate(0deg); }
-          100% { transform: rotate(360deg); }
-        }
-        .dashboard-main {
-          animation: pageFadeIn 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-        }
-        .modal-overlay {
-          position: fixed;
-          top: 0; left: 0; right: 0; bottom: 0;
-          background: rgba(0, 0, 0, 0.5);
-          backdrop-filter: blur(4px);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          z-index: 1000;
-          animation: pageFadeIn 0.25s ease-out forwards;
-        }
-        .modal-content {
-          background: #fff;
-          width: 100%;
-          max-width: 520px;
-          border-radius: 12px;
-          padding: 28px;
-          box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-          animation: modalScaleUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-        }
         .tab-btn {
           padding: 10px 20px;
           border-radius: 6px;
@@ -211,8 +191,8 @@ const ImportExportStock = () => {
             Quản Lý Nhập Kho & Xuất Kho
           </h2>
           <p>
-            Theo dõi các chứng từ, biên bản giao nhận và lịch sử dòng chảy hàng
-            hóa ra vào hệ thống kho.
+            Đồng bộ chứng từ và lịch sử dòng chảy hàng hóa trực tiếp từ Database
+            Backend.
           </p>
         </div>
         <div className="actions">
@@ -226,7 +206,6 @@ const ImportExportStock = () => {
               padding: "10px 16px",
               borderRadius: "6px",
               cursor: "pointer",
-              transition: "transform 0.2s ease",
             }}
           >
             <Plus size={16} />
@@ -251,7 +230,7 @@ const ImportExportStock = () => {
         </button>
       </div>
 
-      {/* Bảng danh sách chứng từ */}
+      {/* Bảng danh sách chứng từ từ Database */}
       <section className="sku-section">
         <div
           style={{
@@ -262,145 +241,162 @@ const ImportExportStock = () => {
           }}
         >
           <FileText size={20} color="#1c1c1c" />
-          <h3 style={{ margin: 0, fontFamily: "'Inter', sans-serif" }}>
+          <h3 style={{ margin: 0 }}>
             Danh Sách Chứng Từ{" "}
-            {tabHienTai === "import" ? "Nhập Kho" : "Xuất Kho"}
+            {tabHienTai === "import" ? "Nhập Kho" : "Xuất Kho"} (Từ Database)
           </h3>
         </div>
 
         {loading ? (
-          <div
-            style={{
-              padding: "60px 0",
-              textAlign: "center",
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              gap: "12px",
-            }}
-          >
-            <div
-              style={{
-                width: "36px",
-                height: "36px",
-                border: "3px solid #e3ded3",
-                borderTop: "3px solid #1c1c1c",
-                borderRadius: "50%",
-                animation: "spin 0.8s linear infinite",
-              }}
-            ></div>
-            <span
-              style={{ fontSize: "14px", color: "#777", fontWeight: "500" }}
-            >
-              Đang đồng bộ chứng từ kho thông minh...
-            </span>
+          <div style={{ padding: "40px", textAlign: "center", color: "#666" }}>
+            Đang tải dữ liệu từ Database...
           </div>
         ) : (
-          <div>
-            <table
-              className="storage-table"
-              style={{ fontFamily: "'Inter', sans-serif", fontSize: "14px" }}
-            >
-              <thead>
-                <tr>
-                  <th>MÃ CHỨNG TỪ</th>
-                  <th>THỜI GIAN</th>
-                  <th>
-                    {tabHienTai === "import"
-                      ? "NHÀ CUNG CẤP"
-                      : "ĐƠN VỊ NHẬN / KHÁCH HÀNG"}
-                  </th>
-                  <th>CHI TIẾT HÀNG HÓA</th>
-                  <th>TRẠNG THÁI</th>
-                </tr>
-              </thead>
-              <tbody>
-                {chungTu[tabHienTai]?.length > 0 ? (
-                  chungTu[tabHienTai].map((tx, idx) => (
-                    <tr key={idx} style={{ transition: "background 0.2s" }}>
-                      <td>
-                        <strong>{tx.code}</strong>
-                      </td>
-                      <td>{tx.date}</td>
-                      <td>{tx.supplier || tx.recipient}</td>
-                      <td>{tx.items}</td>
-                      <td>
-                        <span
-                          className="badge"
-                          style={{ background: "#f0ede6", fontWeight: "600" }}
-                        >
-                          {tx.status}
-                        </span>
-                      </td>
-                    </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td
-                      colSpan="5"
-                      style={{
-                        textAlign: "center",
-                        padding: "30px",
-                        color: "#666",
-                      }}
-                    >
-                      Chưa có dữ liệu chứng từ{" "}
-                      {tabHienTai === "import" ? "nhập" : "xuất"} kho.
+          <table className="storage-table" style={{ fontSize: "14px" }}>
+            <thead>
+              <tr>
+                <th>MÃ CHỨNG TỪ</th>
+                <th>THỜI GIAN</th>
+                <th>ĐỐI TÁC / NHÀ CUNG CẤP</th>
+                <th>CHI TIẾT HÀNG HÓA & GHI CHÚ</th>
+                <th>TRẠNG THÁI</th>
+              </tr>
+            </thead>
+            <tbody>
+              {chungTu[tabHienTai]?.length > 0 ? (
+                chungTu[tabHienTai].map((tx, idx) => (
+                  <tr key={idx}>
+                    <td>
+                      <strong>{tx.code}</strong>
+                    </td>
+                    <td>{tx.date}</td>
+                    <td>{tx.partner}</td>
+                    <td>{tx.items}</td>
+                    <td>
+                      <span
+                        className="badge"
+                        style={{ background: "#f0ede6", fontWeight: "600" }}
+                      >
+                        {tx.status}
+                      </span>
                     </td>
                   </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
+                ))
+              ) : (
+                <tr>
+                  <td
+                    colSpan="5"
+                    style={{
+                      textAlign: "center",
+                      padding: "30px",
+                      color: "#666",
+                    }}
+                  >
+                    Chưa có dữ liệu chứng từ{" "}
+                    {tabHienTai === "import" ? "nhập" : "xuất"} kho trong
+                    Database.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
         )}
       </section>
 
       {/* MODAL TẠO PHIẾU MỚI */}
+      {/* MODAL TẠO PHIẾU MỚI */}
       {isOpenModal && (
-        <div className="modal-overlay">
-          <div className="modal-content">
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: "rgba(0, 0, 0, 0.45)",
+            backdropFilter: "blur(6px)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 9999,
+            animation: "fadeIn 0.2s ease-out forwards",
+          }}
+        >
+          <div
+            style={{
+              background: "#fff",
+              width: "100%",
+              maxWidth: "560px",
+              borderRadius: "16px",
+              padding: "32px",
+              boxShadow:
+                "0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(0, 0, 0, 0.05)",
+              transform: "translateY(0)",
+              animation: "scaleUp 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards",
+              boxSizing: "border-box",
+            }}
+          >
             <div
               style={{
                 display: "flex",
                 justifyContent: "space-between",
                 alignItems: "center",
-                marginBottom: "20px",
+                marginBottom: "24px",
+                borderBottom: "1px solid #eaeaea",
+                paddingBottom: "14px",
               }}
             >
-              <h3 style={{ margin: 0, fontSize: "1.2rem", fontWeight: 600 }}>
-                Tạo Phiếu {tabHienTai === "import" ? "Nhập Kho" : "Xuất Kho"}{" "}
-                Mới
+              <h3
+                style={{
+                  margin: 0,
+                  fontSize: "1.25rem",
+                  fontWeight: 600,
+                  color: "#1a1a1a",
+                  fontFamily: "Bodoni Moda",
+                }}
+              >
+                Tạo Phiếu {tabHienTai === "import" ? "Nhập" : "Xuất"} Kho Mới
               </h3>
               <button
                 onClick={() => setIsOpenModal(false)}
                 style={{
-                  background: "transparent",
+                  background: "#f5f5f4",
                   border: "none",
                   cursor: "pointer",
-                  padding: "4px",
+                  padding: "6px",
                   borderRadius: "50%",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  transition: "background 0.2s",
                 }}
+                onMouseOver={(e) =>
+                  (e.currentTarget.style.background = "#e7e5e4")
+                }
+                onMouseOut={(e) =>
+                  (e.currentTarget.style.background = "#f5f5f4")
+                }
               >
-                <X size={20} color="#666" />
+                <X size={18} color="#444" />
               </button>
             </div>
 
             {thongBaoThanhCong ? (
               <div
                 style={{
-                  padding: "20px",
+                  padding: "24px",
                   background: "#f0fdf4",
-                  border: "1px solid #bbf7d0",
-                  borderRadius: "8px",
+                  borderRadius: "10px",
                   textAlign: "center",
                   color: "#16a34a",
                   display: "flex",
                   flexDirection: "column",
                   alignItems: "center",
-                  gap: "8px",
+                  gap: "10px",
+                  border: "1px solid #bbf7d0",
                 }}
               >
-                <CheckCircle2 size={32} />
+                <CheckCircle2 size={36} />
                 <span style={{ fontWeight: 600, fontSize: "15px" }}>
                   {thongBaoThanhCong}
                 </span>
@@ -411,43 +407,48 @@ const ImportExportStock = () => {
                 style={{
                   display: "flex",
                   flexDirection: "column",
-                  gap: "16px",
+                  gap: "18px",
                 }}
               >
                 <div>
                   <label
                     style={{
                       display: "block",
-                      fontSize: "13px",
-                      fontWeight: 600,
+                      fontSize: "12px",
+                      fontWeight: 700,
                       marginBottom: "6px",
-                      color: "#333",
+                      color: "#555",
+                      letterSpacing: "0.03em",
                     }}
                   >
-                    Chọn Sản Phẩm *
+                    CHỌN BIẾN THỂ SẢN PHẨM *
                   </label>
                   <select
-                    value={formData.productId}
+                    value={formData.variantId}
                     onChange={(e) =>
-                      setFormData({ ...formData, productId: e.target.value })
+                      setFormData({ ...formData, variantId: e.target.value })
                     }
                     style={{
                       width: "100%",
-                      padding: "10px 12px",
-                      borderRadius: "6px",
+                      padding: "11px 14px",
+                      borderRadius: "8px",
                       border: "1px solid #dcd6cd",
                       fontSize: "14px",
+                      background: "#fcfbfa",
                       outline: "none",
-                      background: "#fff",
+                      cursor: "pointer",
                     }}
                     required
                   >
                     <option value="">
-                      -- Chọn sản phẩm từ hệ thống kho --
+                      -- Chọn biến thể từ hệ thống kho --
                     </option>
                     {danhSachSanPham.map((p) => (
-                      <option key={p._id || p.id} value={p._id || p.id}>
-                        {p.name}
+                      <option
+                        key={p.variantId || p.id}
+                        value={p.variantId || p.id}
+                      >
+                        {p.name} ({p.specs}) — Tồn kho: {p.stock}
                       </option>
                     ))}
                   </select>
@@ -457,33 +458,29 @@ const ImportExportStock = () => {
                   <label
                     style={{
                       display: "block",
-                      fontSize: "13px",
-                      fontWeight: 600,
+                      fontSize: "12px",
+                      fontWeight: 700,
                       marginBottom: "6px",
-                      color: "#333",
+                      color: "#555",
+                      letterSpacing: "0.03em",
                     }}
                   >
-                    {tabHienTai === "import"
-                      ? "Nhà Cung Cấp"
-                      : "Đơn Vị Nhận / Khách Hàng"}
+                    NHÀ CUNG CẤP / ĐỐI TÁC
                   </label>
                   <input
                     type="text"
-                    placeholder={
-                      tabHienTai === "import"
-                        ? "Nhập tên nhà cung cấp..."
-                        : "Nhập đơn vị nhận hàng..."
-                    }
+                    placeholder="Nhập tên nhà cung cấp hoặc đơn vị nhận..."
                     value={formData.partner}
                     onChange={(e) =>
                       setFormData({ ...formData, partner: e.target.value })
                     }
                     style={{
                       width: "100%",
-                      padding: "10px 12px",
-                      borderRadius: "6px",
+                      padding: "11px 14px",
+                      borderRadius: "8px",
                       border: "1px solid #dcd6cd",
                       fontSize: "14px",
+                      background: "#fcfbfa",
                       outline: "none",
                       boxSizing: "border-box",
                     }}
@@ -494,13 +491,14 @@ const ImportExportStock = () => {
                   <label
                     style={{
                       display: "block",
-                      fontSize: "13px",
-                      fontWeight: 600,
+                      fontSize: "12px",
+                      fontWeight: 700,
                       marginBottom: "6px",
-                      color: "#333",
+                      color: "#555",
+                      letterSpacing: "0.03em",
                     }}
                   >
-                    Số Lượng
+                    SỐ LƯỢNG *
                   </label>
                   <input
                     type="number"
@@ -514,10 +512,11 @@ const ImportExportStock = () => {
                     }
                     style={{
                       width: "100%",
-                      padding: "10px 12px",
-                      borderRadius: "6px",
+                      padding: "11px 14px",
+                      borderRadius: "8px",
                       border: "1px solid #dcd6cd",
                       fontSize: "14px",
+                      background: "#fcfbfa",
                       outline: "none",
                       boxSizing: "border-box",
                     }}
@@ -529,27 +528,29 @@ const ImportExportStock = () => {
                   <label
                     style={{
                       display: "block",
-                      fontSize: "13px",
-                      fontWeight: 600,
+                      fontSize: "12px",
+                      fontWeight: 700,
                       marginBottom: "6px",
-                      color: "#333",
+                      color: "#555",
+                      letterSpacing: "0.03em",
                     }}
                   >
-                    Ghi Chú / Chi Tiết
+                    GHI CHÚ GIAO DỊCH
                   </label>
                   <textarea
                     rows="3"
-                    placeholder="Nhập ghi chú giao dịch kho..."
+                    placeholder="Nhập ghi chú chi tiết..."
                     value={formData.note}
                     onChange={(e) =>
                       setFormData({ ...formData, note: e.target.value })
                     }
                     style={{
                       width: "100%",
-                      padding: "10px 12px",
-                      borderRadius: "6px",
+                      padding: "11px 14px",
+                      borderRadius: "8px",
                       border: "1px solid #dcd6cd",
                       fontSize: "14px",
+                      background: "#fcfbfa",
                       outline: "none",
                       boxSizing: "border-box",
                       resize: "vertical",
@@ -561,21 +562,24 @@ const ImportExportStock = () => {
                   style={{
                     display: "flex",
                     justifyContent: "flex-end",
-                    gap: "10px",
-                    marginTop: "10px",
+                    gap: "12px",
+                    marginTop: "12px",
+                    borderTop: "1px solid #eaeaea",
+                    paddingTop: "16px",
                   }}
                 >
                   <button
                     type="button"
                     onClick={() => setIsOpenModal(false)}
                     style={{
-                      padding: "10px 16px",
-                      borderRadius: "6px",
+                      padding: "10px 18px",
+                      borderRadius: "8px",
                       border: "1px solid #dcd6cd",
                       background: "#fff",
                       cursor: "pointer",
                       fontWeight: 600,
                       fontSize: "13px",
+                      color: "#555",
                     }}
                   >
                     Hủy Bỏ
@@ -585,14 +589,14 @@ const ImportExportStock = () => {
                     disabled={submitting}
                     className="btn-primary"
                     style={{
-                      padding: "10px 20px",
-                      borderRadius: "6px",
+                      padding: "10px 22px",
+                      borderRadius: "8px",
                       cursor: "pointer",
                       fontWeight: 600,
                       fontSize: "13px",
                     }}
                   >
-                    {submitting ? "Đang lưu..." : "Xác Nhận Tạo"}
+                    {submitting ? "Đang lưu Database..." : "Xác Nhận Tạo"}
                   </button>
                 </div>
               </form>

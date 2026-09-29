@@ -176,6 +176,11 @@ export const storageAPI = {
   getVariantById: (id) => api.get(`/api/variants/${id}`),
 
   updateVariant: (id, data) => api.patch(`/api/variants/${id}`, data),
+
+  // Bổ sung các hàm thiếu:
+  getInventoryTransactions: () => api.get('/api/inventory/transactions'), // Thay axiosClient thành tên biến đang có trong file api.js của bạn (ví: api, axios...)
+  importInventory: (variantId, data) => api.post(`/api/inventory/${variantId}/import`, data),
+  exportInventory: (variantId, data) => api.post(`/api/inventory/${variantId}/export`, data),
 };
 
 // =========== ORDER API ===========
@@ -188,5 +193,7 @@ export const orderAPI = {
   updateOrderStatus: (id, status) =>
     api.patch(`/api/orders/${id}/status`, { status }),
 };
+
+
 
 export default api;

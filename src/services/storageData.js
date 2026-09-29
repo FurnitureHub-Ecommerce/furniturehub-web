@@ -19,7 +19,6 @@ const getVariantLabel = (variant) =>
 export const loadStorageVariants = async () => {
   let productsResponse;
   try {
-    // 1. Đảo ngược lại: Ưu tiên gọi api thông thường trước để tránh dính lỗi 403 của tài khoản STORAGE
     productsResponse = await storageAPI.getProducts();
   } catch (error) {
     try {
@@ -39,7 +38,6 @@ export const loadStorageVariants = async () => {
       try {
         let variantsResponse;
         try {
-          // 2. Ưu tiên gọi biến thể thông thường trước
           variantsResponse = await storageAPI.getVariantsByProduct(productId);
         } catch (error) {
           variantsResponse = await storageAPI.getVariantsAdmin(productId);
@@ -49,6 +47,7 @@ export const loadStorageVariants = async () => {
 
         return variants.map((variant) => ({
           id: variant.sku || variant._id || variant.id,
+          variantId: variant._id || variant.id, // ID thật của variant để gọi API nhập/xuất
           productId,
           name: product.name || 'Sản phẩm chưa đặt tên',
           specs: getVariantLabel(variant),
@@ -72,4 +71,15 @@ export const loadStorageVariants = async () => {
   );
 
   return variantGroups.flat();
+};
+
+// Lấy lịch sử biến động kho trực tiếp từ BE (API: /api/inventory/transactions)
+export const loadInventoryTransactionsFromBE = async () => {
+  try {
+    const response = await storageAPI.getInventoryTransactions();
+    return getArrayFromResponse(response, ['transactions', 'data', 'content']);
+  } catch (error) {
+    console.error('Lỗi tải lịch sử biến động kho từ BE:', error);
+    return [];
+  }
 };
