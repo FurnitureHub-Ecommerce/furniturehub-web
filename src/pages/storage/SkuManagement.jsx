@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { loadStorageVariants } from '../../services/storageData';
-import { Search, Filter, Edit, Trash2 } from 'lucide-react';
+import { Search, Filter, Eye } from 'lucide-react';
 
 const SkuManagement = () => {
   const [skuProducts, setSkuProducts] = useState([]);
   const [tuKhoaTimKiem, setTuKhoaTimKiem] = useState('');
-  const [boLocTrangThai, setBoLocTrangThai] = useState('ALL'); // Trạng thái bộ lọc
+  const [boLocTrangThai, setBoLocTrangThai] = useState('ALL');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -23,7 +23,6 @@ const SkuManagement = () => {
     fetchRealInventory();
   }, []);
 
-  // Lọc theo từ khóa tìm kiếm và trạng thái tồn kho
   const danhSachLoc = skuProducts.filter((item) => {
     const matchKeyword =
       item.name.toLowerCase().includes(tuKhoaTimKiem.toLowerCase()) ||
@@ -66,7 +65,6 @@ const SkuManagement = () => {
         </div>
       </header>
 
-      {/* Thanh tìm kiếm */}
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px', background: '#fff', padding: '16px', borderRadius: '6px', border: '1px solid #eaeaea' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', width: '350px', background: '#f7f6f3', padding: '8px 12px', borderRadius: '4px', border: '1px solid #e2ded4' }}>
           <Search size={18} color="#8c857b" />
@@ -83,7 +81,6 @@ const SkuManagement = () => {
         </div>
       </div>
 
-      {/* Bảng danh sách SKU */}
       <section className="sku-section">
         <table className="storage-table">
           <thead>
@@ -120,11 +117,8 @@ const SkuManagement = () => {
                   </td>
                   <td>
                     <div style={{ display: 'flex', gap: '8px' }}>
-                      <button title="Sửa" style={{ background: 'transparent', border: '1px solid #ccc', padding: '6px', borderRadius: '4px', cursor: 'pointer' }}>
-                        <Edit size={14} color="#333" />
-                      </button>
-                      <button title="Xóa" style={{ background: 'transparent', border: '1px solid #ffcccc', padding: '6px', borderRadius: '4px', cursor: 'pointer' }}>
-                        <Trash2 size={14} color="#dc2626" />
+                      <button title="Xem chi tiết" style={{ background: 'transparent', border: '1px solid #ccc', padding: '6px', borderRadius: '4px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '12px' }}>
+                        <Eye size={14} color="#333" /> Xem
                       </button>
                     </div>
                   </td>
