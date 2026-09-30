@@ -1,58 +1,152 @@
 import { useEffect, useState } from 'react';
-import { Package, Layers, Building, Banknote, Search, List, Grid2X2, Download, Plus, SlidersHorizontal, ShieldCheck, Folder, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Search, RefreshCw } from 'lucide-react';
 import { getCatalog } from '../../../services/admin/catalog.service.js';
 import './AdminCatalog.css';
 
 const money = value => new Intl.NumberFormat('en-IE', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(value);
 
-function Pending({ children, reason, dark = false }) {
-  return <span className="lc-pending" tabIndex={0} aria-label={reason}>
-    <button type="button" disabled className={`lc-button ${dark ? 'lc-dark' : ''}`}>{children}</button>
-    <span role="tooltip">{reason}</span>
-  </span>;
-}
-
-function Placeholder({ label, small = false }) {
-  return <div className={`lc-placeholder ${small ? 'lc-placeholder-small' : ''}`} role="img" aria-label={`Chưa có ảnh gốc: ${label}`}><Package size={small ? 20 : 30} aria-hidden="true" />{!small && <span>Chờ asset gốc</span>}</div>;
-}
-
 export default function AdminCatalog() {
-  const [query, setQuery] = useState({ search: '', categoryId: '', brandId: '', material: '', status: '', page: 1, pageSize: 5 });
+  const [query, setQuery] = useState({ search: '', categoryId: '', brandId: '', material: '', status: '', page: 1, pageSize: 10 });
   const [state, setState] = useState({ data: null, loading: true, error: '' });
-  const [selectedId, setSelectedId] = useState(null);
   const [retry, setRetry] = useState(0);
+
   useEffect(() => {
     let cancelled = false;
-    getCatalog(query).then(data => { if (!cancelled) setState({ data, loading: false, error: '' }); }).catch(error => { if (!cancelled) setState({ data: null, loading: false, error: error.message }); });
+    getCatalog(query).then(data => { 
+      if (!cancelled) setState({ data, loading: false, error: '' }); 
+    }).catch(error => { 
+      if (!cancelled) setState({ data: null, loading: false, error: error.message }); 
+    });
     return () => { cancelled = true; };
   }, [query, retry]);
-  function update(values, pagination = false) {
+
+  function update(values) {
     setState(previous => ({ ...previous, loading: true, error: '' }));
-    setQuery(previous => ({ ...previous, ...values, ...(pagination ? {} : { page: 1 }) }));
-    setSelectedId(null);
+    setQuery(previous => ({ ...previous, ...values, page: 1 }));
   }
+
   const data = state.data;
-  // Chỉ giữ lựa chọn trong trang hiện tại, tránh hiển thị Variant của sản phẩm bị lọc bỏ.
-  const selected = !state.loading && data ? data.rows.find(product => product._id === selectedId) || data.rows[0] : null;
-  function focusSection(id) { const section = document.getElementById(id); section?.scrollIntoView({ behavior: 'instant', block: 'start' }); section?.focus({ preventScroll: true }); }
-  return <div className="lc-page">
-    <p className="lc-eyebrow">BỘ SƯU TẬP KIẾN TRÚC <span>• QUẢN TRỊ DANH MỤC ATELIER</span><b>DỮ LIỆU DEMO</b></p>
-    <section className="lc-heading"><div><h1>Quản Trị Sản Phẩm, Biến Thể & Danh Mục Thương Hiệu</h1><p>Hệ thống điều phối danh mục nội thất, chất liệu và mạng lưới thương hiệu LUMORA.</p></div><div className="lc-toolbar"><Pending reason="Chưa triển khai xuất Catalog PDF"><Download size={15} />Xuất Catalog PDF</Pending><Pending reason="Chưa có quy trình đăng ký xưởng được xác nhận"><Building size={15} />Đăng Ký Xưởng Atelier</Pending><Pending reason="Chưa có thiết kế form tạo danh mục"><Folder size={15} />Tạo Danh Mục Mới</Pending><Pending dark reason="Chưa có thiết kế form thêm sản phẩm"><Plus size={15} />Thêm Sản Phẩm Mới</Pending></div></section>
-    <p className="lc-demo-note">Mock local chỉ dùng thử giao diện. Giá EUR là giá bán Variant, không phải giá gốc, phụ thu hay AOV. Chưa kết nối MockAPI hoặc ERP.</p>
-    {!data && !state.error ? <div className="lc-state" role="status">Đang tải Catalog…<div className="lc-skeleton" /></div> : state.error ? <div className="lc-state" role="alert"><h2>Không thể tải Catalog</h2><p>{state.error}</p><button className="lc-button" onClick={() => { setState({ data: null, loading: true, error: '' }); setRetry(value => value + 1); }}>Thử lại</button></div> : <>
-      <section className="lc-kpis" aria-label="Tổng quan Catalog">{[
-        ['SẢN PHẨM', data.totals.products, 'sản phẩm trong mock', Package],
-        ['BIẾN THỂ SKU', data.totals.activeVariants, `SKU active / ${data.totals.variants} tổng SKU`, SlidersHorizontal],
-        ['THƯƠNG HIỆU', data.totals.brands, 'thương hiệu liên kết', Building],
-        ['GIÁ TRỊ TRUNG BÌNH / AOV', null, 'Chưa có dữ liệu đơn hàng', Banknote],
-      ].map(([label, value, note, Icon]) => <article className="lc-card" key={label}><div><h2>{label}</h2><p>{value === null ? <strong className="lc-unavailable-value">Chưa tích hợp</strong> : <strong>{value}</strong>}<span>{note}</span></p></div><Icon size={23} /></article>)}</section>
-      <div className="lc-navigation"><nav aria-label="Các khu vực Catalog"><button onClick={() => focusSection('admin-catalog-products')}><List size={16} />Tất cả Sản phẩm ({data.totals.products})</button><button onClick={() => focusSection('admin-catalog-variants')}><Layers size={16} />Biến thể & SKU ({data.totals.variants})</button><button onClick={() => focusSection('admin-catalog-categories')}><Folder size={16} />Danh mục & Không gian</button><button onClick={() => focusSection('admin-catalog-brands')}><ShieldCheck size={16} />Thương hiệu & Xưởng chế tác</button></nav><div className="lc-view-mode"><span>Chế độ hiển thị:</span><span className="lc-list-mode" aria-label="Đang hiển thị danh sách"><List size={17} /></span><Pending reason="Chưa có thiết kế chế độ Grid"><Grid2X2 size={17} /><span className="sr-only">Chế độ Grid</span></Pending></div></div>
-      <section className="lc-filters" aria-label="Tìm kiếm và lọc Catalog"><label className="lc-search"><Search size={18} /><input aria-label="Tìm theo tên sản phẩm, SKU, danh mục hoặc thương hiệu" value={query.search} onChange={e => update({ search: e.target.value })} placeholder="Tìm sản phẩm, SKU, thương hiệu…" /></label><label>Danh mục:<select value={query.categoryId} onChange={e => update({ categoryId: e.target.value })}><option value="">Tất cả không gian</option>{data.categories.map(item => <option key={item._id} value={item._id}>{item.name}</option>)}</select></label><label>Xưởng chế tác:<select value={query.brandId} onChange={e => update({ brandId: e.target.value })}><option value="">Tất cả thương hiệu</option>{data.brands.map(item => <option key={item._id} value={item._id}>{item.name}</option>)}</select></label><label>Chất liệu:<select value={query.material} onChange={e => update({ material: e.target.value })}><option value="">Tất cả chất liệu</option>{data.materials.map(item => <option key={item} value={item}>{item}</option>)}</select></label><label>Trạng thái:<select value={query.status} onChange={e => update({ status: e.target.value })}><option value="">Tất cả trạng thái</option><option value="active">Đang hoạt động</option><option value="inactive">Ngừng hoạt động</option></select></label></section>
-      <section id="admin-catalog-products" tabIndex={-1} className="lc-product-section" aria-busy={state.loading}><header><h2>DANH SÁCH SẢN PHẨM ATELIER</h2><span>ERP: Chưa tích hợp</span></header>{state.loading ? <div className="lc-state" role="status">Đang tải kết quả…<div className="lc-skeleton" /></div> : data.rows.length ? <div className="lc-table-scroll" tabIndex={0} aria-label="Bảng sản phẩm, cuộn ngang khi cần"><table className="lc-table"><thead><tr>{['SẢN PHẨM & HÌNH ẢNH', 'DANH MỤC', 'THƯƠNG HIỆU', 'GIÁ BÁN VARIANT', 'BIẾN THỂ SKU', 'TRẠNG THÁI & TỒN KHO', 'THAO TÁC'].map(label => <th key={label} scope="col">{label}</th>)}</tr></thead><tbody>{data.rows.map(product => <tr key={product._id} className={selected?._id === product._id ? 'lc-selected-row' : ''}><td><div className="lc-product-name"><Placeholder label={product.name} small /><div><button aria-pressed={selected?._id === product._id} onClick={() => setSelectedId(product._id)}>{product.name}</button><small>{product.description}</small></div></div></td><td>{product.category.name}</td><td>{product.brand.name}</td><td>{product.priceRange ? <><strong>{money(product.priceRange.min)}</strong>{product.priceRange.max !== product.priceRange.min && <small>đến {money(product.priceRange.max)}</small>}</> : <span>Chưa có giá</span>}</td><td><span className="lc-badge">{product.variants.length} Biến thể</span><small>{[...new Set(product.variants.map(variant => variant.material))].join(', ') || 'Chưa có Variant'}</small></td><td><span className={`lc-badge ${product.isActive ? '' : 'lc-inactive'}`}>{product.isActive ? 'Đang hoạt động' : 'Ngừng hoạt động'}</span><small>Tồn kho: Chưa tích hợp</small></td><td><div className="lc-row-actions"><Pending reason="Chưa có form sửa sản phẩm được duyệt">Sửa</Pending><button className="lc-button" aria-label={`Xem Variant của ${product.name}`} onClick={() => { setSelectedId(product._id); focusSection('admin-catalog-variants'); }}><SlidersHorizontal size={14} /></button></div></td></tr>)}</tbody></table></div> : <div className="lc-state" role="status"><Package size={32} /><h2>Không có sản phẩm phù hợp</h2><p>Thử thay đổi từ khóa hoặc các bộ lọc.</p><button className="lc-button" onClick={() => update({ search: '', categoryId: '', brandId: '', material: '', status: '' })}>Xóa bộ lọc</button></div>}
-      <footer className="lc-pagination"><span aria-live="polite">{state.loading ? 'Đang tải…' : `Hiển thị ${data.total ? (data.page - 1) * data.pageSize + 1 : 0} - ${Math.min(data.page * data.pageSize, data.total)} trong ${data.total} sản phẩm`}</span><label>Hàng mỗi trang:<select value={query.pageSize} onChange={e => update({ pageSize: Number(e.target.value) })}>{[5, 10, 15].map(size => <option key={size}>{size}</option>)}</select></label><nav aria-label="Phân trang sản phẩm"><button disabled={state.loading || data.page === 1} aria-label="Trang trước" onClick={() => update({ page: data.page - 1 }, true)}><ChevronLeft size={15} /></button>{Array.from({ length: data.totalPages }, (_, i) => i + 1).map(page => <button key={page} disabled={state.loading} aria-current={page === data.page ? 'page' : undefined} onClick={() => update({ page }, true)}>{page}</button>)}<button disabled={state.loading || data.page === data.totalPages} aria-label="Trang sau" onClick={() => update({ page: data.page + 1 }, true)}><ChevronRight size={15} /></button></nav></footer></section>
-      <section id="admin-catalog-categories" tabIndex={-1} className="lc-card lc-directory"><header><h2><Building size={18} />Không Gian & Danh Mục</h2><span>{data.categories.length} danh mục</span></header><p>Danh mục phẳng; số lượng tính từ toàn bộ Product mock.</p><ul>{data.categories.map(category => <li key={category._id}><Folder size={19} /><div><h3>{category.name}</h3><p>{category.description}</p></div><span className="lc-badge">{category.productCount} Items</span></li>)}</ul><Pending reason="Chưa có thiết kế form tạo danh mục"><Plus size={15} />Thêm Phân Vùng Không Gian Mới</Pending></section>
-      <section id="admin-catalog-brands" tabIndex={-1} className="lc-card lc-directory lc-brands"><header><h2><ShieldCheck size={18} />Mạng Lưới Xưởng Atelier</h2><span>{data.brands.length} thương hiệu</span></header><p>Thông tin Brand trong mock; chưa có dữ liệu trụ sở, NDA hoặc chứng nhận pháp lý.</p><ul>{data.brands.map(brand => <li key={brand._id}><span className="lc-brand-placeholder" aria-label="Logo chưa có asset">{brand.name[0]}</span><div><h3>{brand.name}</h3><p>{brand.description}</p></div><span className="lc-badge">{brand.productCount} sản phẩm</span></li>)}</ul><Pending reason="Chưa có nguồn hồ sơ pháp lý">Hồ sơ pháp lý →</Pending></section>
-      <section id="admin-catalog-variants" tabIndex={-1} className="lc-card lc-variants"><header><div><p className="lc-eyebrow">CẬN CẢNH BIẾN THỂ & HOÀN THIỆN BỀ MẶT</p><h2>{selected ? `Mẫu Phối Chất Liệu Cho ${selected.name}` : 'Biến Thể Sản Phẩm'}</h2></div><Pending reason="Chưa có form thêm Variant được duyệt"><Plus size={15} />Thêm Mẫu Đá / Gỗ Mới</Pending></header><p className="lc-variant-note">Giá bán riêng của từng SKU. Không mô phỏng tồn kho hoặc phụ thu vật liệu.</p>{state.loading ? <p role="status">Đang tải sản phẩm…</p> : !selected ? <p className="lc-state">Chọn sản phẩm từ danh sách để xem Variant.</p> : !selected.variants.length ? <p className="lc-state">Sản phẩm này chưa có Variant.</p> : <div className="lc-variant-grid">{selected.variants.map(variant => <article key={variant._id}><Placeholder label={variant.material} /><div className="lc-variant-title"><h3>{variant.material}</h3><strong>{money(variant.price)}</strong></div><p className="lc-sku">SKU: {variant.sku}</p><p>{variant.color} • {variant.size}</p><footer><span className="lc-badge">{variant.isActive ? 'Đang hoạt động' : 'Ngừng hoạt động'}</span><Pending reason="Chưa có form sửa Variant"><SlidersHorizontal size={14} /><span className="sr-only">Sửa Variant</span></Pending></footer></article>)}</div>}</section>
-    </>}
-  </div>;
+
+  return (
+    <div style={{ padding: "0 28px 48px 28px", fontFamily: "'Inter', sans-serif", maxWidth: "1500px", margin: "0 auto" }}>
+      {/* HEADER */}
+      <header style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: "28px", borderBottom: "1px solid #eae6df", paddingBottom: "20px" }}>
+        <div>
+          <span style={{ fontSize: 11, fontWeight: 700, color: "#78716c", letterSpacing: "0.05em" }}>
+            QUẢN TRỊ DANH MỤC / QUẢN LÝ SẢN PHẨM
+          </span>
+          <h1 style={{ fontFamily: "Bodoni Moda", fontSize: "2.6rem", fontWeight: 600, color: "#1a1a1a", margin: "4px 0 6px 0" }}>
+            Quản Trị Sản Phẩm, Biến Thể & Danh Mục
+          </h1>
+          <p style={{ margin: 0, color: "#666", fontSize: "13px" }}>
+            Hệ thống điều phối danh mục nội thất, chất liệu và mạng lưới thương hiệu LUMORA.
+          </p>
+        </div>
+      </header>
+
+      {/* THANH LỌC DỮ LIỆU */}
+      <section style={{ display: "grid", gridTemplateColumns: "1.5fr 1fr 1fr 1fr auto", gap: "16px", marginBottom: "24px", background: "#fff", padding: "20px", borderRadius: "14px", border: "1px solid #eae6df", alignItems: "flex-end", boxShadow: "0 2px 6px rgba(0,0,0,0.01)" }}>
+        <label style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '11px', fontWeight: 700, color: '#78716c', letterSpacing: '0.03em' }}>
+          TÌM KIẾM SẢN PHẨM
+          <div style={{ display: 'flex', alignItems: 'center', background: '#faf8f5', border: '1px solid #dcd6cd', borderRadius: '8px', padding: '0 12px' }}>
+            <Search size={16} color="#888" style={{ marginRight: 8, flexShrink: 0 }} />
+            <input style={{ border: 'none', outline: 'none', padding: '10px 0', fontSize: '13px', width: '100%', background: 'transparent' }} value={query.search} onChange={e => update({ search: e.target.value })} placeholder="Tìm sản phẩm, SKU..." />
+          </div>
+        </label>
+        <label style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '11px', fontWeight: 700, color: '#78716c', letterSpacing: '0.03em' }}>
+          DANH MỤC
+          <select style={{ padding: '10px 12px', borderRadius: '8px', border: '1px solid #dcd6cd', fontSize: '13px', background: '#faf8f5', outline: 'none', width: '100%' }} value={query.categoryId} onChange={e => update({ categoryId: e.target.value })}>
+            <option value="">Tất cả không gian</option>
+            {data?.categories?.map(item => <option key={item._id} value={item._id}>{item.name}</option>)}
+          </select>
+        </label>
+        <label style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '11px', fontWeight: 700, color: '#78716c', letterSpacing: '0.03em' }}>
+          THƯƠNG HIỆU
+          <select style={{ padding: '10px 12px', borderRadius: '8px', border: '1px solid #dcd6cd', fontSize: '13px', background: '#faf8f5', outline: 'none', width: '100%' }} value={query.brandId} onChange={e => update({ brandId: e.target.value })}>
+            <option value="">Tất cả thương hiệu</option>
+            {data?.brands?.map(item => <option key={item._id} value={item._id}>{item.name}</option>)}
+          </select>
+        </label>
+        <label style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '11px', fontWeight: 700, color: '#78716c', letterSpacing: '0.03em' }}>
+          TRẠNG THÁI
+          <select style={{ padding: '10px 12px', borderRadius: '8px', border: '1px solid #dcd6cd', fontSize: '13px', background: '#faf8f5', outline: 'none', width: '100%' }} value={query.status} onChange={e => update({ status: e.target.value })}>
+            <option value="">Tất cả trạng thái</option>
+            <option value="active">Đang hoạt động</option>
+            <option value="inactive">Ngừng hoạt động</option>
+          </select>
+        </label>
+        <button 
+          type="button"
+          onClick={() => setRetry(value => value + 1)}
+          style={{ display: "flex", alignItems: "center", gap: "6px", padding: "10px 16px", borderRadius: "8px", border: "1px solid #dcd6cd", background: "#fff", cursor: "pointer", fontSize: "13px", fontWeight: 600, height: "41px", color: "#444", whiteSpace: "nowrap" }}
+        >
+          <RefreshCw size={14} /> Làm mới
+        </button>
+      </section>
+
+      {/* BẢNG HIỂN THỊ CHUẨN FORM */}
+      <section style={{ background: '#fff', border: '1px solid #eae6df', borderRadius: '14px', overflow: 'hidden', boxShadow: "0 4px 12px rgba(0,0,0,0.02)" }}>
+        {!data && !state.error ? (
+          <div style={{ padding: '60px', textAlign: 'center', color: '#666', fontSize: '13px' }}>Đang tải Catalog sản phẩm…</div>
+        ) : state.error ? (
+          <div style={{ padding: '60px', textAlign: 'center', color: '#dc2626', fontSize: '13px' }}>
+            <h2 style={{ fontSize: '1.1rem', marginBottom: '8px' }}>Không thể tải Catalog</h2>
+            <p>{state.error}</p>
+          </div>
+        ) : (
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '13px' }}>
+              <thead>
+                <tr style={{ background: '#faf8f5', borderBottom: '1px solid #eae6df', color: '#78716c', fontSize: '11px', fontWeight: 700, letterSpacing: '0.06em', whiteSpace: 'nowrap' }}>
+                  <th style={{ padding: '16px 24px', width: '32%' }}>SẢN PHẨM</th>
+                  <th style={{ padding: '16px 20px', width: '18%' }}>DANH MỤC</th>
+                  <th style={{ padding: '16px 20px', width: '16%' }}>THƯƠNG HIỆU</th>
+                  <th style={{ padding: '16px 20px', width: '14%' }}>GIÁ BÁN</th>
+                  <th style={{ padding: '16px 20px', width: '10%' }}>BIẾN THỂ SKU</th>
+                  <th style={{ padding: '16px 24px', width: '10%' }}>TRẠNG THÁI</th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.rows.map((product, idx) => {
+                  const isActive = product.isActive !== false;
+                  return (
+                    <tr key={product._id} style={{ borderBottom: '1px solid #f2efeb', background: idx % 2 === 0 ? '#fff' : '#fcfbfa' }}>
+                      <td style={{ padding: '18px 24px' }}>
+                        <strong style={{ color: '#1c1c1c', display: 'block', marginBottom: '4px', fontWeight: 600, fontSize: '14px' }}>{product.name}</strong>
+                        <span style={{ color: '#666', fontSize: '12px', display: '-webkit-box', WebkitLineClamp: 1, WebkitBoxOrient: 'vertical', overflow: 'hidden', lineHeight: '1.4' }}>{product.description}</span>
+                      </td>
+                      <td style={{ padding: '18px 20px', color: '#444', fontWeight: 500 }}>{product.category?.name || "N/A"}</td>
+                      <td style={{ padding: '18px 20px', color: '#444', fontWeight: 500 }}>{product.brand?.name || "N/A"}</td>
+                      <td style={{ padding: '18px 20px', fontWeight: 700, color: '#15803d', whiteSpace: 'nowrap' }}>
+                        {product.priceRange ? money(product.priceRange.min) : 'Chưa có giá'}
+                      </td>
+                      <td style={{ padding: '18px 20px', whiteSpace: 'nowrap' }}>
+                        <span style={{ background: '#f0ece6', color: '#2c2825', padding: '5px 10px', borderRadius: '6px', fontSize: '12px', fontWeight: 600, display: 'inline-block' }}>
+                          {product.variants?.length || 0} Biến thể
+                        </span>
+                      </td>
+                      <td style={{ padding: '18px 24px', whiteSpace: 'nowrap' }}>
+                        <span style={{ 
+                          display: 'inline-block',
+                          background: isActive ? '#f0fdf4' : '#fef2f2', 
+                          color: isActive ? '#15803d' : '#dc2626', 
+                          padding: '5px 12px', 
+                          borderRadius: '20px', 
+                          fontSize: '11px', 
+                          fontWeight: 700,
+                          textAlign: 'center'
+                        }}>
+                          {isActive ? 'Đang hoạt động' : 'Ngừng hoạt động'}
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
+    </div>
+  );
 }

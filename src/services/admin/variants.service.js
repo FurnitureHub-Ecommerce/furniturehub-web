@@ -1,28 +1,98 @@
-import { variantsMock, productsMock, categoriesMock } from '../../data/mock/admin/catalog.mock.js';
+import { productAPI } from "../api.js";
 
-const normalize = value => String(value).normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/gi, 'd').toLowerCase().trim();
+function recordsFrom(data) {
+  if (Array.isArray(data)) return data;
+  if (Array.isArray(data?.variants)) return data.variants;
+  if (Array.isArray(data?.items)) return data.items;
+  if (Array.isArray(data?.data)) return data.data;
+  if (Array.isArray(data?.data?.variants)) return data.data.variants;
+  return [];
+}
 
-export async function getVariants({ search = '', material = '', minPrice = '', maxPrice = '', status = '', page = 1, pageSize = 10 } = {}) {
-  const materials = [...new Set(variantsMock.map(item => item.material))].sort((a, b) => a.localeCompare(b, 'vi'));
-  const lower = minPrice === '' ? null : Number(minPrice);
-  const upper = maxPrice === '' ? null : Number(maxPrice);
-  if ([lower, upper].some(value => value !== null && (!Number.isFinite(value) || value < 0)) || (lower !== null && upper !== null && lower > upper)) throw new Error('Giá phải là số không âm; giá tối thiểu không được lớn hơn giá tối đa.');
-  if (![5, 10, 20].includes(Number(pageSize)) || (status && !['active', 'inactive'].includes(status)) || (material && !materials.includes(material))) throw new Error('Bộ lọc Variant không hợp lệ.');
-  const query = normalize(search);
-  // Thông tin sản phẩm và danh mục chỉ được ghép cho hiển thị, không ghi thêm vào schema.
-  const rows = variantsMock.map(variant => {
-    const product = productsMock.find(item => item._id === variant.productId);
-    return { ...variant, product, category: categoriesMock.find(item => item._id === product?.categoryId) };
-  }).filter(item => normalize([item.sku, item.product?.name ?? '', item.material].join(' ')).includes(query)
-    && (!material || item.material === material)
-    && (lower === null || item.price >= lower) && (upper === null || item.price <= upper)
-    && (!status || item.isActive === (status === 'active')));
-  const size = Number(pageSize);
-  const totalPages = Math.max(1, Math.ceil(rows.length / size));
-  const currentPage = Math.min(totalPages, Math.max(1, Number.isFinite(Number(page)) ? Math.floor(Number(page)) : 1));
-  return structuredClone({
-    rows: rows.slice((currentPage - 1) * size, currentPage * size), total: rows.length, page: currentPage, pageSize: size, totalPages, materials,
-    // KPI toàn danh sách không thay đổi khi người dùng lọc hoặc phân trang.
-    totals: { variants: variantsMock.length, active: variantsMock.filter(item => item.isActive).length, products: new Set(variantsMock.map(item => item.productId)).size },
-  });
+export async function getVariants(params = {}) {
+  try {
+    // 1. Lấy danh sách sản phẩm admin
+    const productsRes = await productAPI.getProductsAdmin();
+    const productsData = productsRes?.data?.products ?? productsRes?.data ?? productsRes ?? [];
+    const products = Array.isArray(productsData) ? productsData : [];
+
+    // 2. Gọi API /api/products/{productId}/variants/admin cho từng sản phẩm để lấy đúng variant và giá
+    const allVariantsPromises = products.map(async (product) => {
+      const productId = product._id || product.id;
+      if (!productId) return [];
+
+      try {
+        const variantRes = await productAPI.getProductVariantsAdmin(productId);
+        const variantList = recordsFrom(variantRes?.data);
+        
+        return variantList.map((v) => ({
+          ...v,
+          _id: v._id || v.id || v.variantId,
+          sku: v.sku || `SKU-${Math.random().toString(36).substring(2, 7)}`,
+          // Lấy giá ưu tiên từ variant, nếu không có thì lấy giá của sản phẩm cha
+          price: Number(v.price ?? v.salePrice ?? v.unitPrice ?? product.price ?? 0),
+          size: v.size || "Standard",
+          material: v.material || product.material || "Gỗ/Kim loại",
+          color: v.color || "Tiêu chuẩn",
+          isActive: v.isActive ?? product.isActive ?? true,
+          productId: productId,
+          product: product,
+        }));
+      } catch (err) {
+        console.error(`Lỗi tải variant cho sản phẩm ${productId}:`, err);
+        // Fallback nếu sản phẩm đã chứa sẵn mảng variants bên trong
+        if (Array.isArray(product.variants)) {
+          return product.variants.map((v) => ({
+            ...v,
+            _id: v._id || v.id || v.variantId,
+            sku: v.sku || `SKU-${Math.random().toString(36).substring(2, 7)}`,
+            price: Number(v.price ?? v.salePrice ?? v.unitPrice ?? product.price ?? 0),
+            size: v.size || "Standard",
+            material: v.material || product.material || "Gỗ/Kim loại",
+            color: v.color || "Tiêu chuẩn",
+            isActive: v.isActive ?? product.isActive ?? true,
+            productId: productId,
+            product: product,
+          }));
+        }
+        return [];
+      }
+    });
+
+    const nestedVariants = await Promise.all(allVariantsPromises);
+    const allVariants = nestedVariants.flat();
+
+    // 3. Lọc dữ liệu theo các tiêu chí (search, material, status)
+    const search = (params.search || "").toLowerCase();
+    const materialFilter = params.material || "";
+    const statusFilter = params.status || "";
+
+    const filtered = allVariants.filter((v) => {
+      const matchSearch =
+        !search ||
+        (v.sku && v.sku.toLowerCase().includes(search)) ||
+        (v.product?.name && v.product.name.toLowerCase().includes(search)) ||
+        (v.material && v.material.toLowerCase().includes(search));
+
+      const matchMaterial = !materialFilter || v.material === materialFilter;
+      const matchStatus =
+        !statusFilter || (statusFilter === "active" ? v.isActive !== false : v.isActive === false);
+
+      return matchSearch && matchMaterial && matchStatus;
+    });
+
+    return {
+      rows: filtered,
+      total: filtered.length,
+      totals: {
+        variants: allVariants.length,
+        products: products.length,
+        active: allVariants.filter((v) => v.isActive !== false).length,
+      },
+      materials: [...new Set(allVariants.map((v) => v.material).filter(Boolean))].sort((a, b) => a.localeCompare(b, "vi")),
+    };
+  } catch (error) {
+    console.error("Lỗi khi tải danh sách SKU:", error);
+    return { rows: [], total: 0, totals: { variants: 0, products: 0, active: 0 }, materials: [] };
+  }
 }

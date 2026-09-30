@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { authAPI } from '../../services/api';
-import { ArrowLeft, Eye, EyeOff } from 'lucide-react';
-// Import hình nền từ thư mục assets (giống như trang Login)
+import { ArrowLeft, Eye, EyeOff, CheckCircle2, AlertCircle } from 'lucide-react';
 import bgImage from "../../assets/background.jpg"; 
 import './Register.css';
 
@@ -18,7 +17,7 @@ const Register = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  const [error, setError] = useState("");
+  const [notification, setNotification] = useState({ type: "", message: "" });
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
@@ -31,15 +30,15 @@ const Register = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError("");
+    setNotification({ type: "", message: "" });
 
     if (formData.password !== formData.confirmPassword) {
-      setError("Mật khẩu nhập lại không trùng khớp.");
+      setNotification({ type: "error", message: "Mật khẩu nhập lại không trùng khớp." });
       return;
     }
 
     if (formData.password.length < 6) {
-      setError("Mật khẩu phải từ 6 ký tự trở lên.");
+      setNotification({ type: "error", message: "Mật khẩu phải từ 6 ký tự trở lên." });
       return;
     }
 
@@ -56,21 +55,26 @@ const Register = () => {
     }
 
     try {
+      // API đăng ký chỉ cấp tài khoản Customer theo đúng thiết kế hệ thống
       await authAPI.register(payload);
-      navigate("/login");
+      
+      setNotification({
+        type: "success",
+        message: "Đăng ký tài khoản Customer thành công! Đang chuyển hướng...",
+      });
+
+      setTimeout(() => {
+        navigate("/login");
+      }, 1500);
     } catch (err) {
       const res = err.response?.data;
+      let errorMsg = "Đăng ký thất bại. Vui lòng thử lại!";
       if (res?.errors && res.errors.length > 0) {
-        const firstErr = res.errors[0];
-        const fieldName = firstErr.path?.[0] ? `[${firstErr.path[0]}] ` : "";
-        setError(`${fieldName}${firstErr.message}`);
+        errorMsg = res.errors[0].message;
       } else if (res?.message) {
-        setError(res.message);
-      } else {
-        setError(
-          getApiErrorMessage(err, "Đăng ký thất bại. Vui lòng thử lại!"),
-        );
+        errorMsg = res.message;
       }
+      setNotification({ type: "error", message: errorMsg });
     } finally {
       setLoading(false);
     }
@@ -80,16 +84,13 @@ const Register = () => {
     <div 
       className="auth-wrapper"
       style={{
-        /* Áp dụng hiệu ứng nền mờ và tối tương tự trang Login */
         backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.8)), url(${bgImage})`,
         backgroundSize: "cover",
         backgroundPosition: "center",
         backgroundRepeat: "no-repeat"
       }}
     >
-      {/* Khung card lớn chứa cả 2 bên (ảnh banner và form) */}
       <div className="auth-main-card">
-        {/* Banner bên trái (Ảnh nội thất sáng sủa, sang trọng) */}
         <div className="auth-banner">
           <div className="banner-brand">LUMORA</div>
           <div className="banner-quote">
@@ -98,23 +99,43 @@ const Register = () => {
               <br />
               quản lý kho thông minh.
             </h3>
-            <p>Tạo tài khoản để bắt đầu quản lý danh mục nội thất của bạn.</p>
+            <p>Tạo tài khoản khách hàng để bắt đầu mua sắm và quản lý đơn hàng.</p>
           </div>
         </div>
 
-        {/* Khung form bên phải */}
         <div className="auth-form-container">
           <div className="auth-card register-card">
-            {/* Nút Back về trang chủ dạng mũi tên ở góc trên */}
             <Link to="/" className="btn-back-home" title="Về trang chủ">
               <ArrowLeft size={20} />
             </Link>
             <div className="auth-header">
-              <h2  style={{ fontFamily: "Bodoni Moda", fontSize: 'clamp(2rem, 2.5vw, 2.7rem)', color: '#1a1a1a', letterSpacing: '-0.02em', fontWeight: 600 }}>Tạo Tài Khoản</h2>
-              <p>Điền thông tin bên dưới để đăng ký thành viên.</p>
+              <h2 style={{ fontFamily: "Bodoni Moda", fontSize: 'clamp(2rem, 2.5vw, 2.7rem)', color: '#1a1a1a', letterSpacing: '-0.02em', fontWeight: 600 }}>
+                Đăng Ký Tài Khoản
+              </h2>
+              <p>Chỉ dành cho Khách hàng (Customer). Tài khoản quản trị/nhân viên do Admin cung cấp.</p>
             </div>
 
-            {error && <div className="error-badge">{error}</div>}
+            {/* Thông báo trạng thái */}
+            {notification.message && (
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "10px",
+                  padding: "12px 16px",
+                  borderRadius: "8px",
+                  marginBottom: "16px",
+                  fontSize: "13px",
+                  fontWeight: 600,
+                  backgroundColor: notification.type === "success" ? "#f0fdf4" : "#fef2f2",
+                  color: notification.type === "success" ? "#16a34a" : "#dc2626",
+                  border: `1px solid ${notification.type === "success" ? "#bbf7d0" : "#fecaca"}`,
+                }}
+              >
+                {notification.type === "success" ? <CheckCircle2 size={18} /> : <AlertCircle size={18} />}
+                <span>{notification.message}</span>
+              </div>
+            )}
 
             <form onSubmit={handleSubmit}>
               <div className="form-group">
@@ -155,7 +176,6 @@ const Register = () => {
                 />
               </div>
 
-              {/* Ô Mật Khẩu */}
               <div className="form-group">
                 <label>Mật Khẩu</label>
                 <div style={{ position: "relative" }}>
@@ -190,7 +210,6 @@ const Register = () => {
                 </div>
               </div>
 
-              {/* Ô Nhập Lại Mật Khẩu */}
               <div className="form-group">
                 <label>Nhập Lại Mật Khẩu</label>
                 <div style={{ position: "relative" }}>
@@ -220,17 +239,13 @@ const Register = () => {
                       alignItems: "center",
                     }}
                   >
-                    {showConfirmPassword ? (
-                      <EyeOff size={20} />
-                    ) : (
-                      <Eye size={20} />
-                    )}
+                    {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                   </button>
                 </div>
               </div>
 
               <button type="submit" className="btn-submit" disabled={loading}>
-                {loading ? "Đang xử lý..." : "Đăng Ký"}
+                {loading ? "Đang xử lý..." : "Đăng Ký Tài Khoản"}
               </button>
             </form>
 

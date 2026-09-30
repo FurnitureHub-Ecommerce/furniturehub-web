@@ -113,7 +113,7 @@ export default function AdminInventoryDetail() {
                 {variant.size} · {variant.material} · {variant.color}
               </p>
               <span className="lid-demo">
-                Dữ liệu Variant/Product mock từ Catalog
+                Dữ liệu Variant/Product từ Backend
               </span>
             </div>
             <Pending

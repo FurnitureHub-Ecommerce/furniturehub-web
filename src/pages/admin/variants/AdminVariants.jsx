@@ -1,406 +1,308 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
-import {
-  Barcode,
-  Layers,
-  BadgeCheck,
-  Monitor,
-  Download,
-  CirclePlus,
-  RefreshCw,
-  Package,
-  Ruler,
-  Palette,
-  ShieldCheck,
-  ChevronLeft,
-  ChevronRight,
-  ChevronsLeft,
-  ChevronsRight,
-} from "lucide-react";
 import { getVariants } from "../../../services/admin/variants.service.js";
+import api from "../../../services/api.js";
+import { Plus, Pencil, Trash2, X, RefreshCw } from "lucide-react";
 import "./AdminVariants.css";
 
-const initialQuery = {
-  search: "",
-  material: "",
-  minPrice: "",
-  maxPrice: "",
-  status: "",
-  page: 1,
-  pageSize: 10,
-};
-const money = (value) =>
-  new Intl.NumberFormat("vi-VN", { style: "currency", currency: "EUR" }).format(
-    value,
-  );
+const money = (value) => new Intl.NumberFormat("vi-VN", { style: "currency", currency: "EUR" }).format(value);
 
-function Unavailable({ children, reason, primary = false }) {
+// Modal Thêm/Sửa Variant
+function VariantModal({ variant, onClose, onSaved }) {
+  const [form, setForm] = useState({
+    sku: variant?.sku ?? "",
+    size: variant?.size ?? "",
+    material: variant?.material ?? "",
+    color: variant?.color ?? "",
+    price: variant?.price ?? 0,
+    isActive: variant?.isActive ?? true,
+  });
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+
+  async function handleSubmit(e) {
+    e.preventDefault();
+    if (saving) return;
+    setSaving(true);
+    setError("");
+    try {
+      const variantId = variant?._id || variant?.id;
+      if (variant && variantId) {
+        await api.patch(`/api/variants/${variantId}`, form);
+      } else {
+        alert("Chức năng tạo variant mới đang liên kết với form sản phẩm chính.");
+      }
+      onSaved();
+    } catch (err) {
+      setError(err.response?.data?.message || err.message || "Không thể lưu biến thể.");
+      setSaving(false);
+    }
+  }
+
   return (
-    <span className="lv-unavailable" tabIndex={0} aria-label={reason}>
-      <button disabled type="button" className={primary ? "lv-primary" : ""}>
-        {children}
-      </button>
-      <span className="lv-tooltip">{reason}</span>
-    </span>
+    <div style={{
+      position: "fixed",
+      top: 0,
+      left: 0,
+      width: "100vw",
+      height: "100vh",
+      background: "rgba(0, 0, 0, 0.45)",
+      backdropFilter: "blur(3px)",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      zIndex: 9999,
+      padding: "16px",
+    }}>
+      <div style={{ 
+        padding: "32px", 
+        borderRadius: "16px", 
+        border: "1px solid #e7e2dc", 
+        width: "500px", 
+        maxWidth: "100%",
+        background: "#fff", 
+        boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
+      }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "24px", borderBottom: "1px solid #f2efeb", paddingBottom: "14px" }}>
+          <div>
+            <span style={{ fontSize: "10px", fontWeight: 700, color: "#8c8278", letterSpacing: "0.05em" }}>LUMORA SYSTEM</span>
+            <h2 style={{ fontSize: "1.35rem", fontWeight: 600, margin: "2px 0 0 0", fontFamily: "Bodoni Moda", color: "#1a1a1a" }}>
+              {variant ? "Chỉnh Sửa Biến Thể SKU" : "Thêm Biến Thể Mới"}
+            </h2>
+          </div>
+          <button type="button" onClick={onClose} style={{ background: "#f5f2ed", border: "none", borderRadius: "50%", width: "32px", height: "32px", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "#555" }}><X size={18} /></button>
+        </div>
+
+        <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+          <label style={{ fontSize: "11px", fontWeight: 700, color: "#78716c", letterSpacing: "0.05em", display: "flex", flexDirection: "column", gap: "6px" }}>
+            MÃ SKU *
+            <input required value={form.sku} onChange={e => setForm({ ...form, sku: e.target.value })} style={{ width: "100%", padding: "11px 14px", borderRadius: "8px", border: "1px solid #dcd6cd", fontSize: "13px", outline: "none", background: "#faf8f5" }} />
+          </label>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+            <label style={{ fontSize: "11px", fontWeight: 700, color: "#78716c", letterSpacing: "0.05em", display: "flex", flexDirection: "column", gap: "6px" }}>
+              KÍCH THƯỚC
+              <input value={form.size} onChange={e => setForm({ ...form, size: e.target.value })} style={{ width: "100%", padding: "11px 14px", borderRadius: "8px", border: "1px solid #dcd6cd", fontSize: "13px", outline: "none", background: "#faf8f5" }} />
+            </label>
+            <label style={{ fontSize: "11px", fontWeight: 700, color: "#78716c", letterSpacing: "0.05em", display: "flex", flexDirection: "column", gap: "6px" }}>
+              MÀU SẮC
+              <input value={form.color} onChange={e => setForm({ ...form, color: e.target.value })} style={{ width: "100%", padding: "11px 14px", borderRadius: "8px", border: "1px solid #dcd6cd", fontSize: "13px", outline: "none", background: "#faf8f5" }} />
+            </label>
+          </div>
+          <label style={{ fontSize: "11px", fontWeight: 700, color: "#78716c", letterSpacing: "0.05em", display: "flex", flexDirection: "column", gap: "6px" }}>
+            CHẤT LIỆU
+            <input value={form.material} onChange={e => setForm({ ...form, material: e.target.value })} style={{ width: "100%", padding: "11px 14px", borderRadius: "8px", border: "1px solid #dcd6cd", fontSize: "13px", outline: "none", background: "#faf8f5" }} />
+          </label>
+          <label style={{ fontSize: "11px", fontWeight: 700, color: "#78716c", letterSpacing: "0.05em", display: "flex", flexDirection: "column", gap: "6px" }}>
+            GIÁ BÁN (EUR) *
+            <input type="number" required value={form.price} onChange={e => setForm({ ...form, price: Number(e.target.value) })} style={{ width: "100%", padding: "11px 14px", borderRadius: "8px", border: "1px solid #dcd6cd", fontSize: "13px", outline: "none", background: "#faf8f5" }} />
+          </label>
+          <label style={{ display: "flex", alignItems: "center", gap: "10px", fontSize: "13px", fontWeight: 500, color: "#333", marginTop: "4px", cursor: "pointer", background: "#faf8f5", padding: "10px 14px", borderRadius: "8px", border: "1px solid #eae6df" }}>
+            <input 
+              type="checkbox" 
+              checked={form.isActive} 
+              onChange={e => setForm({ ...form, isActive: e.target.checked })}
+              style={{ width: "16px", height: "16px", accentColor: "#1c1c1c" }} 
+            />
+            Đang hoạt động (Kinh doanh sản phẩm này)
+          </label>
+          
+          {error && <p style={{ color: "#dc2626", fontSize: "12px", margin: 0, fontWeight: 500 }}>{error}</p>}
+          
+          <div style={{ display: "flex", justifyContent: "flex-end", gap: "12px", marginTop: "16px", borderTop: "1px solid #f2efeb", paddingTop: "18px" }}>
+            <button type="button" onClick={onClose} style={{ padding: "11px 20px", borderRadius: "8px", border: "1px solid #dcd6cd", background: "#fff", cursor: "pointer", fontSize: "13px", fontWeight: 600, color: "#555" }}>Hủy</button>
+            <button type="submit" disabled={saving} style={{ padding: "11px 20px", borderRadius: "8px", border: "none", background: "#1c1c1c", color: "#fff", fontWeight: 600, cursor: "pointer", fontSize: "13px" }}>
+              {saving ? "Đang lưu..." : "Lưu Thay Đổi"}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
   );
 }
 
 export default function AdminVariants() {
-  const [query, setQuery] = useState(initialQuery);
-  const [revision, setRevision] = useState(0);
+  const [query, setQuery] = useState({ search: "", material: "", status: "", page: 1, pageSize: 10 });
   const [state, setState] = useState({ loading: true, data: null, error: "" });
+  const [modalMode, setModalMode] = useState(null);
+  const [refreshKey, setRefreshKey] = useState(0);
+
   useEffect(() => {
     let cancelled = false;
     getVariants(query)
-      .then((data) => {
-        if (!cancelled) setState({ loading: false, data, error: "" });
-      })
-      .catch((error) => {
-        if (!cancelled)
-          setState((current) => ({
-            ...current,
-            loading: false,
-            error: error.message,
-          }));
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [query, revision]);
+      .then((data) => { if (!cancelled) setState({ loading: false, data, error: "" }); })
+      .catch((error) => { if (!cancelled) setState({ loading: false, data: null, error: error.message }); });
+    return () => { cancelled = true; };
+  }, [query, refreshKey]);
+
   function update(changes) {
-    setState((current) => ({ ...current, loading: true, error: "" }));
-    setQuery((current) => ({ ...current, page: 1, ...changes }));
+    setQuery((current) => ({ ...current, ...changes }));
   }
-  function reload() {
-    setState((current) => ({ ...current, loading: true, error: "" }));
-    setRevision((value) => value + 1);
+
+  async function handleDelete(variant) {
+    const variantId = variant?._id || variant?.id;
+    if (!variantId) return;
+    if (!window.confirm("Bạn có chắc chắn muốn vô hiệu hóa/xóa biến thể này không?")) return;
+    try {
+      await api.delete(`/api/variants/${variantId}`);
+      setRefreshKey(prev => prev + 1);
+    } catch (err) {
+      alert("Không thể xóa biến thể: " + (err.message || "Lỗi hệ thống"));
+    }
   }
+
   const data = state.data;
-  const totals = data?.totals;
+
   return (
-    <div className="lv-page">
-      <p className="lv-eyebrow">QUẢN TRỊ DANH MỤC / BIẾN THỂ & SKU</p>
-      <div className="lv-intro">
+    <div style={{ padding: "0 28px 48px 28px", fontFamily: "'Inter', sans-serif", maxWidth: "1500px", margin: "0 auto" }}>
+      <header style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: "28px", borderBottom: "1px solid #eae6df", paddingBottom: "20px" }}>
         <div>
-          <h1>Quản Lý Biến Thể & Danh Mục SKU</h1>
-          <p>
-            Theo dõi kích thước, chất liệu, màu sắc và giá niêm yết
-            <br />
-            của từng biến thể sản phẩm LUMORA.
+          <span style={{ fontSize: 11, fontWeight: 700, color: "#78716c", letterSpacing: "0.05em" }}>
+            QUẢN TRỊ DANH MỤC / BIẾN THỂ & SKU
+          </span>
+          <h1 style={{ fontFamily: "Bodoni Moda", fontSize: "2.6rem", fontWeight: 600, color: "#1a1a1a", margin: "4px 0 6px 0" }}>
+            Quản Lý Biến Thể & Danh Mục SKU
+          </h1>
+          <p style={{ margin: 0, color: "#666", fontSize: "13px" }}>
+            Quản lý kích thước, chất liệu, màu sắc và giá niêm yết của từng biến thể sản phẩm LUMORA.
           </p>
         </div>
-        <div className="lv-actions">
-          <Unavailable reason="Xuất báo cáo SKU chưa triển khai.">
-            <Download size={16} />
-            Xuất Báo Cáo SKU
-          </Unavailable>
-          <Unavailable
-            primary
-            reason="Thêm Variant chưa triển khai; trang này chỉ đọc."
-          >
-            <CirclePlus size={16} />
-            Thêm Biến Thể Mới
-          </Unavailable>
-        </div>
-      </div>
-      <p className="lv-demo">
-        <strong>Dữ liệu mock Catalog</strong> · Chỉ đọc · Giá demo bằng EUR ·
-        Tải lại không đồng bộ Backend hoặc Storage.
-      </p>
-      <div className="lv-kpis">
-        <article>
-          <span>
-            TỔNG MÃ BIẾN THỂ (SKU)
-            <Barcode size={20} />
-          </span>
-          <strong>{totals?.variants ?? "…"}</strong>
-          <p>Trên {totals?.products ?? "…"} sản phẩm có Variant</p>
-        </article>
-        <article>
-          <span>
-            QUY CHUẨN HOÀN THIỆN
-            <Layers size={20} />
-          </span>
-          <strong className="lv-pending">Chưa tích hợp</strong>
-          <p>Chưa có dữ liệu quy chuẩn hoàn thiện</p>
-        </article>
-        <article>
-          <span>
-            VARIANT ĐANG HOẠT ĐỘNG
-            <BadgeCheck size={20} />
-          </span>
-          <strong>{totals?.active ?? "…"}</strong>
-          <p>
-            {totals
-              ? `${totals.variants ? ((totals.active / totals.variants) * 100).toFixed(1) : "0"}% tổng SKU · ${totals.variants - totals.active} ngừng hoạt động`
-              : "Đang tải tổng số…"}
-          </p>
-        </article>
-        <article>
-          <span>
-            ĐỒNG BỘ DỮ LIỆU KHO
-            <Monitor size={20} />
-          </span>
-          <strong className="lv-pending">Chưa tích hợp</strong>
-          <p>Không có kết nối đồng bộ Storage</p>
-        </article>
-      </div>
-      <section className="lv-filters" aria-label="Lọc danh sách SKU">
-        <label className="lv-search">
-          Tìm kiếm
+        <button 
+          onClick={() => setModalMode("add")}
+          style={{ display: "flex", alignItems: "center", gap: "8px", background: "#1c1c1c", color: "#fff", border: "none", padding: "12px 20px", borderRadius: "8px", fontSize: "13px", fontWeight: 600, cursor: "pointer", boxShadow: "0 4px 12px rgba(0,0,0,0.08)", transition: "all 0.2s" }}
+        >
+          <Plus size={16} /> Thêm Biến Thể Mới
+        </button>
+      </header>
+      
+      {/* THANH LỌC DỮ LIỆU */}
+      <section style={{ display: "grid", gridTemplateColumns: "1fr 240px 200px auto", gap: "16px", marginBottom: "24px", background: "#fff", padding: "20px", borderRadius: "14px", border: "1px solid #eae6df", alignItems: "flex-end", boxShadow: "0 2px 6px rgba(0,0,0,0.01)" }}>
+        <label style={{ display: "flex", flexDirection: "column", gap: "6px", fontSize: "11px", fontWeight: 700, color: "#78716c", letterSpacing: "0.03em" }}>
+          TÌM KIẾM SKU / SẢN PHẨM
           <input
             type="search"
-            placeholder="SKU, tên sản phẩm hoặc chất liệu…"
+            placeholder="Nhập mã SKU hoặc tên sản phẩm..."
             value={query.search}
-            onChange={(event) => update({ search: event.target.value })}
+            onChange={(e) => update({ search: e.target.value })}
+            style={{ padding: "10px 14px", borderRadius: "8px", border: "1px solid #dcd6cd", fontSize: "13px", background: "#faf8f5", outline: "none", width: "100%" }}
           />
         </label>
-        <label>
-          Chất liệu
-          <select
-            value={query.material}
-            onChange={(event) => update({ material: event.target.value })}
+        <label style={{ display: "flex", flexDirection: "column", gap: "6px", fontSize: "11px", fontWeight: 700, color: "#78716c", letterSpacing: "0.03em" }}>
+          CHẤT LIỆU
+          <select 
+            value={query.material} 
+            onChange={(e) => update({ material: e.target.value })}
+            style={{ padding: "10px 14px", borderRadius: "8px", border: "1px solid #dcd6cd", fontSize: "13px", background: "#faf8f5", outline: "none", width: "100%" }}
           >
             <option value="">Tất cả chất liệu</option>
-            {data?.materials.map((material) => (
-              <option key={material}>{material}</option>
-            ))}
+            {data?.materials?.map((m) => <option key={m}>{m}</option>)}
           </select>
         </label>
-        <label>
-          Giá tối thiểu (EUR)
-          <input
-            type="number"
-            min="0"
-            step="0.01"
-            value={query.minPrice}
-            onChange={(event) => update({ minPrice: event.target.value })}
-            aria-invalid={query.minPrice !== "" && Number(query.minPrice) < 0}
-          />
-        </label>
-        <label>
-          Giá tối đa (EUR)
-          <input
-            type="number"
-            min="0"
-            step="0.01"
-            value={query.maxPrice}
-            onChange={(event) => update({ maxPrice: event.target.value })}
-            aria-invalid={
-              query.maxPrice !== "" &&
-              (Number(query.maxPrice) < 0 ||
-                (query.minPrice !== "" &&
-                  Number(query.minPrice) > Number(query.maxPrice)))
-            }
-          />
-        </label>
-        <label>
-          Trạng thái
-          <select
-            value={query.status}
-            onChange={(event) => update({ status: event.target.value })}
+        <label style={{ display: "flex", flexDirection: "column", gap: "6px", fontSize: "11px", fontWeight: 700, color: "#78716c", letterSpacing: "0.03em" }}>
+          TRẠNG THÁI
+          <select 
+            value={query.status} 
+            onChange={(e) => update({ status: e.target.value })}
+            style={{ padding: "10px 14px", borderRadius: "8px", border: "1px solid #dcd6cd", fontSize: "13px", background: "#faf8f5", outline: "none", width: "100%" }}
           >
             <option value="">Tất cả trạng thái</option>
             <option value="active">Đang hoạt động</option>
             <option value="inactive">Ngừng hoạt động</option>
           </select>
         </label>
-        <button className="lv-reload" onClick={reload} disabled={state.loading}>
-          <RefreshCw size={17} />
-          Tải lại mock
+        <button 
+          type="button"
+          onClick={() => setRefreshKey(prev => prev + 1)}
+          style={{ display: "flex", alignItems: "center", gap: "6px", padding: "10px 16px", borderRadius: "8px", border: "1px solid #dcd6cd", background: "#fff", cursor: "pointer", fontSize: "13px", fontWeight: 600, height: "41px", color: "#444" }}
+        >
+          <RefreshCw size={14} /> Làm mới
         </button>
       </section>
-      <section className="lv-table-box" aria-label="Danh sách Variant">
+
+      {/* BẢNG HIỂN THỊ */}
+      <section style={{ background: "#fff", border: "1px solid #eae6df", borderRadius: "14px", overflow: "hidden", boxShadow: "0 4px 12px rgba(0,0,0,0.02)" }}>
         {state.loading ? (
-          <div className="lv-state" role="status">
-            Đang tải danh sách SKU…
-          </div>
+          <div style={{ padding: "60px", textAlign: "center", color: "#666", fontSize: "13px" }}>Đang tải danh sách SKU từ hệ thống...</div>
         ) : state.error ? (
-          <div className="lv-state" role="alert">
-            <p>{state.error}</p>
-            <button onClick={reload}>Thử lại</button>
-            <button onClick={() => update(initialQuery)}>Xóa bộ lọc</button>
-          </div>
-        ) : !data?.rows.length ? (
-          <div className="lv-state" role="status">
-            <Package size={30} />
-            <h2>Không có SKU phù hợp</h2>
-            <p>Thử điều chỉnh tìm kiếm, chất liệu, giá hoặc trạng thái.</p>
-            <button onClick={() => update(initialQuery)}>Xóa bộ lọc</button>
-          </div>
+          <div style={{ padding: "60px", textAlign: "center", color: "#dc2626", fontSize: "13px" }}>{state.error}</div>
+        ) : !data?.rows?.length ? (
+          <div style={{ padding: "60px", textAlign: "center", color: "#666", fontSize: "13px" }}>Không tìm thấy SKU phù hợp.</div>
         ) : (
-          <>
-            <p className="lv-result" aria-live="polite">
-              Hiển thị {data.rows.length} trên {data.total} SKU phù hợp · KPI
-              phía trên tính trên toàn bộ mock.
-            </p>
-            <div
-              className="lv-table-scroll"
-              tabIndex={0}
-              aria-label="Bảng SKU, cuộn ngang khi cần"
-            >
-              <table>
-                <thead>
-                  <tr>
-                    <th scope="col">MÃ SKU</th>
-                    <th scope="col">SẢN PHẨM GỐC</th>
-                    <th scope="col">THUỘC TÍNH BIẾN THỂ</th>
-                    <th scope="col">GIÁ BÁN NIÊM YẾT</th>
-                    <th scope="col">TỒN KHO (STORAGE)</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {data.rows.map((variant) => (
-                    <tr key={variant._id}>
-                      <td>
-                        <Link
-                          className="lv-sku"
-                          to={
-                            "/admin/inventory/" +
-                            encodeURIComponent(variant._id)
-                          }
-                        >
-                          {variant.sku}
-                        </Link>
-                        <small>ID: {variant._id}</small>
+          <div style={{ overflowX: "auto" }}>
+            <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left", fontSize: "13px", whiteSpace: "nowrap" }}>
+              <thead>
+                <tr style={{ background: "#faf8f5", borderBottom: "1px solid #eae6df", color: "#78716c", fontSize: "11px", fontWeight: 700, letterSpacing: "0.06em" }}>
+                  <th style={{ padding: "16px 20px" }}>MÃ SKU</th>
+                  <th style={{ padding: "16px 20px" }}>SẢN PHẨM GỐC</th>
+                  <th style={{ padding: "16px 20px" }}>KÍCH THƯỚC</th>
+                  <th style={{ padding: "16px 20px" }}>CHẤT LIỆU</th>
+                  <th style={{ padding: "16px 20px" }}>MÀU SẮC</th>
+                  <th style={{ padding: "16px 20px" }}>GIÁ BÁN</th>
+                  <th style={{ padding: "16px 20px" }}>TRẠNG THÁI</th>
+                  <th style={{ padding: "16px 20px", textAlign: "right" }}>THAO TÁC</th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.rows.map((variant, idx) => {
+                  const isActive = variant.isActive !== false;
+                  return (
+                    <tr key={variant._id || variant.id || idx} style={{ borderBottom: "1px solid #f2efeb", background: idx % 2 === 0 ? "#fff" : "#fcfbfa" }}>
+                      <td style={{ padding: "16px 20px", fontWeight: 600, color: "#1c1c1c" }}>
+                        <span style={{ background: "#f0ece6", color: "#2c2825", padding: "5px 10px", borderRadius: "6px", fontSize: "12px", fontFamily: "monospace", fontWeight: 700, letterSpacing: "0.03em" }}>{variant.sku}</span>
                       </td>
-                      <td>
-                        <div className="lv-product">
-                          <span
-                            className="lv-placeholder"
-                            role="img"
-                            aria-label="Chưa có ảnh sản phẩm gốc"
+                      <td style={{ padding: "16px 20px", color: "#1c1c1c", fontWeight: 600, maxWidth: "260px", overflow: "hidden", textOverflow: "ellipsis" }}>{variant.product?.name || "Sản phẩm gốc"}</td>
+                      <td style={{ padding: "16px 20px", color: "#666" }}>{variant.size || "Standard"}</td>
+                      <td style={{ padding: "16px 20px", color: "#666", maxWidth: "220px", overflow: "hidden", textOverflow: "ellipsis" }} title={variant.material}>{variant.material || "N/A"}</td>
+                      <td style={{ padding: "16px 20px", color: "#666" }}>{variant.color || "N/A"}</td>
+                      <td style={{ padding: "16px 20px", fontWeight: 700, color: "#15803d" }}>{money(variant.price)}</td>
+                      <td style={{ padding: "16px 20px" }}>
+                        <span style={{ 
+                          display: "inline-block",
+                          background: isActive ? "#f0fdf4" : "#fef2f2", 
+                          color: isActive ? "#15803d" : "#dc2626", 
+                          padding: "5px 10px", 
+                          borderRadius: "20px", 
+                          fontSize: "11px", 
+                          fontWeight: 700,
+                          textAlign: "center"
+                        }}>
+                          {isActive ? "Đang hoạt động" : "Ngừng hoạt động"}
+                        </span>
+                      </td>
+                      <td style={{ padding: "16px 20px", textAlign: "right" }}>
+                        <div style={{ display: "flex", justifyContent: "flex-end", gap: "8px" }}>
+                          <button 
+                            type="button"
+                            title="Chỉnh sửa SKU"
+                            onClick={() => setModalMode(variant)}
+                            style={{ padding: "8px", borderRadius: "8px", border: "1px solid #dcd6cd", background: "#fff", cursor: "pointer", color: "#444", transition: "all 0.2s" }}
                           >
-                            <Package size={25} />
-                          </span>
-                          <div>
-                            <strong>
-                              {variant.product?.name ?? "Chưa có sản phẩm gốc"}
-                            </strong>
-                            <small>ID sản phẩm: {variant.productId}</small>
-                            <small>
-                              Danh mục:{" "}
-                              {variant.category?.name ?? "Chưa xác định"}
-                            </small>
-                          </div>
+                            <Pencil size={15} />
+                          </button>
+                          <button 
+                            type="button"
+                            title="Vô hiệu hóa / Xóa"
+                            onClick={() => handleDelete(variant)}
+                            style={{ padding: "8px", borderRadius: "8px", border: "1px solid #fecaca", background: "#fef2f2", cursor: "pointer", color: "#dc2626", transition: "all 0.2s" }}
+                          >
+                            <Trash2 size={15} />
+                          </button>
                         </div>
-                      </td>
-                      <td>
-                        <div className="lv-attribute">
-                          <Ruler size={15} />
-                          <span>{variant.size}</span>
-                        </div>
-                        <div className="lv-attribute">
-                          <Layers size={15} />
-                          <span>{variant.material}</span>
-                        </div>
-                        <div className="lv-attribute">
-                          <Palette size={15} />
-                          <span>{variant.color}</span>
-                        </div>
-                      </td>
-                      <td>
-                        <strong className="lv-price">
-                          {money(variant.price)}
-                        </strong>
-                        <small>Thuế: Chưa xác nhận</small>
-                      </td>
-                      <td>
-                        <span className="lv-stock">Chưa tích hợp</span>
                       </td>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         )}
-        <footer className="lv-footer">
-          <label>
-            Dòng trên trang:{" "}
-            <select
-              value={query.pageSize}
-              onChange={(event) =>
-                update({ pageSize: Number(event.target.value) })
-              }
-            >
-              {[5, 10, 20].map((size) => (
-                <option key={size} value={size}>
-                  {size}
-                </option>
-              ))}
-            </select>
-          </label>
-          {data && !state.error && !state.loading && (
-            <>
-              <span>
-                {data.total
-                  ? `Trang ${data.page} trên ${data.totalPages}`
-                  : "0 kết quả"}
-              </span>
-              <nav aria-label="Phân trang SKU">
-                <button
-                  aria-label="Trang đầu"
-                  disabled={data.page === 1}
-                  onClick={() => update({ page: 1 })}
-                >
-                  <ChevronsLeft size={17} />
-                </button>
-                <button
-                  aria-label="Trang trước"
-                  disabled={data.page === 1}
-                  onClick={() => update({ page: data.page - 1 })}
-                >
-                  <ChevronLeft size={17} />
-                </button>
-                {Array.from(
-                  { length: data.totalPages },
-                  (_, index) => index + 1,
-                ).map((page) => (
-                  <button
-                    key={page}
-                    aria-current={page === data.page ? "page" : undefined}
-                    onClick={() => update({ page })}
-                  >
-                    {page}
-                  </button>
-                ))}
-                <button
-                  aria-label="Trang sau"
-                  disabled={data.page === data.totalPages}
-                  onClick={() => update({ page: data.page + 1 })}
-                >
-                  <ChevronRight size={17} />
-                </button>
-                <button
-                  aria-label="Trang cuối"
-                  disabled={data.page === data.totalPages}
-                  onClick={() => update({ page: data.totalPages })}
-                >
-                  <ChevronsRight size={17} />
-                </button>
-              </nav>
-            </>
-          )}
-        </footer>
       </section>
-      <section className="lv-governance">
-        <ShieldCheck size={25} />
-        <div>
-          <h2>Nguyên Tắc Quản Trị Theo Vai Trò</h2>
-          <p>
-            Admin xem thông tin SKU và giá niêm yết trong mock Catalog. Trang
-            này không thực hiện nhập, xuất hoặc điều chỉnh tồn kho của Storage
-            Manager.
-          </p>
-          <small>
-            Vai trò nghiệp vụ: Admin / Staff / Storage Manager / Customer
-          </small>
-        </div>
-        <span>
-          Quyền ghi: <strong>Chưa xác định</strong>
-        </span>
-      </section>
+
+      {modalMode && (
+        <VariantModal 
+          variant={modalMode === "add" ? null : modalMode} 
+          onClose={() => setModalMode(null)} 
+          onSaved={() => { setModalMode(null); setRefreshKey(prev => prev + 1); }} 
+        />
+      )}
     </div>
   );
 }
