@@ -1,3 +1,4 @@
+// src/services/admin/catalog.service.js
 import { brandAPI, categoryAPI, productAPI } from "../api.js";
 
 const normalize = (value) =>
@@ -39,10 +40,14 @@ async function variantsForProduct(product) {
     return product.variants.map((variant) => normalizeVariant(variant, product._id));
   }
   if (!product._id) return [];
-  const response = await productAPI.getProductVariantsAdmin(product._id);
-  return recordsFrom(response.data, ["variants"]).map((variant) =>
-    normalizeVariant(variant, product._id),
-  );
+  try {
+    const response = await productAPI.getProductVariantsAdmin(product._id);
+    return recordsFrom(response.data, ["variants"]).map((variant) =>
+      normalizeVariant(variant, product._id),
+    );
+  } catch {
+    return [];
+  }
 }
 
 export async function getCatalog({ search = "", categoryId = "", brandId = "", material = "", status = "", page = 1, pageSize = 5 } = {}) {
@@ -51,16 +56,19 @@ export async function getCatalog({ search = "", categoryId = "", brandId = "", m
     categoryAPI.getCategoriesAdmin(),
     brandAPI.getBrandsAdmin(),
   ]);
+
   const categories = recordsFrom(categoriesResponse.data, ["categories"]).map((category) => ({
     ...category,
     _id: category._id ?? category.id ?? category.categoryId,
     isActive: category.isActive ?? category.status === "active",
   }));
+
   const brands = recordsFrom(brandsResponse.data, ["brands"]).map((brand) => ({
     ...brand,
     _id: brand._id ?? brand.id ?? brand.brandId,
     isActive: brand.isActive ?? brand.status === "active",
   }));
+
   const productRecords = recordsFrom(productsResponse.data, ["products"]).map((product) => ({
     ...product,
     _id: product._id ?? product.id ?? product.productId,
@@ -68,12 +76,14 @@ export async function getCatalog({ search = "", categoryId = "", brandId = "", m
     brandId: entityId(product.brandId ?? product.brand),
     isActive: product.isActive ?? product.status === "active",
   }));
+
   const productsWithVariants = await Promise.all(
     productRecords.map(async (product) => ({
       ...product,
       variants: await variantsForProduct(product),
     })),
   );
+
   const products = productsWithVariants.map((product) => {
     const category = categories.find((item) => item._id === product.categoryId)
       ?? (typeof product.category === "object" ? product.category : { name: "Chưa phân loại" });
@@ -89,8 +99,10 @@ export async function getCatalog({ search = "", categoryId = "", brandId = "", m
         : null,
     };
   });
+
   const materials = [...new Set(products.flatMap((product) => product.variants.map((variant) => variant.material).filter(Boolean)))].sort((a, b) => a.localeCompare(b, "vi"));
   const query = normalize(search);
+
   const filtered = products.filter((product) => {
     const text = normalize([
       product.name,
@@ -105,6 +117,7 @@ export async function getCatalog({ search = "", categoryId = "", brandId = "", m
       && (!material || product.variants.some((variant) => variant.material === material))
       && (!status || product.isActive === (status === "active"));
   });
+
   const size = Number(pageSize);
   const totalPages = Math.max(1, Math.ceil(filtered.length / size));
   const currentPage = Math.max(1, Math.min(totalPages, Number.isFinite(Number(page)) ? Math.floor(Number(page)) : 1));
@@ -126,11 +139,6 @@ export async function getCatalog({ search = "", categoryId = "", brandId = "", m
       brands: brands.length,
     },
   };
-}
-
-export async function getProductById(id) {
-  const response = await productAPI.getProductById(id);
-  return response.data?.product ?? response.data?.data ?? response.data;
 }
 
 export async function saveProduct({ id, ...productData }) {
