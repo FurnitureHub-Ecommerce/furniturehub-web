@@ -127,6 +127,20 @@ export const authAPI = {
     ),
 };
 
+// =========== USER / ADMIN MANAGEMENT API ===========
+
+export const userAPI = {
+  // Admin lấy danh sách toàn bộ người dùng trong hệ thống
+  getUsers: (params = {}) => api.get("/api/users", { params }),
+
+  // Admin tạo tài khoản mới cho Staff hoặc Storage_Manager
+  createUser: (userData) => api.post("/api/users", userData),
+
+  getProfile: () => api.get("/api/users/profile"),
+
+  updateProfile: (profileData) => api.patch("/api/users/profile", profileData),
+};
+
 // =========== PRODUCT API ===========
 
 export const productAPI = {
@@ -134,7 +148,13 @@ export const productAPI = {
 
   getProductsAdmin: (params = {}) => api.get("/api/products/admin", { params }),
 
+  createProduct: (productData) => api.post("/api/products", productData),
+
   getProductById: (id) => api.get(`/api/products/${id}`),
+
+  updateProduct: (id, productData) => api.patch(`/api/products/${id}`, productData),
+
+  deactivateProduct: (id) => api.delete(`/api/products/${id}`),
 
   getProductVariants: (productId) =>
     api.get(`/api/products/${productId}/variants`),
@@ -151,13 +171,31 @@ export const productAPI = {
 export const categoryAPI = {
   getCategories: (params = {}) => api.get("/api/categories", { params }),
 
+  getCategoriesAdmin: (params = {}) => api.get("/api/categories/admin", { params }),
+
   getCategoryById: (id) => api.get(`/api/categories/${id}`),
+
+  createCategory: (categoryData) => api.post("/api/categories", categoryData),
+
+  updateCategory: (id, categoryData) => api.patch(`/api/categories/${id}`, categoryData),
+
+  deactivateCategory: (id) => api.delete(`/api/categories/${id}`),
 };
 
 // =========== BRAND API ===========
 
 export const brandAPI = {
-  getBrands: () => api.get("/api/brands"),
+  getBrands: (params = {}) => api.get("/api/brands", { params }),
+
+  getBrandsAdmin: (params = {}) => api.get("/api/brands/admin", { params }),
+
+  getBrandById: (id) => api.get(`/api/brands/${id}`),
+
+  createBrand: (brandData) => api.post("/api/brands", brandData),
+
+  updateBrand: (id, brandData) => api.patch(`/api/brands/${id}`, brandData),
+
+  deactivateBrand: (id) => api.delete(`/api/brands/${id}`),
 };
 
 // =========== STORAGE API ===========
@@ -168,6 +206,8 @@ export const storageAPI = {
 
   // Xem tồn kho chi tiết của một biến thể
   getInventoryByVariantId: (variantId) => api.get(`/api/inventory/${variantId}`),
+
+  getLowStock: (params = {}) => api.get("/api/inventory/low-stock", { params }),
 
   getProducts: () => api.get("/api/products"),
 
@@ -183,8 +223,10 @@ export const storageAPI = {
 
   updateVariant: (id, data) => api.patch(`/api/variants/${id}`, data),
 
+  deactivateVariant: (id) => api.delete(`/api/variants/${id}`),
+
   // Các hàm giao dịch kho hàng
-  getInventoryTransactions: () => api.get('/api/inventory/transactions'), 
+  getInventoryTransactions: (params = {}) => api.get('/api/inventory/transactions', { params }),
   importInventory: (variantId, data) => api.post(`/api/inventory/${variantId}/import`, data),
   exportInventory: (variantId, data) => api.post(`/api/inventory/${variantId}/export`, data),
 };

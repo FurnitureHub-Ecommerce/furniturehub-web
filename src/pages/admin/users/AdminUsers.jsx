@@ -1,586 +1,212 @@
-import { useEffect, useRef, useState } from "react";
-import {
-  Search,
-  ShieldCheck,
-  UserPlus,
-  FileText,
-  SlidersHorizontal,
-  Users,
-  KeyRound,
-  LockKeyhole,
-  Gavel,
-} from "lucide-react";
-import { getUsers } from "../../../services/admin/users.service.js";
-import "./AdminUsers.css";
+import { useEffect, useState } from "react";
+import { UserPlus, Users, Shield, Mail, Phone } from "lucide-react";
+import { getUsers, createAdminUser } from "../../../services/admin/users.service.js";
 
-function PendingButton({ children, reason, dark = false }) {
-  return (
-    <span className="lu-pending" tabIndex={0} aria-label={reason}>
-      <button
-        type="button"
-        disabled
-        className={`lu-button ${dark ? "lu-button-dark" : ""}`}
-      >
-        {children}
-      </button>
-      <span className="lu-pending-tip" role="tooltip">
-        {reason}
-      </span>
-    </span>
-  );
-}
-
-function UnknownPermission({ label }) {
-  const ref = useRef(null);
-  useEffect(() => {
-    if (ref.current) ref.current.indeterminate = true;
-  }, []);
-  return (
-    <input
-      ref={ref}
-      type="checkbox"
-      disabled
-      aria-label={`${label}: chưa có dữ liệu quyền, chỉ xem`}
-    />
-  );
-}
-
-function UserAvatar({ name }) {
-  return (
-    <span className="lu-avatar" aria-hidden="true">
-      {name
-        .split(" ")
-        .slice(0, 2)
-        .map((part) => part[0])
-        .join("")}
-    </span>
-  );
-}
-
-function AccessPanel({ user, data }) {
-  const role = data.roles.find((item) => item.value === user?.role);
-  return (
-    <aside
-      className="lu-details"
-      aria-label="Thông tin và quyền của người dùng"
-    >
-      <section className="lu-card lu-access">
-        <header>
-          <SlidersHorizontal size={20} />
-          <div>
-            <h2>Chi Tiết Quyền Hạn RBAC</h2>
-            <p>{user ? `ÁP DỤNG: ${role.label}` : "CHƯA CHỌN NGƯỜI DÙNG"}</p>
-          </div>
-          <span className="lu-small-tag">Chỉ xem</span>
-        </header>
-        {user ? (
-          <>
-            <div className="lu-selected-user">
-              <UserAvatar name={user.name} />
-              <div>
-                <h3>{user.name}</h3>
-                <p>
-                  {role.label} • {user.hub}
-                </p>
-                <small>{user.displayCode}</small>
-              </div>
-            </div>
-            <div className="lu-matrix-title">
-              <h3>MA TRẬN THẨM QUYỀN THEO MODULE</h3>
-              <span>Chưa tích hợp</span>
-            </div>
-            <p className="lu-access-note">
-              Chưa có nguồn quyền thực tế. Ô gạch ngang là chưa xác định, không
-              phải quyền được cấp hoặc bị từ chối.
-            </p>
-            <div
-              className="lu-matrix-scroll"
-              tabIndex={0}
-              aria-label="Ma trận quyền chỉ đọc"
-            >
-              <table className="lu-matrix">
-                <thead>
-                  <tr>
-                    <th scope="col">
-                      Phân Hệ
-                      <br />
-                      (Module)
-                    </th>
-                    {data.access.actions.map((action) => (
-                      <th scope="col" key={action}>
-                        {action}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {data.access.modules.map((module) => (
-                    <tr key={module.name}>
-                      <th scope="row">{module.name}</th>
-                      {module.permissions.map((_, index) => (
-                        <td key={data.access.actions[index]}>
-                          <UnknownPermission
-                            label={`${module.name}, ${data.access.actions[index]}`}
-                          />
-                        </td>
-                      ))}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            <h3 className="lu-policy-title">CHÍNH SÁCH PHIÊN LÀM VIỆC</h3>
-            <dl className="lu-policies">
-              {data.access.policies.map((policy) => (
-                <div key={policy}>
-                  <dt>{policy}</dt>
-                  <dd>Chưa tích hợp</dd>
-                </div>
-              ))}
-            </dl>
-          </>
-        ) : (
-          <p className="lu-empty-panel">
-            Chọn một người dùng trong danh sách để xem thông tin. Không có người
-            dùng phù hợp thì panel không hiển thị quyền.
-          </p>
-        )}
-        <div className="lu-panel-actions">
-          <PendingButton dark reason="Panel chỉ xem; chưa triển khai lưu quyền">
-            Lưu Phân Bổ RBAC
-          </PendingButton>
-          <PendingButton reason="Không có bản nháp quyền để đặt lại">
-            Đặt lại
-          </PendingButton>
-        </div>
-      </section>
-      <section className="lu-card lu-hierarchy">
-        <div>
-          <h2>Cấu Trúc Vai Trò</h2>
-          <span>{data.roles.length} nhóm</span>
-        </div>
-        <p className="lu-access-note">
-          Số lượng từ mock; nhãn trình diễn không thay đổi role nghiệp vụ.
-        </p>
-        {data.roles.map((item) => (
-          <div className="lu-role-count" key={item.value}>
-            <span>
-              <i
-                className={`lu-dot lu-role-${item.value.replaceAll(" ", "-").toLowerCase()}`}
-              />
-              {item.label}
-              <small>{item.description}</small>
-            </span>
-            <b>{item.count} Users</b>
-          </div>
-        ))}
-      </section>
-    </aside>
-  );
-}
+const initialForm = {
+  fullName: "",
+  email: "",
+  password: "",
+  phone: "",
+  role: "STAFF",
+};
 
 export default function AdminUsers() {
-  const [query, setQuery] = useState({
-    search: "",
-    tab: "",
-    role: "",
-    status: "",
-    hub: "",
-    page: 1,
-  });
-  const [state, setState] = useState({ data: null, loading: true, error: "" });
-  const [selectedId, setSelectedId] = useState(null);
-  const [retry, setRetry] = useState(0);
-  const listRef = useRef(null);
-  const scrollAfterPageChange = useRef(false);
+  const [usersList, setUsersList] = useState([]);
+  const [loadingList, setLoadingList] = useState(true);
+  
+  const [form, setForm] = useState(initialForm);
+  const [loadingCreate, setLoadingCreate] = useState(false);
+  const [notice, setNotice] = useState(null);
+
+  // Lấy danh sách tài khoản từ API khi tải trang
+  const fetchUsers = async () => {
+    try {
+      setLoadingList(true);
+      const data = await getUsers();
+      // Xử lý linh hoạt cấu trúc trả về từ backend (array hoặc object chứa rows/users)
+      const list = Array.isArray(data) ? data : data?.rows || data?.users || data?.data || [];
+      setUsersList(list);
+    } catch (error) {
+      console.error("Lỗi tải danh sách người dùng:", error);
+    } finally {
+      setLoadingList(false);
+    }
+  };
+
   useEffect(() => {
-    let cancelled = false;
-    getUsers(query)
-      .then((data) => {
-        if (!cancelled) setState({ data, loading: false, error: "" });
-      })
-      .catch((error) => {
-        if (!cancelled)
-          setState({ data: null, loading: false, error: error.message });
+    fetchUsers();
+  }, []);
+
+  async function submit(event) {
+    event.preventDefault();
+    if (loadingCreate) return;
+    setLoadingCreate(true);
+    setNotice(null);
+    try {
+      const newUser = await createAdminUser({
+        ...form,
+        ...(form.phone.trim() ? { phone: form.phone.trim() } : {}),
       });
-    return () => {
-      cancelled = true;
-    };
-  }, [query, retry]);
-  function updateFilters(values) {
-    setState((previous) => ({ ...previous, loading: true, error: "" }));
-    setQuery((previous) => ({ ...previous, ...values, page: 1 }));
-    setSelectedId(null);
+      setNotice({
+        type: "success",
+        text: `Đã tạo thành công tài khoản cho ${newUser?.fullName ?? newUser?.name ?? form.fullName}.`,
+      });
+      setForm(initialForm);
+      fetchUsers(); // Tải lại danh sách sau khi tạo thành công
+    } catch (error) {
+      setNotice({ type: "error", text: error.message || "Không thể tạo tài khoản." });
+    } finally {
+      setLoadingCreate(false);
+    }
   }
-  // Chỉ cuộn lên đầu danh sách sau khi dữ liệu của trang mới tải xong.
-  useEffect(() => {
-    if (state.loading || !state.data || !scrollAfterPageChange.current) return;
 
-    scrollAfterPageChange.current = false;
-    listRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-  }, [state.loading, state.data]);
-
-  function changePage(page) {
-    if (page === query.page) return;
-    scrollAfterPageChange.current = true;
-    setState((previous) => ({ ...previous, loading: true, error: "" }));
-    setQuery((previous) => ({ ...previous, page }));
-    setSelectedId(null);
+  function updateField(field, value) {
+    setForm((current) => ({ ...current, [field]: value }));
   }
-  const data = state.data;
-  // Chỉ chọn trong trang hiện tại để panel không giữ người dùng đã bị bộ lọc loại bỏ.
-  const selected =
-    !state.loading && data
-      ? data.rows.find((user) => user.id === selectedId) || data.rows[0]
-      : null;
+
   return (
-    <div className="lu-page">
-      <p className="lu-eyebrow lu-context">
-        <ShieldCheck size={14} /> BẢO MẬT & QUẢN TRỊ TRUY CẬP{" "}
-        <span>• DỮ LIỆU NGƯỜI DÙNG DEMO</span>
-      </p>
-      <section className="lu-heading">
-        <div>
-          <h1>Quản Lý Người Dùng & Phân Quyền Vai Trò</h1>
-          <p>
-            Quản lý danh sách người dùng và xem thông tin phân quyền trong không
-            gian LUMORA Atelier.
-          </p>
-        </div>
-        <div className="lu-heading-actions">
-          <PendingButton reason="Chính sách xác thực chưa được tích hợp">
-            <ShieldCheck size={16} /> Chính sách 2FA
-          </PendingButton>
-          <PendingButton reason="Chưa có nguồn Audit Log để xuất">
-            <FileText size={16} /> Xuất Audit Log
-          </PendingButton>
-          <PendingButton
-            dark
-            reason="Chưa có thiết kế form và quy trình tạo tài khoản được duyệt"
-          >
-            <UserPlus size={16} /> Tạo tài khoản người dùng mới
-          </PendingButton>
-        </div>
-      </section>
-      <section className="lu-kpis" aria-label="Trạng thái tích hợp bảo mật">
-        {[
-          ["ACTIVE SESSIONS", "Chưa có nguồn dữ liệu phiên đăng nhập.", Users],
-          [
-            "2FA ENFORCEMENT",
-            "Chưa kết nối trạng thái FIDO2 hoặc Authenticator.",
-            ShieldCheck,
-          ],
-          [
-            "ROLE GUARD INCIDENTS",
-            "Chưa có dữ liệu giám sát vi phạm quyền.",
-            LockKeyhole,
-          ],
-          [
-            "YÊU CẦU NÂNG QUYỀN",
-            "Chưa tích hợp yêu cầu và quy trình thẩm định.",
-            KeyRound,
-          ],
-        ].map(([title, description, Icon]) => (
-          <article className="lu-card lu-kpi" key={title}>
-            <div>
-              <h2>{title}</h2>
-              <Icon size={18} />
+    <div style={{ width: "100%", padding: "0 4px", fontFamily: "'Inter', sans-serif" }}>
+      {/* HEADER */}
+      <header style={{ marginBottom: 24, borderBottom: "1px solid #eae6df", paddingBottom: 16 }}>
+        <span style={{ fontSize: 11, fontWeight: 700, color: "#78716c", letterSpacing: "0.05em" }}>
+          NGƯỜI DÙNG & PHÂN QUYỀN
+        </span>
+        <h1 style={{ fontFamily: "Bodoni Moda", fontSize: "2.2rem", fontWeight: 600, color: "#1a1a1a", margin: "4px 0 4px 0" }}>
+          Quản Lý Người Dùng & Tạo Tài Khoản
+        </h1>
+        <p style={{ margin: 0, color: "#666", fontSize: "13px" }}>
+          Xem danh sách tất cả tài khoản trong hệ thống và cấp tài khoản mới cho Staff hoặc Storage Manager.
+        </p>
+      </header>
+
+      {/* FORM TẠO TÀI KHOẢN VẬN HÀNH */}
+      <section style={{ background: "#fff", border: "1px solid #eae6df", borderRadius: "12px", padding: "24px", marginBottom: "32px" }}>
+        <h2 style={{ fontSize: "1.1rem", fontWeight: 600, color: "#1c1c1c", margin: "0 0 16px 0", display: "flex", alignItems: "center", gap: "8px" }}>
+          <UserPlus size={18} /> Cấp Tài Khoản Vận Hành Mới
+        </h2>
+        <form onSubmit={submit} style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "16px" }}>
+          <label style={{ display: "flex", flexDirection: "column", gap: "6px", fontSize: "12px", fontWeight: 600, color: "#555" }}>
+            HỌ VÀ TÊN *
+            <input
+              required
+              placeholder="Nhập họ tên..."
+              value={form.fullName}
+              onChange={(event) => updateField("fullName", event.target.value)}
+              style={{ padding: "9px 12px", borderRadius: "6px", border: "1px solid #dcd6cd", fontSize: "13px" }}
+            />
+          </label>
+          <label style={{ display: "flex", flexDirection: "column", gap: "6px", fontSize: "12px", fontWeight: 600, color: "#555" }}>
+            EMAIL *
+            <input
+              required
+              type="email"
+              placeholder="email@lumora.com"
+              value={form.email}
+              onChange={(event) => updateField("email", event.target.value)}
+              style={{ padding: "9px 12px", borderRadius: "6px", border: "1px solid #dcd6cd", fontSize: "13px" }}
+            />
+          </label>
+          <label style={{ display: "flex", flexDirection: "column", gap: "6px", fontSize: "12px", fontWeight: 600, color: "#555" }}>
+            MẬT KHẨU TẠM THỜI *
+            <input
+              required
+              type="password"
+              minLength={8}
+              placeholder="Tối thiểu 8 ký tự..."
+              value={form.password}
+              onChange={(event) => updateField("password", event.target.value)}
+              style={{ padding: "9px 12px", borderRadius: "6px", border: "1px solid #dcd6cd", fontSize: "13px" }}
+            />
+          </label>
+          <label style={{ display: "flex", flexDirection: "column", gap: "6px", fontSize: "12px", fontWeight: 600, color: "#555" }}>
+            SỐ ĐIỆN THOẠI
+            <input
+              type="tel"
+              placeholder="0912345678..."
+              value={form.phone}
+              onChange={(event) => updateField("phone", event.target.value)}
+              style={{ padding: "9px 12px", borderRadius: "6px", border: "1px solid #dcd6cd", fontSize: "13px" }}
+            />
+          </label>
+          <label style={{ display: "flex", flexDirection: "column", gap: "6px", fontSize: "12px", fontWeight: 600, color: "#555", gridColumn: "span 2" }}>
+            VAI TRÒ TRONG HỆ THỐNG
+            <select
+              value={form.role}
+              onChange={(event) => updateField("role", event.target.value)}
+              style={{ padding: "9px 12px", borderRadius: "6px", border: "1px solid #dcd6cd", fontSize: "13px", background: "#fff" }}
+            >
+              <option value="STAFF">Staff (Nhân viên vận hành)</option>
+              <option value="STORAGE_MANAGER">Storage Manager (Quản lý kho)</option>
+            </select>
+          </label>
+
+          {notice && (
+            <div style={{ gridColumn: "span 2", padding: "10px 14px", borderRadius: "6px", background: notice.type === "error" ? "#fef2f2" : "#f0fdf4", color: notice.type === "error" ? "#dc2626" : "#15803d", fontSize: "13px", fontWeight: 500 }}>
+              {notice.text}
             </div>
-            <strong>Chưa tích hợp</strong>
-            <p>{description}</p>
-          </article>
-        ))}
-      </section>
-      {state.error ? (
-        <div className="lu-state" role="alert">
-          <h2>Không thể tải người dùng</h2>
-          <p>{state.error}</p>
-          <button
-            className="lu-button"
-            onClick={() => {
-              setState({ data: null, loading: true, error: "" });
-              setRetry((value) => value + 1);
-            }}
-          >
-            Thử lại
-          </button>
-        </div>
-      ) : !data ? (
-        <div className="lu-state" role="status">
-          Đang tải người dùng demo…
-          <div className="lu-skeleton" />
-        </div>
-      ) : (
-        <>
-          <div className="lu-tab-row">
-            <div className="lu-tabs" role="group" aria-label="Nhóm người dùng">
-              <button
-                aria-pressed={!query.tab}
-                className={!query.tab ? "lu-tab-active" : ""}
-                onClick={() => updateFilters({ tab: "" })}
-              >
-                Tất cả người dùng <span>({data.totalUsers})</span>
-              </button>
-              {data.roles.map((role) => (
-                <button
-                  key={role.value}
-                  aria-pressed={query.tab === role.value}
-                  className={query.tab === role.value ? "lu-tab-active" : ""}
-                  onClick={() => updateFilters({ tab: role.value })}
-                >
-                  {role.label} <span>({role.count})</span>
-                </button>
-              ))}
-            </div>
-            <span className="lu-sync">
-              LDAP / Okta
-              <br />
-              Chưa tích hợp
-            </span>
+          )}
+
+          <div style={{ gridColumn: "span 2" }}>
+            <button
+              type="submit"
+              disabled={loadingCreate}
+              style={{ display: "inline-flex", alignItems: "center", gap: "8px", background: "#1c1c1c", color: "#fff", border: "none", padding: "10px 20px", borderRadius: "6px", fontSize: "13px", fontWeight: 600, cursor: "pointer" }}
+            >
+              <UserPlus size={16} /> {loadingCreate ? "Đang tạo tài khoản..." : "Tạo Tài Khoản"}
+            </button>
           </div>
-          <section className="lu-filters" aria-label="Lọc người dùng">
-            <label className="lu-search">
-              <Search size={18} />
-              <span className="sr-only">
-                Tìm theo tên, email, mã người dùng hoặc role
-              </span>
-              <input
-                value={query.search}
-                onChange={(event) =>
-                  updateFilters({ search: event.target.value })
-                }
-                placeholder="Tìm theo tên, email, mã người dùng hoặc role…"
-              />
-            </label>
-            <div className="lu-selects">
-              <label>
-                VAI TRÒ:
-                <select
-                  value={query.role}
-                  onChange={(event) =>
-                    updateFilters({ role: event.target.value })
-                  }
-                >
-                  <option value="">Tất cả vai trò</option>
-                  {data.roles.map((role) => (
-                    <option key={role.value} value={role.value}>
-                      {role.label}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label>
-                TRẠNG THÁI:
-                <select
-                  value={query.status}
-                  onChange={(event) =>
-                    updateFilters({ status: event.target.value })
-                  }
-                >
-                  <option value="">Tất cả trạng thái</option>
-                  {data.statuses.map((status) => (
-                    <option key={status.value} value={status.value}>
-                      {status.label}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label>
-                HUB / ATELIER:
-                <select
-                  value={query.hub}
-                  onChange={(event) =>
-                    updateFilters({ hub: event.target.value })
-                  }
-                >
-                  <option value="">Tất cả Hubs</option>
-                  {data.hubs.map((hub) => (
-                    <option key={hub} value={hub}>
-                      {hub}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            </div>
-          </section>
-          <div className="lu-body" aria-busy={state.loading}>
-            <div className="lu-list-column">
-              <section
-                ref={listRef}
-                className="lu-card lu-user-list"
-                style={{ scrollMarginTop: "90px" }}
-              >
-                {state.loading ? (
-                  <div className="lu-state" role="status">
-                    Đang tải kết quả…
-                    <div className="lu-skeleton" />
-                  </div>
-                ) : data.rows.length ? (
-                  <div
-                    className="lu-table-scroll"
-                    tabIndex={0}
-                    aria-label="Bảng người dùng, cuộn ngang khi cần"
-                  >
-                    <table className="lu-table">
-                      <thead>
-                        <tr>
-                          <th scope="col">NGƯỜI DÙNG & DANH TÍNH</th>
-                          <th scope="col">VAI TRÒ PHÂN QUYỀN</th>
-                          <th scope="col">PHẠM VI / HUB ATELIER</th>
-                          <th scope="col">XÁC THỰC</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {data.rows.map((user) => {
-                          const role = data.roles.find(
-                            (item) => item.value === user.role,
-                          );
-                          return (
-                            <tr
-                              key={user.id}
-                              className={
-                                selected?.id === user.id
-                                  ? "lu-user-selected"
-                                  : ""
-                              }
-                              onClick={() => setSelectedId(user.id)}
-                            >
-                              <td>
-                                <div className="lu-user-identity">
-                                  <UserAvatar name={user.name} />
-                                  <div>
-                                    <button
-                                      className="lu-user-name"
-                                      aria-pressed={selected?.id === user.id}
-                                      aria-label={`Xem thông tin ${user.name}`}
-                                      onClick={() => setSelectedId(user.id)}
-                                    >
-                                      {user.name}
-                                    </button>
-                                    <div className="lu-user-meta">
-                                      <span>{user.displayCode}</span>
-                                      <span>{user.email}</span>
-                                    </div>
-                                    <small
-                                      className={`lu-status lu-status-${user.status}`}
-                                    >
-                                      {
-                                        data.statuses.find(
-                                          (item) => item.value === user.status,
-                                        ).label
-                                      }
-                                    </small>
-                                  </div>
-                                </div>
-                              </td>
-                              <td>
-                                <span
-                                  className={`lu-role-badge lu-role-${user.role.replaceAll(" ", "-").toLowerCase()}`}
-                                >
-                                  {role.label}
-                                </span>
-                              </td>
-                              <td>
-                                {user.hub}
-                                <small className="lu-cell-note">
-                                  Phạm vi trình diễn
-                                </small>
-                              </td>
-                              <td>
-                                <span className="lu-auth">
-                                  <KeyRound size={14} />
-                                  Chưa tích hợp
-                                </span>
-                                <small className="lu-cell-note">
-                                  Chưa có dữ liệu xác thực
-                                </small>
-                              </td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
-                  </div>
-                ) : (
-                  <div className="lu-state" role="status">
-                    <Users size={30} />
-                    <h2>Không có người dùng phù hợp</h2>
-                    <p>Thử đổi từ khóa, tab hoặc điều kiện lọc.</p>
-                    <button
-                      className="lu-button"
-                      onClick={() =>
-                        updateFilters({
-                          search: "",
-                          tab: "",
-                          role: "",
-                          status: "",
-                          hub: "",
-                        })
-                      }
-                    >
-                      Xóa bộ lọc
-                    </button>
-                  </div>
-                )}
-                <div className="lu-pagination">
-                  <span aria-live="polite">
-                    {state.loading
-                      ? "Đang tải…"
-                      : `Hiển thị ${data.total ? (data.page - 1) * data.pageSize + 1 : 0} - ${Math.min(data.page * data.pageSize, data.total)} trong ${data.total} người dùng`}
-                  </span>
-                  <nav aria-label="Phân trang người dùng">
-                    <span>
-                      Trang {data.page}/{data.totalPages}
-                    </span>
-                    <button
-                      disabled={state.loading || data.page <= 1}
-                      onClick={() => changePage(data.page - 1)}
-                    >
-                      Trước
-                    </button>
-                    {Array.from(
-                      { length: data.totalPages },
-                      (_, i) => i + 1,
-                    ).map((page) => (
-                      <button
-                        key={page}
-                        disabled={state.loading}
-                        aria-current={page === data.page ? "page" : undefined}
-                        className={page === data.page ? "lu-current-page" : ""}
-                        onClick={() => changePage(page)}
-                      >
-                        {page}
-                      </button>
-                    ))}
-                    <button
-                      disabled={state.loading || data.page >= data.totalPages}
-                      onClick={() => changePage(data.page + 1)}
-                    >
-                      Sau
-                    </button>
-                  </nav>
-                </div>
-              </section>
-              <section className="lu-compliance">
-                <Gavel size={25} />
-                <div>
-                  <h2>
-                    Chính Sách Kiểm Soát Thẩm Quyền Nguyên Tắc Phân Quyền Tối
-                    Thiểu (PoLP)
-                  </h2>
-                  <p>
-                    Chưa tích hợp tài liệu tuân thủ hoặc cơ chế ghi Audit Log.
-                  </p>
-                </div>
-                <PendingButton reason="Chưa có tài liệu tuân thủ được cung cấp">
-                  Xem Tài Liệu Tuân Thủ
-                </PendingButton>
-              </section>
-            </div>
-            <AccessPanel user={selected} data={data} />
+        </form>
+      </section>
+
+      {/* DANH SÁCH TẤT CẢ TÀI KHOẢN */}
+      <section style={{ background: "#fff", border: "1px solid #eae6df", borderRadius: "12px", padding: "24px" }}>
+        <h2 style={{ fontSize: "1.1rem", fontWeight: 600, color: "#1c1c1c", margin: "0 0 16px 0", display: "flex", alignItems: "center", gap: "8px" }}>
+          <Users size={18} /> Danh Sách Toàn Bộ Tài Khoản Hệ Thống
+        </h2>
+
+        {loadingList ? (
+          <div style={{ padding: "20px", color: "#666", fontSize: "13px" }}>Đang tải danh sách người dùng từ cơ sở dữ liệu...</div>
+        ) : usersList.length === 0 ? (
+          <div style={{ padding: "20px", color: "#666", fontSize: "13px" }}>Chưa có tài khoản nào trong hệ thống.</div>
+        ) : (
+          <div style={{ overflowX: "auto" }}>
+            <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left", fontSize: "13px" }}>
+              <thead>
+                <tr style={{ borderBottom: "1px solid #eae6df", color: "#78716c", fontSize: "11px", fontWeight: 700 }}>
+                  <th style={{ padding: "12px" }}>HỌ VÀ TÊN</th>
+                  <th style={{ padding: "12px" }}>EMAIL</th>
+                  <th style={{ padding: "12px" }}>SỐ ĐIỆN THOẠI</th>
+                  <th style={{ padding: "12px" }}>VAI TRÒ</th>
+                </tr>
+              </thead>
+              <tbody>
+                {usersList.map((u, idx) => (
+                  <tr key={u._id || u.id || idx} style={{ borderBottom: "1px solid #f2efeb" }}>
+                    <td style={{ padding: "12px", fontWeight: 600, color: "#1c1c1c" }}>
+                      {u.fullName || u.name || "Chưa cập nhật"}
+                    </td>
+                    <td style={{ padding: "12px", color: "#666" }}>
+                      <span style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}>
+                        <Mail size={14} color="#888" /> {u.email}
+                      </span>
+                    </td>
+                    <td style={{ padding: "12px", color: "#666" }}>
+                      <span style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}>
+                        <Phone size={14} color="#888" /> {u.phone || "Chưa có"}
+                      </span>
+                    </td>
+                    <td style={{ padding: "12px" }}>
+                      <span style={{ background: u.role === "ADMIN" ? "#1c1c1c" : "#ede8e1", color: u.role === "ADMIN" ? "#fff" : "#1c1c1c", padding: "4px 8px", borderRadius: "4px", fontSize: "11px", fontWeight: 700 }}>
+                        {u.role || "CUSTOMER"}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
-        </>
-      )}
+        )}
+      </section>
     </div>
   );
 }

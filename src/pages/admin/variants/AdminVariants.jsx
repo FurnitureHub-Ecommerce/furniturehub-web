@@ -104,8 +104,8 @@ export default function AdminVariants() {
         </div>
       </div>
       <p className="lv-demo">
-        <strong>Dữ liệu mock Catalog</strong> · Chỉ đọc · Giá demo bằng EUR ·
-        Tải lại không đồng bộ Backend hoặc Storage.
+        <strong>Dữ liệu từ API quản trị</strong> · Giá lấy theo Variant ·
+        Tồn kho hiển thị tại API Storage.
       </p>
       <div className="lv-kpis">
         <article>
@@ -207,7 +207,7 @@ export default function AdminVariants() {
         </label>
         <button className="lv-reload" onClick={reload} disabled={state.loading}>
           <RefreshCw size={17} />
-          Tải lại mock
+          Tải lại dữ liệu
         </button>
       </section>
       <section className="lv-table-box" aria-label="Danh sách Variant">
@@ -232,7 +232,7 @@ export default function AdminVariants() {
           <>
             <p className="lv-result" aria-live="polite">
               Hiển thị {data.rows.length} trên {data.total} SKU phù hợp · KPI
-              phía trên tính trên toàn bộ mock.
+              tính trên dữ liệu API quản trị.
             </p>
             <div
               className="lv-table-scroll"
@@ -306,7 +306,11 @@ export default function AdminVariants() {
                         <small>Thuế: Chưa xác nhận</small>
                       </td>
                       <td>
-                        <span className="lv-stock">Chưa tích hợp</span>
+                        <span className="lv-stock">
+                          {variant.inventory
+                            ? `${variant.inventory.quantity} chiếc`
+                            : "Chưa có dữ liệu tồn kho"}
+                        </span>
                       </td>
                     </tr>
                   ))}
@@ -389,9 +393,8 @@ export default function AdminVariants() {
         <div>
           <h2>Nguyên Tắc Quản Trị Theo Vai Trò</h2>
           <p>
-            Admin xem thông tin SKU và giá niêm yết trong mock Catalog. Trang
-            này không thực hiện nhập, xuất hoặc điều chỉnh tồn kho của Storage
-            Manager.
+            Admin xem thông tin SKU, giá niêm yết và tồn kho từ Backend. Trang
+            này không thực hiện nhập, xuất hoặc điều chỉnh tồn kho.
           </p>
           <small>
             Vai trò nghiệp vụ: Admin / Staff / Storage Manager / Customer

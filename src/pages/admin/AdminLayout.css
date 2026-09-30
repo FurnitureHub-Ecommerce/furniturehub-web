@@ -167,7 +167,6 @@
   color: var(--la-muted);
 }
 .la-workspace {
-  margin-left: 280px;
   min-width: 0;
 }
 .la-header {
@@ -270,9 +269,9 @@
   border: 1px solid var(--la-line);
 }
 .la-content {
-  padding: 0 24px 40px;
-  max-width: 1800px;
-  margin-inline: auto;
+  width: 100%;
+  margin: 0;
+  padding: 24px; /* Hoặc 0 nếu bạn muốn sát mép hoàn toàn */
 }
 .la-menu-toggle,
 .la-drawer-close,
@@ -297,9 +296,7 @@
   .la-header {
     gap: 20px;
   }
-  .la-content {
-    padding-inline: 32px;
-  }
+  
   .la-search {
     max-width: 440px;
     margin-left: auto;

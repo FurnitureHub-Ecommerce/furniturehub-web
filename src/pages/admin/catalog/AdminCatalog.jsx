@@ -36,9 +36,9 @@ export default function AdminCatalog() {
   const selected = !state.loading && data ? data.rows.find(product => product._id === selectedId) || data.rows[0] : null;
   function focusSection(id) { const section = document.getElementById(id); section?.scrollIntoView({ behavior: 'instant', block: 'start' }); section?.focus({ preventScroll: true }); }
   return <div className="lc-page">
-    <p className="lc-eyebrow">BỘ SƯU TẬP KIẾN TRÚC <span>• QUẢN TRỊ DANH MỤC ATELIER</span><b>DỮ LIỆU DEMO</b></p>
+    <p className="lc-eyebrow">BỘ SƯU TẬP KIẾN TRÚC <span>• QUẢN TRỊ DANH MỤC ATELIER</span><b>ADMIN API</b></p>
     <section className="lc-heading"><div><h1>Quản Trị Sản Phẩm, Biến Thể & Danh Mục Thương Hiệu</h1><p>Hệ thống điều phối danh mục nội thất, chất liệu và mạng lưới thương hiệu LUMORA.</p></div><div className="lc-toolbar"><Pending reason="Chưa triển khai xuất Catalog PDF"><Download size={15} />Xuất Catalog PDF</Pending><Pending reason="Chưa có quy trình đăng ký xưởng được xác nhận"><Building size={15} />Đăng Ký Xưởng Atelier</Pending><Pending reason="Chưa có thiết kế form tạo danh mục"><Folder size={15} />Tạo Danh Mục Mới</Pending><Pending dark reason="Chưa có thiết kế form thêm sản phẩm"><Plus size={15} />Thêm Sản Phẩm Mới</Pending></div></section>
-    <p className="lc-demo-note">Mock local chỉ dùng thử giao diện. Giá EUR là giá bán Variant, không phải giá gốc, phụ thu hay AOV. Chưa kết nối MockAPI hoặc ERP.</p>
+    <p className="lc-demo-note">Danh mục được tải từ API quản trị. Giá hiển thị là giá bán Variant; tồn kho, hình ảnh và AOV chưa có dữ liệu trên màn hình này.</p>
     {!data && !state.error ? <div className="lc-state" role="status">Đang tải Catalog…<div className="lc-skeleton" /></div> : state.error ? <div className="lc-state" role="alert"><h2>Không thể tải Catalog</h2><p>{state.error}</p><button className="lc-button" onClick={() => { setState({ data: null, loading: true, error: '' }); setRetry(value => value + 1); }}>Thử lại</button></div> : <>
       <section className="lc-kpis" aria-label="Tổng quan Catalog">{[
         ['SẢN PHẨM', data.totals.products, 'sản phẩm trong mock', Package],
