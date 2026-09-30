@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { loadStorageVariants } from '../../services/storageData';
-import { BarChart3, ShieldCheck, TrendingUp, Package, AlertTriangle } from 'lucide-react';
+import { BarChart3, ShieldCheck, TrendingUp } from 'lucide-react';
 
 const InventoryStatistics = () => {
   const [inventory, setInventory] = useState(null);
@@ -14,22 +14,20 @@ const InventoryStatistics = () => {
   const stockItems = variants.filter((variant) => variant.stock !== null && variant.stock !== undefined);
   const totalStock = stockItems.reduce((total, variant) => total + Number(variant.stock || 0), 0);
 
-  // Thống kê phân loại chi tiết
   const stableItems = stockItems.filter((v) => Number(v.stock) > 15);
   const lowStockItems = stockItems.filter((v) => Number(v.stock) > 0 && Number(v.stock) <= 15);
   const outOfStockItems = stockItems.filter((v) => Number(v.stock) === 0);
 
   const getPercent = (count) => (totalSku > 0 ? Math.round((count / totalSku) * 100) : 0);
 
-  // Lấy Top sản phẩm có số lượng tồn kho cao nhất để thống kê
   const topStockProducts = [...stockItems]
     .sort((a, b) => Number(b.stock) - Number(a.stock))
     .slice(0, 5);
 
   const storageMetrics = [
-    { label: 'TỔNG SỐ SKU', value: inventory === null ? 'Đang tải...' : totalSku, sub: 'Đồng bộ từ API sản phẩm và biến thể' },
-    { label: 'HÀNG TỒN KHO (TỔNG)', value: stockItems.length ? totalStock.toLocaleString() : 'Chưa cập nhật', sub: stockItems.length ? 'Tổng số lượng từ API variant' : 'API variant chưa trả về số lượng tồn' },
-    { label: 'CẢNH BÁO TỒN THẤP', value: stockItems.length ? `${lowStockItems.length} SKU` : 'Chưa cập nhật', sub: stockItems.length ? 'Dưới mức tồn kho tối thiểu' : 'Không thể tính khi API chưa có số lượng tồn' },
+    { label: 'TỔNG SỐ SKU', value: inventory === null ? 'Đang tải...' : totalSku, sub: 'Đồng bộ từ Database sản phẩm' },
+    { label: 'HÀNG TỒN KHO (TỔNG)', value: stockItems.length ? totalStock.toLocaleString() : 'Chưa cập nhật', sub: 'Tổng số lượng thực tế' },
+    { label: 'CẢNH BÁO TỒN THẤP', value: stockItems.length ? `${lowStockItems.length} SKU` : 'Chưa cập nhật', sub: 'Dưới mức tồn kho tối thiểu' },
   ];
 
   return (
@@ -42,7 +40,6 @@ const InventoryStatistics = () => {
         </div>
       </header>
 
-      {/* Metric Cards */}
       <div className="metrics-grid" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
         {storageMetrics.map((item, idx) => (
           <div key={idx} className="metric-card">
@@ -53,10 +50,7 @@ const InventoryStatistics = () => {
         ))}
       </div>
 
-      {/* Grid chứa các dạng thống kê mới */}
       <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '24px', marginBottom: '24px' }}>
-        
-        {/* Dạng 1: Biểu đồ phân phối trạng thái trực quan */}
         <section className="sku-section" style={{ margin: 0 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '20px' }}>
             <BarChart3 size={20} color="#1c1c1c" />
@@ -70,7 +64,7 @@ const InventoryStatistics = () => {
                 <span style={{ color: '#16a34a' }}>{stableItems.length} SKU ({getPercent(stableItems.length)}%)</span>
               </div>
               <div style={{ width: '100%', height: '10px', background: '#eaeaea', borderRadius: '5px', overflow: 'hidden' }}>
-                <div style={{ width: `${getPercent(stableItems.length)}%`, height: '100%', background: '#16a34a', transition: 'width 0.5s ease' }}></div>
+                <div style={{ width: `${getPercent(stableItems.length)}%`, height: '100%', background: '#16a34a' }}></div>
               </div>
             </div>
 
@@ -80,7 +74,7 @@ const InventoryStatistics = () => {
                 <span style={{ color: '#d97706' }}>{lowStockItems.length} SKU ({getPercent(lowStockItems.length)}%)</span>
               </div>
               <div style={{ width: '100%', height: '10px', background: '#eaeaea', borderRadius: '5px', overflow: 'hidden' }}>
-                <div style={{ width: `${getPercent(lowStockItems.length)}%`, height: '100%', background: '#d97706', transition: 'width 0.5s ease' }}></div>
+                <div style={{ width: `${getPercent(lowStockItems.length)}%`, height: '100%', background: '#d97706' }}></div>
               </div>
             </div>
 
@@ -90,13 +84,12 @@ const InventoryStatistics = () => {
                 <span style={{ color: '#dc2626' }}>{outOfStockItems.length} SKU ({getPercent(outOfStockItems.length)}%)</span>
               </div>
               <div style={{ width: '100%', height: '10px', background: '#eaeaea', borderRadius: '5px', overflow: 'hidden' }}>
-                <div style={{ width: `${getPercent(outOfStockItems.length)}%`, height: '100%', background: '#dc2626', transition: 'width 0.5s ease' }}></div>
+                <div style={{ width: `${getPercent(outOfStockItems.length)}%`, height: '100%', background: '#dc2626' }}></div>
               </div>
             </div>
           </div>
         </section>
 
-        {/* Dạng 2: Thống kê tỷ lệ loại hàng & chỉ số an toàn */}
         <section className="sku-section" style={{ margin: 0, background: '#fcfbfa' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
             <ShieldCheck size={20} color="#16a34a" />
@@ -108,20 +101,13 @@ const InventoryStatistics = () => {
               <span style={{ color: '#16a34a', fontWeight: '700' }}>{totalSku ? `${100 - getPercent(outOfStockItems.length)}%` : '0%'}</span>
             </div>
             <div style={{ padding: '12px', background: '#fff', border: '1px solid #eaeaea', borderRadius: '6px', display: 'flex', justifyContent: 'space-between' }}>
-              <span><strong>Mức độ rủi ro thiếu hàng:</strong></span>
-              <span style={{ color: lowStockItems.length > 0 ? '#d97706' : '#16a34a', fontWeight: '700' }}>
-                {lowStockItems.length > 0 ? 'Cần chú ý' : 'An toàn'}
-              </span>
-            </div>
-            <div style={{ padding: '12px', background: '#fff', border: '1px solid #eaeaea', borderRadius: '6px', display: 'flex', justifyContent: 'space-between' }}>
-              <span><strong>Độ chính xác dữ liệu SKU:</strong></span>
-              <span style={{ fontWeight: '700' }}>100% Đồng bộ</span>
+              <span><strong>Độ chính xác dữ liệu:</strong></span>
+              <span style={{ fontWeight: '700' }}>100% Đồng bộ DB</span>
             </div>
           </div>
         </section>
       </div>
 
-      {/* Dạng 3: Bảng Thống Kê Top 5 Sản Phẩm Tồn Kho Nhiều Nhất */}
       <section className="sku-section" style={{ margin: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
           <TrendingUp size={20} color="#1c1c1c" />
@@ -152,11 +138,7 @@ const InventoryStatistics = () => {
                 </tr>
               ))
             ) : (
-              <tr>
-                <td colSpan="4" style={{ textAlign: 'center', padding: '20px', color: '#666' }}>
-                  Chưa có dữ liệu tồn kho để xếp hạng.
-                </td>
-              </tr>
+              <tr><td colSpan="4" style={{ textAlign: 'center', padding: '20px', color: '#666' }}>Chưa có dữ liệu tồn kho.</td></tr>
             )}
           </tbody>
         </table>

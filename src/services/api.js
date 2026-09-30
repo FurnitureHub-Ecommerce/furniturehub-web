@@ -163,6 +163,12 @@ export const brandAPI = {
 // =========== STORAGE API ===========
 
 export const storageAPI = {
+  // Lấy danh sách tồn kho, SKU và biến thể chính thức từ Backend
+  getInventory: (params = {}) => api.get("/api/inventory", { params }),
+
+  // Xem tồn kho chi tiết của một biến thể
+  getInventoryByVariantId: (variantId) => api.get(`/api/inventory/${variantId}`),
+
   getProducts: () => api.get("/api/products"),
 
   getProductsAdmin: () => api.get("/api/products/admin"),
@@ -177,8 +183,8 @@ export const storageAPI = {
 
   updateVariant: (id, data) => api.patch(`/api/variants/${id}`, data),
 
-  // Bổ sung các hàm thiếu:
-  getInventoryTransactions: () => api.get('/api/inventory/transactions'), // Thay axiosClient thành tên biến đang có trong file api.js của bạn (ví: api, axios...)
+  // Các hàm giao dịch kho hàng
+  getInventoryTransactions: () => api.get('/api/inventory/transactions'), 
   importInventory: (variantId, data) => api.post(`/api/inventory/${variantId}/import`, data),
   exportInventory: (variantId, data) => api.post(`/api/inventory/${variantId}/export`, data),
 };
