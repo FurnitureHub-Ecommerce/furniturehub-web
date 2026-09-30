@@ -35,12 +35,8 @@ const LowStockAlerts = () => {
           <h2 style={{ fontFamily: "Bodoni Moda", fontSize: 'clamp(2rem, 2.5vw, 2.7rem)', color: '#1a1a1a', letterSpacing: '-0.02em', fontWeight: 600 }}>Cảnh Báo Tồn Thấp & Hết Hàng</h2>
           <p>Danh sách các mã SKU cần được bổ sung gấp để đảm bảo chuỗi cung ứng hoạt động thông suốt.</p>
         </div>
-        <div className="actions">
-          <button className="btn-primary">Tạo Lệnh Nhập Hàng Bổ Sung</button>
-        </div>
       </header>
 
-      {/* Thẻ thống kê */}
       <div className="metrics-grid" style={{ gridTemplateColumns: 'repeat(2, 1fr)' }}>
         <div className="metric-card" style={{ borderLeft: '4px solid #dc2626' }}>
           <h4>SẢN PHẨM DƯỚI NGƯỠNG AN TOÀN</h4>
@@ -50,11 +46,10 @@ const LowStockAlerts = () => {
         <div className="metric-card" style={{ borderLeft: '4px solid #f59e0b' }}>
           <h4>TRẠNG THÁI GIÁM SÁT</h4>
           <div className="metric-val" style={{ color: '#f59e0b' }}>Hoạt Động</div>
-          <p>Tự động cập nhật thời gian thực từ hệ thống kho.</p>
+          <p>Tự động đồng bộ thời gian thực từ Database.</p>
         </div>
       </div>
 
-      {/* Bảng cảnh báo */}
       <section className="sku-section">
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
           <ShieldAlert size={20} color="#dc2626" />
@@ -67,7 +62,6 @@ const LowStockAlerts = () => {
               <th>MÃ SKU & TÊN SẢN PHẨM</th>
               <th>QUY CÁCH</th>
               <th>TRẠNG THÁI</th>
-              <th>THAO TÁC</th>
             </tr>
           </thead>
           <tbody>
@@ -85,16 +79,11 @@ const LowStockAlerts = () => {
                       {prod.stock === 0 ? 'HẾT HÀNG' : 'SẮP HẾT'}
                     </span>
                   </td>
-                  <td>
-                    <button className="btn-secondary" style={{ padding: '6px 12px', fontSize: '12px' }}>
-                      Nhập Hàng <ArrowUpRight size={14} style={{ verticalAlign: 'middle' }} />
-                    </button>
-                  </td>
                 </tr>
               ))
             ) : (
               <tr>
-                <td colSpan="4" style={{ textAlign: 'center', padding: '30px', color: '#666' }}>
+                <td colSpan="3" style={{ textAlign: 'center', padding: '30px', color: '#666' }}>
                   Tuyệt vời! Không có sản phẩm nào nằm dưới ngưỡng tồn kho an toàn.
                 </td>
               </tr>

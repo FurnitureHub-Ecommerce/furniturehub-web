@@ -5,7 +5,7 @@ import { Layers, FileSpreadsheet, Search } from 'lucide-react';
 const StorageDashboard = () => {
   const [skuProducts, setSkuProducts] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null); // Thêm state bắt lỗi
+  const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
 
   const fetchDashboardData = async () => {
@@ -13,7 +13,6 @@ const StorageDashboard = () => {
       setLoading(true);
       setError(null);
       const data = await loadStorageVariants();
-      // Đảm bảo dữ liệu luôn là mảng
       setSkuProducts(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error('Lỗi tải Dashboard kho:', err);
@@ -59,7 +58,6 @@ const StorageDashboard = () => {
     document.body.removeChild(link);
   };
 
-  // Kiểm tra an toàn trước khi filter
   const filteredProducts = Array.isArray(skuProducts) ? skuProducts.filter((item) => 
     (item.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
     (item.id || '').toLowerCase().includes(searchTerm.toLowerCase())

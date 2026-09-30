@@ -116,20 +116,14 @@ const SkuManagement = () => {
                     </span>
                   </td>
                   <td>
-                    <div style={{ display: 'flex', gap: '8px' }}>
-                      <button title="Xem chi tiết" style={{ background: 'transparent', border: '1px solid #ccc', padding: '6px', borderRadius: '4px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '12px' }}>
-                        <Eye size={14} color="#333" /> Xem
-                      </button>
-                    </div>
+                    <button title="Xem chi tiết" style={{ background: 'transparent', border: '1px solid #ccc', padding: '6px', borderRadius: '4px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '12px' }}>
+                      <Eye size={14} color="#333" /> Xem
+                    </button>
                   </td>
                 </tr>
               ))
             ) : (
-              <tr>
-                <td colSpan="5" style={{ textAlign: 'center', padding: '30px', color: '#666' }}>
-                  Không tìm thấy SKU nào phù hợp với bộ lọc.
-                </td>
-              </tr>
+              <tr><td colSpan="5" style={{ textAlign: 'center', padding: '30px', color: '#666' }}>Không tìm thấy SKU nào phù hợp.</td></tr>
             )}
           </tbody>
         </table>
