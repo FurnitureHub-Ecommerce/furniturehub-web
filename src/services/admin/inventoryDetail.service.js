@@ -1,10 +1,25 @@
-import { variantsMock, productsMock } from '../../data/mock/admin/catalog.mock.js';
+import { productAPI, storageAPI } from "../api.js";
 
 export async function getInventoryDetail(variantId) {
-  // Định danh bằng _id, không thay bằng SKU hoặc tự chọn bản ghi mẫu.
-  const variant = variantsMock.find(item => item._id === variantId);
+  const inventoryResponse = await storageAPI.getInventoryByVariantId(variantId);
+  const inventory = inventoryResponse.data?.inventory ?? inventoryResponse.data;
+  let variant = inventory?.variant ?? inventory?.variantDetails ?? null;
+
+  if (!variant?._id && !variant?.id && !variant?.sku) {
+    const variantResponse = await storageAPI.getVariantById(variantId);
+    variant = variantResponse.data?.variant ?? variantResponse.data?.data ?? variantResponse.data;
+  }
+
   if (!variant) return null;
-  const product = productsMock.find(item => item._id === variant.productId);
-  // Chỉ trả thông tin Catalog; chưa có nguồn tồn kho hay lịch sử biến động.
-  return structuredClone({ variant, product: product ?? null });
+  const productId = typeof variant.productId === "object"
+    ? variant.productId._id ?? variant.productId.id
+    : variant.productId ?? variant.product?._id ?? variant.product?.id;
+  let product = variant.product && typeof variant.product === "object" ? variant.product : null;
+
+  if (!product && productId) {
+    const productResponse = await productAPI.getProductById(productId);
+    product = productResponse.data?.product ?? productResponse.data?.data ?? productResponse.data;
+  }
+
+  return { variant: { ...variant, _id: variant._id ?? variant.id ?? variantId, productId }, product, inventory };
 }

@@ -214,9 +214,7 @@ export default function AdminBrands() {
   }
   function saved(brand) {
     setModal(null);
-    setNotice(
-      `Đã lưu “${brand.name}” vào mock dùng chung với Catalog. Thay đổi mất khi tải lại trình duyệt.`,
-    );
+    setNotice(`Đã lưu thương hiệu “${brand.name}” vào Backend.`);
     update({ page: 1 });
   }
   const data = state.data;
@@ -241,9 +239,7 @@ export default function AdminBrands() {
         </button>
       </div>
       <p className="lb-demo">
-        <strong>Dữ liệu demo dùng chung với Catalog</strong> · Lưu tạm trong bộ
-        nhớ, không gọi Backend. Tải lại trình duyệt sẽ khôi phục dữ liệu ban
-        đầu.
+        <strong>Dữ liệu từ API quản trị</strong> · Thay đổi được lưu qua Backend.
       </p>
       {notice && (
         <p className="lb-notice" role="status">
@@ -257,7 +253,7 @@ export default function AdminBrands() {
             <Building size={20} />
           </span>
           <strong>{data?.totals.brands ?? "…"}</strong>
-          <p>Thương hiệu trong mock</p>
+          <p>Thương hiệu từ Backend</p>
         </article>
         <article>
           <span>
@@ -306,7 +302,7 @@ export default function AdminBrands() {
           </select>
         </label>
         <button disabled={state.loading} onClick={reload}>
-          Tải lại mock
+          Tải lại dữ liệu
         </button>
       </section>
       <section className="lb-table-box">
