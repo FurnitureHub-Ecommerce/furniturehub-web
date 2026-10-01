@@ -9,3 +9,8 @@ export async function getDashboard() {
     throw error;
   }
 }
+
+export async function getDashboardStatistics() {
+  const response = await api.get("/api/dashboard/statistics");
+  return response?.data?.data ?? response?.data;
+}
