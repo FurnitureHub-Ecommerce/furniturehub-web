@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { Settings, User, LogOut } from 'lucide-react';
 import logo from '../../assets/logo.jpg';
@@ -8,11 +8,29 @@ const StorageLayout = () => {
   const [showSettingsMenu, setShowSettingsMenu] = useState(false);
   const navigate = useNavigate();
 
-  const currentUser = {
-    name: 'Vy Đặng',
-    role: 'GIÁM ĐỐC VẬN HÀNH KHO',
-    avatar: 'https://ui-avatars.com/api/?name=Vy+Dang&background=1c1c1c&color=fff'
-  };
+  const [currentUser, setCurrentUser] = useState({
+    fullName: 'Đang tải...',
+    role: 'STORAGE MANAGER',
+    avatar: 'https://ui-avatars.com/api/?name=User&background=1c1c1c&color=fff'
+  });
+
+  useEffect(() => {
+    try {
+      const storedUser = localStorage.getItem('user') || sessionStorage.getItem('user');
+      if (storedUser) {
+        const parsed = JSON.parse(storedUser);
+        const fullName = parsed.fullName || 'Người dùng kho'  ;
+        const role = parsed.role || 'STORAGE MANAGER';
+        setCurrentUser({
+          fullName: fullName,
+          role: role === 'STORAGE_MANAGER' ? 'QUẢN LÝ KHO' : role,
+          avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(fullName)}&background=1c1c1c&color=fff`
+        });
+      }
+    } catch (e) {
+      console.error("Không thể đọc thông tin user:", e);
+    }
+  }, []);
 
   const handleLogout = () => {
     navigate('/login');
@@ -59,8 +77,8 @@ const StorageLayout = () => {
         <div className="user-profile-wrapper">
           <div className="user-profile">
             <div className="user-main-info">
-              <img src={currentUser.avatar} alt={currentUser.name} className="user-avatar" />
-              <span className="user-name">{currentUser.name}</span>
+              <img src={currentUser.avatar} alt={currentUser.fullName} className="user-avatar" />
+              <span className="user-name">{currentUser.fullName}</span>
             </div>
             
             <button 

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { loadInventoryTransactionsFromBE } from '../../services/storageData';
-import { History, Calendar, ArrowDownLeft, ArrowUpRight, Layers } from 'lucide-react';
+import { History, Calendar, ArrowDownLeft, ArrowUpRight, Layers, User } from 'lucide-react';
 
 const InventoryHistory = () => {
   const [nhatKy, setNhatKy] = useState([]);
@@ -9,44 +9,74 @@ const InventoryHistory = () => {
   // State bộ lọc
   const [boLocLoai, setBoLocLoai] = useState('ALL'); // ALL, IMPORT, EXPORT
   const [boLocThoiGian, setBoLocThoiGian] = useState('ALL'); // ALL, TODAY, WEEK, MONTH
+  const [boLocNhanVien, setBoLocNhanVien] = useState('ALL'); // Lọc theo nhân sự
+  const [danhSachNhanVien, setDanhSachNhanVien] = useState([]); // Danh sách các nhân viên có trong dữ liệu
 
   useEffect(() => {
     const fetchTransactions = async () => {
       try {
         setLoading(true);
-        const data = await loadInventoryTransactionsFromBE();
+        const res = await loadInventoryTransactionsFromBE();
         
-      const formattedData = Array.isArray(data) ? data.map((item, index) => {
+        const data = Array.isArray(res) ? res : (res?.transactions || res?.data || []);
+        
+        const staffSet = new Set();
+
+        const formattedData = data.map((item, index) => {
           const isImport = item.type === 'IMPORT' || item.type?.includes('Nhập');
           
-          // Tạo mã SKU ngắn gọn, tuyệt đối không bị dính object
-          const skuVal = `SKU-${100 + index}`;
+          let staffName = 'Nhân sự kho';
+          const creator = item.createdBy || item.performedBy || item.user;
+          if (creator && typeof creator === 'object') {
+            staffName = creator.fullName || creator.name || 'Nhân sự kho';
+          } else if (typeof creator === 'string') {
+            staffName = creator;
+          }
 
-          // Lấy tên sản phẩm an toàn
-          let prodName = 'Sản phẩm kho';
-          if (typeof item.productName === 'string') {
-            prodName = item.productName;
-          } else if (item.productName && typeof item.productName === 'object') {
-            prodName = item.productName.name || item.productName.title || 'Sản phẩm kho';
-          } else if (item.sku && typeof item.sku === 'object') {
-            prodName = item.sku.name || item.sku.productName || 'Sản phẩm kho';
+          staffSet.add(staffName);
+
+          let skuVal = 'SKU-001';
+          const variant = item.variantId || item.sku || item.variant;
+          if (variant && typeof variant === 'object') {
+            skuVal = variant.code || variant.sku || variant.skuCode || `SKU-${100 + index}`;
+          } else if (typeof variant === 'string') {
+            skuVal = variant;
+          }
+
+          let prodName = 'Sản phẩm nội thất cao cấp';
+          
+          if (variant && typeof variant === 'object') {
+            if (variant.productId && typeof variant.productId === 'object') {
+              prodName = variant.productId.name || variant.productId.title || variant.productId.productName;
+            } else if (variant.product && typeof variant.product === 'object') {
+              prodName = variant.product.name || variant.product.title;
+            } else if (variant.name) {
+              prodName = variant.name;
+            }
+          }
+
+          if (prodName === 'Sản phẩm nội thất cao cấp') {
+            if (item.productName) prodName = item.productName;
+            else if (item.product && typeof item.product === 'object') prodName = item.product.name;
+            else if (item.itemName) prodName = item.itemName;
           }
 
           return {
             id: item.code || `TX-${item._id?.slice(-4) || index}`,
             rawDate: item.createdAt || new Date(),
-            time: item.createdAt ? new Date(item.createdAt).toLocaleString() : 'Hôm nay',
+            time: item.createdAt ? new Date(item.createdAt).toLocaleString('vi-VN') : 'Hôm nay',
             sku: skuVal,
             productName: prodName,
             type: isImport ? 'Nhập Kho' : 'Xuất Kho',
             typeKey: isImport ? 'IMPORT' : 'EXPORT',
             change: `${isImport ? '+' : '-'}${item.quantity || 0}`,
-            staff: 'Trúc Vy (Giám đốc Kho)',
+            staff: staffName,
             note: item.note || 'Giao dịch từ hệ thống',
           };
-        }) : [];
+        });
 
         setNhatKy(formattedData);
+        setDanhSachNhanVien(Array.from(staffSet));
       } catch (error) {
         console.error('Lỗi tải lịch sử từ BE:', error);
         setNhatKy([]);
@@ -58,17 +88,22 @@ const InventoryHistory = () => {
     fetchTransactions();
   }, []);
 
-  // Xử lý logic lọc dữ liệu theo loại và thời gian
+  // Xử lý logic lọc dữ liệu theo loại, thời gian và nhân viên
   const filteredNhatKy = nhatKy.filter((log) => {
-    // 1. Lọc theo loại (Nhập / Xuất)
+    // 1. Lọc theo loại
     if (boLocLoai !== 'ALL' && log.typeKey !== boLocLoai) {
       return false;
     }
 
-    // 2. Lọc theo thời gian (Hôm nay, Tuần này, Tháng này)
+    // 2. Lọc theo nhân viên
+    if (boLocNhanVien !== 'ALL' && log.staff !== boLocNhanVien) {
+      return false;
+    }
+
+    // 3. Lọc theo thời gian
     if (boLocThoiGian !== 'ALL') {
       const logDate = new Date(log.rawDate);
-      const now = new Date(); // Lấy thời gian hiện tại
+      const now = new Date();
 
       if (boLocThoiGian === 'TODAY') {
         if (logDate.toDateString() !== now.toDateString()) return false;
@@ -87,15 +122,15 @@ const InventoryHistory = () => {
   });
 
   return (
-    <div className="dashboard-main">
+    <div className="dashboard-main" style={{ width: "100%", padding: "0 28px 48px 28px", maxWidth: "1500px", margin: "0 auto", fontFamily: "'Inter', sans-serif" }}>
       <style>{`
         .filter-tab {
-          padding: 8px 16px;
-          border-radius: 6px;
+          padding: 9px 16px;
+          border-radius: 8px;
           font-size: 13px;
           font-weight: 600;
           cursor: pointer;
-          transition: all 0.25s ease;
+          transition: all 0.2s ease;
           border: 1px solid #dcd6cd;
           background: #fff;
           color: #555;
@@ -104,7 +139,7 @@ const InventoryHistory = () => {
           gap: 6px;
         }
         .filter-tab:hover {
-          background: #f4f1ea;
+          background: #faf8f5;
           color: #111;
           border-color: #b8b0a2;
         }
@@ -112,22 +147,28 @@ const InventoryHistory = () => {
           background: #1c1c1c;
           color: #fff;
           border-color: #1c1c1c;
-          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+          box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
         }
       `}</style>
 
-      <header className="dash-header">
+      {/* HEADER */}
+      <header style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: "28px", borderBottom: "1px solid #eae6df", paddingBottom: "20px" }}>
         <div>
-          <span className="subtitle">NHẬT KÝ KIỂM SOÁT KHO</span>
-          <h2 style={{ fontFamily: "Bodoni Moda", fontSize: 'clamp(2rem, 2.5vw, 2.7rem)', color: '#1a1a1a', letterSpacing: '-0.02em', fontWeight: 600 }}>Lịch Sử Biến Động Kho</h2>
-          <p>Nhật ký chi tiết các giao dịch lấy trực tiếp từ Database của Backend.</p>
+          <span style={{ fontSize: "11px", fontWeight: 700, color: "#78716c", letterSpacing: "0.05em" }}>
+            NHẬT KÝ KIỂM SOÁT KHO
+          </span>
+          <h1 style={{ fontFamily: "Bodoni Moda", fontSize: "2.6rem", fontWeight: 600, color: "#1a1a1a", margin: "4px 0 0 0" }}>
+            Lịch Sử Biến Động Kho
+          </h1>
+          <p style={{ margin: "4px 0 0 0", color: "#666", fontSize: "13px" }}>
+            Nhật ký chi tiết các giao dịch nhập xuất kho lấy trực tiếp từ Database hệ thống.
+          </p>
         </div>
       </header>
 
-      {/* Thanh công cụ Bộ lọc (Tabs Nhập/Xuất & Chọn thời gian) */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', background: '#fff', padding: '16px', borderRadius: '6px', border: '1px solid #eaeaea', flexWrap: 'wrap', gap: '16px' }}>
-        
-        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+      {/* THANH CÔNG CỤ BỘ LỌC (LOẠI, NHÂN VIÊN, THỜI GIAN) */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', background: '#fff', padding: '18px 24px', borderRadius: '14px', border: '1px solid #eae6df', flexWrap: 'wrap', gap: '16px', boxShadow: '0 2px 6px rgba(0,0,0,0.01)' }}>
+        <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
           <button 
             className={`filter-tab ${boLocLoai === 'ALL' ? 'active' : ''}`}
             onClick={() => setBoLocLoai('ALL')}
@@ -148,75 +189,98 @@ const InventoryHistory = () => {
           </button>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', fontWeight: '600', color: '#444' }}>
-            <Calendar size={16} /> Thời gian:
+        <div style={{ display: 'flex', alignItems: 'center', gap: '14px', flexWrap: 'wrap' }}>
+          {/* Bộ lọc theo Nhân viên */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', fontWeight: '700', color: '#555' }}>
+              <User size={16} /> NHÂN SỰ:
+            </div>
+            <select 
+              value={boLocNhanVien} 
+              onChange={(e) => setBoLocNhanVien(e.target.value)}
+              style={{ padding: '9px 14px', borderRadius: '8px', border: '1px solid #dcd6cd', background: '#faf8f5', fontSize: '13px', outline: 'none', cursor: 'pointer', fontWeight: '600', color: '#333' }}
+            >
+              <option value="ALL">Tất cả nhân sự</option>
+              {danhSachNhanVien.map((nv, idx) => (
+                <option key={idx} value={nv}>{nv}</option>
+              ))}
+            </select>
           </div>
-          <select 
-            value={boLocThoiGian} 
-            onChange={(e) => setBoLocThoiGian(e.target.value)}
-            style={{ padding: '8px 12px', borderRadius: '6px', border: '1px solid #dcd6cd', background: '#f7f6f3', fontSize: '13px', outline: 'none', cursor: 'pointer', fontWeight: '500' }}
-          >
-            <option value="ALL">Toàn bộ thời gian</option>
-            <option value="TODAY">Hôm nay</option>
-            <option value="WEEK">Trong tuần này</option>
-            <option value="MONTH">Trong tháng này</option>
-          </select>
+
+          {/* Bộ lọc theo Thời gian */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', fontWeight: '700', color: '#555' }}>
+              <Calendar size={16} /> THỜI GIAN:
+            </div>
+            <select 
+              value={boLocThoiGian} 
+              onChange={(e) => setBoLocThoiGian(e.target.value)}
+              style={{ padding: '9px 14px', borderRadius: '8px', border: '1px solid #dcd6cd', background: '#faf8f5', fontSize: '13px', outline: 'none', cursor: 'pointer', fontWeight: '600', color: '#333' }}
+            >
+              <option value="ALL">Toàn bộ thời gian</option>
+              <option value="TODAY">Hôm nay</option>
+              <option value="WEEK">Trong tuần này</option>
+              <option value="MONTH">Trong tháng này</option>
+            </select>
+          </div>
         </div>
       </div>
 
-      <section className="sku-section" style={{ margin: 0 }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
+      {/* BẢNG NHẬT KÝ */}
+      <section style={{ background: '#fff', border: '1px solid #eae6df', borderRadius: '14px', overflow: 'hidden', boxShadow: '0 4px 12px rgba(0,0,0,0.02)' }}>
+        <div style={{ padding: '20px 24px', borderBottom: '1px solid #eae6df', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <History size={20} color="#1c1c1c" />
-            <h3 style={{ margin: 0 }}>Nhật Ký Hoạt Động Kho Hàng</h3>
+            <History size={18} color="#1c1c1c" />
+            <h3 style={{ fontSize: '1.1rem', fontWeight: 600, color: '#1c1c1c', margin: 0 }}>Nhật Ký Hoạt Động Kho Hàng</h3>
           </div>
-          <span style={{ fontSize: '13px', color: '#666' }}>
+          <span style={{ fontSize: '12px', color: '#666', fontWeight: 600 }}>
             Hiển thị <strong>{filteredNhatKy.length}</strong> bản ghi phù hợp
           </span>
         </div>
 
-        <table className="storage-table">
-          <thead>
-            <tr>
-              <th>MÃ GIAO DỊCH</th>
-              <th>THỜI GIAN</th>
-              <th>MÃ SKU & SẢN PHẨM</th>
-              <th>LOẠI BIẾN ĐỘNG</th>
-              <th>SỐ LƯỢNG</th>
-              <th>NHÂN SỰ</th>
-              <th>GHI CHÚ</th>
-            </tr>
-          </thead>
-          <tbody>
-            {loading ? (
-              <tr><td colSpan="7" style={{ textAlign: 'center', padding: '30px', color: '#666' }}>Đang tải lịch sử từ Database...</td></tr>
-            ) : filteredNhatKy.length === 0 ? (
-              <tr><td colSpan="7" style={{ textAlign: 'center', padding: '30px', color: '#666' }}>Không tìm thấy giao dịch nào phù hợp với bộ lọc.</td></tr>
-            ) : filteredNhatKy.map((log, index) => (
-              <tr key={log.id || index}>
-                <td><strong>{log.id}</strong></td>
-                <td>{log.time}</td>
-                <td>
-                  <span className="badge" style={{ background: '#f5f5f4', padding: '2px 6px', borderRadius: '4px', fontSize: '11px', fontWeight: '700' }}>{log.sku}</span>
-                  <div style={{ fontWeight: '600', marginTop: '4px', fontSize: '13px' }}>{log.productName}</div>
-                </td>
-                <td>
-                  <span style={{ fontWeight: '600', color: log.type === 'Nhập Kho' ? '#16a34a' : '#2563eb' }}>
-                    {log.type}
-                  </span>
-                </td>
-                <td>
-                  <strong style={{ color: log.type === 'Nhập Kho' ? '#16a34a' : '#dc2626' }}>
-                    {log.change}
-                  </strong>
-                </td>
-                <td>{log.staff}</td>
-                <td><small style={{ color: '#555' }}>{log.note}</small></td>
+        <div style={{ overflowX: 'auto' }}>
+          <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left", fontSize: "13px" }}>
+            <thead>
+              <tr style={{ background: "#5c4033", color: "#fff", fontSize: "11px", fontWeight: 700, letterSpacing: "0.05em" }}>
+                <th style={{ padding: "16px 24px", whiteSpace: "nowrap" }}>MÃ GIAO DỊCH</th>
+                <th style={{ padding: "16px 20px", whiteSpace: "nowrap" }}>THỜI GIAN</th>
+                <th style={{ padding: "16px 20px", whiteSpace: "nowrap" }}>MÃ SKU & SẢN PHẨM</th>
+                <th style={{ padding: "16px 20px", whiteSpace: "nowrap" }}>LOẠI BIẾN ĐỘNG</th>
+                <th style={{ padding: "16px 20px", whiteSpace: "nowrap" }}>SỐ LƯỢNG</th>
+                <th style={{ padding: "16px 20px", whiteSpace: "nowrap" }}>NHÂN SỰ</th>
+                <th style={{ padding: "16px 24px", whiteSpace: "nowrap" }}>GHI CHÚ</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {loading ? (
+                <tr><td colSpan="7" style={{ textAlign: 'center', padding: '40px', color: '#666' }}>Đang tải lịch sử từ cơ sở dữ liệu…</td></tr>
+              ) : filteredNhatKy.length === 0 ? (
+                <tr><td colSpan="7" style={{ textAlign: 'center', padding: '40px', color: '#666' }}>Không tìm thấy giao dịch nào phù hợp với bộ lọc.</td></tr>
+              ) : filteredNhatKy.map((log, index) => (
+                <tr key={log.id || index} style={{ borderBottom: '1px solid #f2efeb', background: index % 2 === 0 ? '#fff' : '#fcfbfa' }}>
+                  <td style={{ padding: '16px 24px', fontWeight: 600, color: '#1c1c1c', whiteSpace: 'nowrap' }}>{log.id}</td>
+                  <td style={{ padding: '16px 20px', color: '#666', whiteSpace: 'nowrap' }}>{log.time}</td>
+                  <td style={{ padding: '16px 20px', minWidth: '260px' }}>
+                    <span style={{ background: '#f2efeb', padding: '3px 8px', borderRadius: '4px', fontSize: '11px', fontWeight: '700', color: '#1c1c1c', display: 'inline-block', whiteSpace: 'nowrap' }}>{log.sku}</span>
+                    <div style={{ fontWeight: '600', marginTop: '6px', fontSize: '13px', color: '#333', lineHeight: '1.4' }}>{log.productName}</div>
+                  </td>
+                  <td style={{ padding: '16px 20px', whiteSpace: 'nowrap' }}>
+                    <span style={{ fontWeight: '600', color: log.type === 'Nhập Kho' ? '#16a34a' : '#2563eb' }}>
+                      {log.type}
+                    </span>
+                  </td>
+                  <td style={{ padding: '16px 20px', whiteSpace: 'nowrap' }}>
+                    <strong style={{ color: log.type === 'Nhập Kho' ? '#16a34a' : '#dc2626' }}>
+                      {log.change}
+                    </strong>
+                  </td>
+                  <td style={{ padding: '16px 20px', fontWeight: 500, color: '#444', whiteSpace: 'nowrap' }}>{log.staff}</td>
+                  <td style={{ padding: '16px 24px', color: '#666', whiteSpace: 'nowrap' }}><small>{log.note}</small></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </section>
     </div>
   );
