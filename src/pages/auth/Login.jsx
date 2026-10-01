@@ -55,7 +55,7 @@ const Login = () => {
         } else if (userRole === "STAFF") {
           navigate("/staff");
         } else {
-          navigate("/");
+          navigate("/products");
         }
       }, 1000);
     } catch (err) {
