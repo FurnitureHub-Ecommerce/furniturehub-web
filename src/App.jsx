@@ -44,8 +44,6 @@ const InventoryStatistics = lazy(
 
 // =========== STAFF PAGES (Lazy load) ===========
 const StaffLayout = lazy(() => import("./pages/staff/StaffLayout"));
-const StaffDashboard = lazy(() => import("./pages/staff/StaffDashboard"));
-const StaffList = lazy(() => import("./pages/staff/StaffList"));
 const StaffOrders = lazy(() => import("./pages/staff/StaffOrders"));
 
 // =========== ADMIN PAGES (Lazy load) ===========
@@ -221,9 +219,7 @@ function App() {
               }
             >
               <Route path="/staff" element={<StaffLayout />}>
-                <Route index element={<StaffDashboard />} />
-                <Route path="members" element={<StaffList />} />
-                <Route path="orders" element={<StaffOrders />} />
+                <Route index element={<StaffOrders />} />
               </Route>
             </Route>
 
