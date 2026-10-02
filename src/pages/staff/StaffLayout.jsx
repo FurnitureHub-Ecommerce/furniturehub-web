@@ -1,26 +1,10 @@
 import React, { useState } from "react";
 import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
-import {
-  Settings,
-  User,
-  LogOut,
-  LayoutDashboard,
-  Users,
-  ClipboardList,
-} from "lucide-react";
+import { Settings, User, LogOut, ClipboardList } from "lucide-react";
 import logo from "../../assets/logo.jpg";
 import "./Staff.css";
 
-const navItems = [
-  {
-    path: "/staff",
-    label: "Tổng Quan",
-    icon: LayoutDashboard,
-    exact: true,
-  },
-  { path: "/staff/members", label: "Nhân Viên", icon: Users },
-  { path: "/staff/orders", label: "Đơn Hàng", icon: ClipboardList },
-];
+const navItems = [{ path: "/staff", label: "Đơn Hàng", icon: ClipboardList }];
 
 const StaffLayout = () => {
   const [showSettingsMenu, setShowSettingsMenu] = useState(false);
