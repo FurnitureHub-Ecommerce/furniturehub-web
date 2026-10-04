@@ -261,8 +261,8 @@ export const PRODUCTS = [
     reviewCount: 19,
     isNew: true,
     isWishlisted: false,
-    image: "https://images.unsplash.com/photo-1507473885765-e6ed057f782c?auto=format&fit=crop&w=800&q=80",
-    hoverImage: "https://images.unsplash.com/photo-1513506003901-1e6a229e2d15?auto=format&fit=crop&w=800&q=80",
+    image: "https://images.unsplash.com/photo-1513506003901-1e6a229e2d15?auto=format&fit=crop&w=800&q=80",
+    hoverImage: "https://images.unsplash.com/photo-1540932239986-30128078f3c5?auto=format&fit=crop&w=800&q=80",
   },
   {
     id: "prod-4",
@@ -293,7 +293,7 @@ export const PRODUCTS = [
     reviewCount: 27,
     isNew: false,
     isWishlisted: false,
-    image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRMcAWGtovriCdmxR8veWxQ09js58klU8wWFSZx2FbkZfyq6NGyghG4EN0&s=10",
+    image: "https://images.unsplash.com/photo-1505797149-43b0069ec26b?auto=format&fit=crop&w=800&q=80",
     hoverImage: "https://images.unsplash.com/photo-1524758631624-e2822e304c36?auto=format&fit=crop&w=800&q=80",
   },
   {

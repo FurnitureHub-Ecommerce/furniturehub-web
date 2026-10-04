@@ -43,7 +43,7 @@ export function Header() {
         <div className="container header__topbar-inner">
           <p className="header__topbar-text">
             <span>
-              Miễn Phí Giao Hàng Cao Cấp & Lắp Ráp Cho Đơn Hàng Trên $2,000
+              Miễn Phí Giao Hàng Cao Cấp & Lắp Ráp Cho Đơn Hàng Trên 5.000.000 ₫
             </span>
             <span className="header__topbar-divider">•</span>
             <span className="header__topbar-highlight">
@@ -51,7 +51,7 @@ export function Header() {
             </span>
           </p>
           <div className="header__topbar-links">
-            <a href="#currency">USD ($)</a>
+            <a href="#currency">VNĐ (₫)</a>
             <a href="#support">Hỗ Trợ</a>
           </div>
         </div>
@@ -62,7 +62,7 @@ export function Header() {
         className={`header ${scrolled ? "header--scrolled" : ""}`}
         role="banner"
       >
-        <div className="header__inner">
+        <div className="header__inner flex items-center justify-between">
           {/* Mobile Menu Toggle */}
           <button
             id="header-mobile-toggle"
@@ -80,7 +80,7 @@ export function Header() {
           {/* Brand Logo */}
           <Link
             to="/"
-            className="header__logo"
+            className="header__logo flex items-center shrink-0"
             aria-label="Nội Thất Cao Cấp LUMORA - Trang Chủ"
           >
             <img
@@ -92,14 +92,14 @@ export function Header() {
 
           {/* Desktop Navigation */}
           <nav className="header__nav" aria-label="Điều Hướng Chính">
-            <ul className="header__nav-list">
+            <ul className="header__nav-list flex items-center gap-5 lg:gap-6">
               {NAV_LINKS.map(({ label, to }) => {
                 const isActive = pathname === to;
                 return (
-                  <li key={to} className="header__nav-item">
+                  <li key={to} className="header__nav-item shrink-0">
                     <Link
                       to={to}
-                      className={`header__nav-link ${isActive ? "header__nav-link--active" : ""}`}
+                      className={`header__nav-link whitespace-nowrap ${isActive ? "header__nav-link--active" : ""}`}
                     >
                       {label}
                     </Link>

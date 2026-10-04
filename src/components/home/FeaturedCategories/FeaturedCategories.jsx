@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { ArrowUpRight, ChevronLeft, ChevronRight, AlertCircle, RefreshCw, FolderX } from 'lucide-react';
 import { CATEGORIES as MOCK_CATEGORIES } from '../../../data/lumoraData';
 import { Skeleton } from '../../common/Skeleton/Skeleton';
+import { formatCategoryName } from '../../../utils/formatters';
 import './FeaturedCategories.css';
 
 export function FeaturedCategories({
@@ -85,22 +86,32 @@ export function FeaturedCategories({
                       <Skeleton height="380px" borderRadius="var(--radius-md)" />
                     </div>
                   ))
-                : displayCategories.map((category) => (
-                    <Link
-                      key={category.id || category._id}
-                      to={category.link || `/category/${category.id || category._id}`}
-                      className="category-card"
-                      aria-label={`Khám phá bộ sưu tập ${category.name}`}
-                    >
-                      <div className="category-card__image-wrap">
-                        <img
-                          src={category.image || 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=800&q=80'}
-                          alt={category.name}
-                          className="category-card__image"
-                          loading="lazy"
-                        />
-                        <div className="category-card__overlay" />
-                      </div>
+                : displayCategories.map((category, idx) => {
+                    const fallbackImg = [
+                      'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=800&q=80',
+                      'https://images.unsplash.com/photo-1617806118233-18e1de247200?auto=format&fit=crop&w=800&q=80',
+                      'https://images.unsplash.com/photo-1616594039964-ae9021a400a0?auto=format&fit=crop&w=800&q=80',
+                      'https://images.unsplash.com/photo-1524758631624-e2822e304c36?auto=format&fit=crop&w=800&q=80',
+                      'https://images.unsplash.com/photo-1507473885765-e6ed057f782c?auto=format&fit=crop&w=800&q=80',
+                      'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?auto=format&fit=crop&w=800&q=80',
+                    ][idx % 6];
+
+                    return (
+                      <Link
+                        key={category.id || category._id}
+                        to={category.link || `/category/${category.id || category._id}`}
+                        className="category-card"
+                        aria-label={`Khám phá bộ sưu tập ${category.name}`}
+                      >
+                        <div className="category-card__image-wrap">
+                          <img
+                            src={category.image || fallbackImg}
+                            alt={category.name}
+                            className="category-card__image"
+                            loading="lazy"
+                          />
+                          <div className="category-card__overlay" />
+                        </div>
 
                       <div className="category-card__content">
                         <div className="category-card__top">
@@ -111,12 +122,13 @@ export function FeaturedCategories({
                         </div>
 
                         <div className="category-card__bottom">
-                          <h3 className="category-card__name">{category.name}</h3>
+                          <h3 className="category-card__name">{formatCategoryName(category.name)}</h3>
                           <p className="category-card__desc">{category.description || 'Nội thất sang trọng Wabi-Sabi & Bắc Âu.'}</p>
                         </div>
                       </div>
                     </Link>
-                  ))}
+                  );
+                })}
             </div>
           </div>
         )}

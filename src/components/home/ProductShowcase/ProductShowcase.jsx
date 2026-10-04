@@ -5,6 +5,11 @@ import { PRODUCTS as MOCK_PRODUCTS } from '../../../data/lumoraData';
 import { useShop } from '../../../context/ShopContext';
 import Rating from '../../common/Rating/Rating';
 import { ProductCardSkeleton } from '../../common/Skeleton/Skeleton';
+import { 
+  formatCurrency, 
+  PRODUCT_IMAGE_OVERRIDES, 
+  getProductMetrics 
+} from '../../../utils/formatters';
 import './ProductShowcase.css';
 
 const TABS = [
@@ -122,98 +127,112 @@ export function ProductShowcase({
             {isLoading
               ? Array.from({ length: 4 }).map((_, idx) => <ProductCardSkeleton key={idx} />)
               : displayedProducts.map((product) => {
-                  const prodId = String(product.id || product._id);
-                  const isWishlisted = wishlist.includes(prodId);
-                  const isJustAdded = addedItem === prodId;
+                    const prodId = String(product.id || product._id);
+                    const isWishlisted = wishlist.includes(prodId);
+                    const isJustAdded = addedItem === prodId;
 
-                  return (
-                    <article key={prodId} className="product-card">
-                      <div className="product-card__image-container">
-                        <img
-                          src={product.image || product.imageUrl || 'https://images.unsplash.com/photo-1567538096630-e0c55bd6374c?auto=format&fit=crop&w=800&q=80'}
-                          alt={product.name}
-                          className="product-card__image product-card__image--primary"
-                          loading="lazy"
-                        />
-                        <img
-                          src={product.hoverImage || product.image || 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?auto=format&fit=crop&w=800&q=80'}
-                          alt={`${product.name} lifestyle angle`}
-                          className="product-card__image product-card__image--hover"
-                          loading="lazy"
-                        />
+                    const overrideImages = PRODUCT_IMAGE_OVERRIDES[product.name];
+                    const primaryImg = overrideImages?.[0] || product.images?.[0] || product.image || product.imageUrl || 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=800&q=80';
+                    const hoverImg = overrideImages?.[1] || product.images?.[1] || product.hoverImage || primaryImg;
+                    const metrics = getProductMetrics(product.name, product.rating, product.reviewCount);
+                    const currentPrice = product.minPrice ?? product.price ?? 0;
 
-                        <div className="product-card__badges">
-                          {product.isNew && <span className="product-badge product-badge--new">Mới</span>}
-                          {product.oldPrice && product.oldPrice > product.price && (
-                            <span className="product-badge product-badge--sale">
-                              Tiết kiệm ${(product.oldPrice - product.price).toLocaleString()}
-                            </span>
-                          )}
-                        </div>
-
-                        <button
-                          className={`product-card__wishlist-btn ${
-                            isWishlisted ? 'product-card__wishlist-btn--active' : ''
-                          }`}
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            toggleWishlist(prodId);
-                          }}
-                          aria-label={
-                            isWishlisted
-                              ? `Xóa ${product.name} khỏi yêu thích`
-                              : `Thêm ${product.name} vào yêu thích`
-                          }
-                          type="button"
-                        >
-                          <Heart
-                            size={18}
-                            fill={isWishlisted ? '#E53E3E' : 'none'}
-                            color={isWishlisted ? '#E53E3E' : 'currentColor'}
+                    return (
+                      <article key={prodId} className="product-card group">
+                        <div className="product-card__image-container">
+                          <img
+                            src={primaryImg}
+                            alt={product.name}
+                            className="product-card__image product-card__image--primary"
+                            loading="lazy"
+                            onError={(e) => {
+                              e.currentTarget.onerror = null;
+                              e.currentTarget.src = 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=800&q=80';
+                            }}
                           />
-                        </button>
+                          <img
+                            src={hoverImg}
+                            alt={`${product.name} lifestyle angle`}
+                            className="product-card__image product-card__image--hover"
+                            loading="lazy"
+                            onError={(e) => {
+                              e.currentTarget.onerror = null;
+                              e.currentTarget.src = primaryImg;
+                            }}
+                          />
 
-                        <div className="product-card__quick-actions">
-                          <button
-                            className="product-card__quick-view-btn"
-                            onClick={() => setQuickViewProduct(product)}
-                            aria-label={`Xem nhanh ${product.name}`}
-                            type="button"
-                          >
-                            <Eye size={16} />
-                            <span>Xem nhanh</span>
-                          </button>
-                        </div>
-                      </div>
-
-                      <div className="product-card__details">
-                        <div className="product-card__meta">
-                          <span className="product-card__variant">{product.variantLabel || 'Solid Oak / Crafted'}</span>
-                          <Rating score={product.rating || 4.9} reviewCount={product.reviewCount || 24} />
-                        </div>
-
-                        <h3 className="product-card__title">
-                          <Link to={`/product/${product.slug || prodId}`}>{product.name}</Link>
-                        </h3>
-
-                        <div className="product-card__footer">
-                          <div className="product-card__pricing">
-                            <span className="product-card__price">
-                              ${(product.price || 0).toLocaleString()}
-                            </span>
-                            {product.oldPrice && (
-                              <span className="product-card__old-price">
-                                ${product.oldPrice.toLocaleString()}
+                          <div className="product-card__badges">
+                            {product.isNew && <span className="product-badge product-badge--new">Mới</span>}
+                            {product.oldPrice && product.oldPrice > currentPrice && (
+                              <span className="product-badge product-badge--sale">
+                                -{Math.round(((product.oldPrice - currentPrice) / product.oldPrice) * 100)}%
                               </span>
                             )}
                           </div>
 
                           <button
-                            className={`product-card__cart-btn ${
-                              isJustAdded ? 'product-card__cart-btn--added' : ''
+                            className={`product-card__wishlist-btn ${
+                              isWishlisted ? 'product-card__wishlist-btn--active' : ''
                             }`}
-                            onClick={() => handleAddToCart(product)}
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              toggleWishlist(prodId);
+                            }}
+                            aria-label={
+                              isWishlisted
+                                ? `Xóa ${product.name} khỏi yêu thích`
+                                : `Thêm ${product.name} vào yêu thích`
+                            }
+                            type="button"
+                          >
+                            <Heart
+                              size={18}
+                              fill={isWishlisted ? '#92400E' : 'none'}
+                              color={isWishlisted ? '#92400E' : 'currentColor'}
+                            />
+                          </button>
+
+                          <div className="product-card__quick-actions">
+                            <button
+                              className="product-card__quick-view-btn"
+                              onClick={() => setQuickViewProduct(product)}
+                              aria-label={`Xem nhanh ${product.name}`}
+                              type="button"
+                            >
+                              <Eye size={16} />
+                              <span>Xem nhanh</span>
+                            </button>
+                          </div>
+                        </div>
+
+                        <div className="product-card__details">
+                          <div className="product-card__meta">
+                            <span className="product-card__variant">{product.variantLabel || 'Gỗ sồi Bắc Âu / Tinh xảo'}</span>
+                            <Rating score={metrics.rating} reviewCount={metrics.reviewCount} />
+                          </div>
+
+                          <h3 className="product-card__title">
+                            <Link to={`/product/${product.slug || prodId}`}>{product.name}</Link>
+                          </h3>
+
+                          <div className="product-card__footer">
+                            <div className="product-card__pricing">
+                              <span className="product-card__price">
+                                {formatCurrency(currentPrice)}
+                              </span>
+                              {product.oldPrice && (
+                                <span className="product-card__old-price">
+                                  {formatCurrency(product.oldPrice)}
+                                </span>
+                              )}
+                            </div>
+
+                            <button
+                              className={`product-card__cart-btn ${
+                                isJustAdded ? 'product-card__cart-btn--added' : ''
+                              }`}
+                              onClick={() => handleAddToCart(product)}
                             aria-label={`Thêm ${product.name} vào giỏ hàng`}
                             type="button"
                           >

@@ -1,17 +1,13 @@
 import { Link } from 'react-router-dom';
 import { ShoppingCart, Heart, Eye } from 'lucide-react';
 import Rating from './Rating';
+import { formatCurrency, PRODUCT_IMAGE_OVERRIDES, getProductMetrics } from '../../../utils/formatters';
 import './ProductCard.css';
+
+const DEFAULT_FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=800&q=80';
 
 /**
  * ProductCard – shared UI component.
- *
- * Props:
- *   product {
- *     id, name, slug, price, oldPrice,
- *     rating, reviewCount,
- *     image, isNew, discount
- *   }
  */
 function ProductCard({ product }) {
   const {
@@ -20,31 +16,37 @@ function ProductCard({ product }) {
     slug = '#',
     price,
     oldPrice,
-    rating = 0,
-    reviewCount = 0,
     image,
     isNew = false,
     discount = null,
   } = product;
 
+  const overrideImages = PRODUCT_IMAGE_OVERRIDES[name];
+  const finalImage = overrideImages?.[0] || image || DEFAULT_FALLBACK_IMAGE;
+  const metrics = getProductMetrics(name, product.rating, product.reviewCount);
+
   return (
-    <article className="product-card" aria-label={name}>
+    <article className="product-card group" aria-label={name}>
       {/* ---- Image ---- */}
-      <div className="product-card__img-wrap">
+      <div className="product-card__img-wrap relative overflow-hidden">
         <img
-          src={image}
+          src={finalImage}
           alt={name}
-          className="product-card__img"
+          className="product-card__img group-hover:scale-105 transition-transform duration-500 ease-out"
           loading="lazy"
+          onError={(e) => {
+            e.currentTarget.onerror = null;
+            e.currentTarget.src = DEFAULT_FALLBACK_IMAGE;
+          }}
         />
 
         {/* Badges */}
         {(isNew || discount) && (
-          <div className="product-card__badges">
+          <div className="product-card__badges absolute top-3 left-3 z-10">
             {discount && (
-              <span className="badge badge--discount">{discount}% Off</span>
+              <span className="badge badge--discount">-{discount}%</span>
             )}
-            {isNew && <span className="badge badge--new">New</span>}
+            {isNew && <span className="badge badge--new">Mới</span>}
           </div>
         )}
 
@@ -82,17 +84,17 @@ function ProductCard({ product }) {
 
       {/* ---- Info ---- */}
       <div className="product-card__info">
-        <Rating value={rating} showCount={reviewCount > 0} count={reviewCount} />
+        <Rating value={metrics.rating} showCount={metrics.reviewCount > 0} count={metrics.reviewCount} />
 
         <Link to={`/products/${slug}`} className="product-card__name">
           {name}
         </Link>
 
         <div className="product-card__price-row">
-          <span className="product-card__price">{price}</span>
+          <span className="product-card__price">{formatCurrency(price)}</span>
           {oldPrice && (
             <span className="product-card__price product-card__price--old">
-              {oldPrice}
+              {formatCurrency(oldPrice)}
             </span>
           )}
         </div>

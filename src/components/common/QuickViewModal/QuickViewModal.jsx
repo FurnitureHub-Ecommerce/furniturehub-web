@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { X, ShoppingBag, Heart, Plus, Minus, Check } from 'lucide-react';
 import { useShop } from '../../../context/ShopContext';
 import Rating from '../Rating/Rating';
+import { formatCurrency } from '../../../utils/formatters';
 import './QuickViewModal.css';
 
 export function QuickViewModal() {
@@ -76,11 +77,11 @@ export function QuickViewModal() {
 
             <div className="quickview-price-box">
               <span className="quickview-price">
-                ${quickViewProduct.price.toLocaleString()}
+                {formatCurrency(quickViewProduct.price || quickViewProduct.basePrice || quickViewProduct.minPrice || 0)}
               </span>
               {quickViewProduct.oldPrice && (
                 <span className="quickview-old-price">
-                  ${quickViewProduct.oldPrice.toLocaleString()}
+                  {formatCurrency(quickViewProduct.oldPrice)}
                 </span>
               )}
             </div>
