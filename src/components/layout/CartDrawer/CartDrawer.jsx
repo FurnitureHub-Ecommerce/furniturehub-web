@@ -4,6 +4,10 @@ import { useShop } from "../../../context/ShopContext";
 import { Link } from "react-router-dom";
 import "./CartDrawer.css";
 
+import { formatCurrency } from '../../../utils/formatters';
+
+const formatVND = (price) => formatCurrency(price);
+
 export function CartDrawer() {
   const {
     isCartOpen,
@@ -17,9 +21,9 @@ export function CartDrawer() {
 
   if (!isCartOpen) return null;
 
-  const freeShippingThreshold = 2000;
+  const freeShippingThreshold = 5000000; // 5,000,000 VND
   const progress = Math.min(100, (cartSubtotal / freeShippingThreshold) * 100);
-  const remaining = freeShippingThreshold - cartSubtotal;
+  const remaining = Math.max(0, freeShippingThreshold - cartSubtotal);
 
   return (
     <>
@@ -55,13 +59,13 @@ export function CartDrawer() {
         <div className="cart-drawer-shipping">
           {remaining > 0 ? (
             <p>
-              Mua thêm <strong>${remaining.toLocaleString()}</strong> để nhận{" "}
+              Mua thêm <strong>{formatVND(remaining)}</strong> để nhận{" "}
               <strong>Miễn phí Giao hàng & Lắp ráp</strong>
             </p>
           ) : (
             <p>
               🎉 Bạn đã đủ điều kiện nhận{" "}
-              <strong>Miễn phí Giao hàng Cao cấp!</strong>
+              <strong>Miễn phí Giao hàng White-Glove!</strong>
             </p>
           )}
           <div className="cart-shipping-bar">
@@ -82,64 +86,76 @@ export function CartDrawer() {
               </p>
             </div>
           ) : (
-            cart.map(({ product, quantity }) => (
-              <div key={product.id} className="cart-item">
-                <img
-                  src={product.image}
-                  alt={product.name}
-                  className="cart-item-image"
-                />
-                <div className="cart-item-details">
-                  <div className="cart-item-top">
-                    <div>
-                      <h3
-                        className="cart-item-title"
-                        style={{ fontFamily: '"Bodoni Moda", serif' }}
+            cart.map((item) => {
+              const product = item.product || {};
+              const itemPrice = item.unitPrice || product.price || 0;
+              const itemId = item.itemId || product.id;
+
+              return (
+                <div key={itemId} className="cart-item">
+                  <img
+                    src={product.image}
+                    alt={product.name}
+                    className="cart-item-image"
+                  />
+                  <div className="cart-item-details">
+                    <div className="cart-item-top">
+                      <div>
+                        <h3
+                          className="cart-item-title"
+                          style={{ fontFamily: '"Bodoni Moda", serif' }}
+                        >
+                          <Link 
+                            to={`/product/${product.slug || product.id}`}
+                            onClick={() => setIsCartOpen(false)}
+                            style={{ textDecoration: 'none', color: 'inherit' }}
+                          >
+                            {product.name}
+                          </Link>
+                        </h3>
+                        <span className="cart-item-variant">
+                          {product.variantLabel || "Tiêu chuẩn"}
+                        </span>
+                      </div>
+                      <button
+                        className="cart-item-remove"
+                        onClick={() => removeFromCart(itemId)}
+                        aria-label={`Xóa ${product.name}`}
+                        type="button"
                       >
-                        {product.name}
-                      </h3>
-                      <span className="cart-item-variant">
-                        {product.variantLabel}
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+
+                    <div className="cart-item-bottom">
+                      <div className="cart-item-qty">
+                        <button
+                          className="cart-qty-btn"
+                          onClick={() => updateCartQuantity(itemId, -1)}
+                          aria-label="Giảm số lượng"
+                          type="button"
+                        >
+                          <Minus size={14} />
+                        </button>
+                        <span className="cart-qty-val">{item.quantity}</span>
+                        <button
+                          className="cart-qty-btn"
+                          onClick={() => updateCartQuantity(itemId, 1)}
+                          aria-label="Tăng số lượng"
+                          type="button"
+                        >
+                          <Plus size={14} />
+                        </button>
+                      </div>
+
+                      <span className="cart-item-price">
+                        {formatVND(itemPrice * item.quantity)}
                       </span>
                     </div>
-                    <button
-                      className="cart-item-remove"
-                      onClick={() => removeFromCart(product.id)}
-                      aria-label={`Xóa ${product.name}`}
-                      type="button"
-                    >
-                      <Trash2 size={16} />
-                    </button>
-                  </div>
-
-                  <div className="cart-item-bottom">
-                    <div className="cart-item-qty">
-                      <button
-                        className="cart-qty-btn"
-                        onClick={() => updateCartQuantity(product.id, -1)}
-                        aria-label="Giảm số lượng"
-                        type="button"
-                      >
-                        <Minus size={14} />
-                      </button>
-                      <span className="cart-qty-val">{quantity}</span>
-                      <button
-                        className="cart-qty-btn"
-                        onClick={() => updateCartQuantity(product.id, 1)}
-                        aria-label="Tăng số lượng"
-                        type="button"
-                      >
-                        <Plus size={14} />
-                      </button>
-                    </div>
-
-                    <span className="cart-item-price">
-                      ${(product.price * quantity).toLocaleString()}
-                    </span>
                   </div>
                 </div>
-              </div>
-            ))
+              );
+            })
           )}
         </div>
 
@@ -159,7 +175,7 @@ export function CartDrawer() {
                 className="cart-total-price"
                 style={{ fontFamily: '"Bodoni Moda", serif' }}
               >
-                ${cartSubtotal.toLocaleString()}
+                {formatVND(cartSubtotal)}
               </span>
             </div>
             <div className="cart-actions-row">
@@ -168,16 +184,8 @@ export function CartDrawer() {
                 className="cart-checkout-btn"
                 onClick={() => setIsCartOpen(false)}
               >
-                <span>Thanh Toán</span>
+                <span>Xem Giỏ Hàng & Thanh Toán</span>
                 <ArrowRight size={16} />
-              </Link>
-
-              <Link
-                to="/cart"
-                className="cart-view-link"
-                onClick={() => setIsCartOpen(false)}
-              >
-                Chi tiết giỏ hàng
               </Link>
             </div>
           </div>

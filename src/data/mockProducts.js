@@ -43,7 +43,7 @@ export const MOCK_PRODUCTS = [
     colors: [
       { id: 'c-oat', name: 'Trắng Kem Oat', hex: '#F4F0EA', image: 'https://images.unsplash.com/photo-1567538096630-e0c55bd6374c?auto=format&fit=crop&w=1000&q=85' },
       { id: 'c-charcoal', name: 'Xám Than Charcoal', hex: '#343538', image: 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?auto=format&fit=crop&w=1000&q=85' },
-      { id: 'c-walnut', name: 'Nâu Gỗ Óc Chó', hex: '#5C4033', image: 'https://images.unsplash.com/photo-1580481072645-022f9a6d83d0?auto=format&fit=crop&w=1000&q=85' },
+      { id: 'c-walnut', name: 'Nâu Gỗ Óc Chó', hex: '#5C4033', image: 'https://images.unsplash.com/photo-1505797149-43b0069ec26b?auto=format&fit=crop&w=1000&q=85' },
     ],
     sizes: [
       { id: 's-standard', name: 'Tiêu chuẩn (85x90cm)', priceAdjustment: 0 },
@@ -57,7 +57,7 @@ export const MOCK_PRODUCTS = [
     gallery: [
       'https://images.unsplash.com/photo-1567538096630-e0c55bd6374c?auto=format&fit=crop&w=1000&q=85',
       'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?auto=format&fit=crop&w=1000&q=85',
-      'https://images.unsplash.com/photo-1580481072645-022f9a6d83d0?auto=format&fit=crop&w=1000&q=85',
+      'https://images.unsplash.com/photo-1505797149-43b0069ec26b?auto=format&fit=crop&w=1000&q=85',
       'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=1000&q=85',
     ],
     skuMatrix: {
@@ -163,7 +163,7 @@ export const MOCK_PRODUCTS = [
 
   {
     id: 'prod-3',
-    name: 'Đèn Treo ĐÁ Alabaster Aura',
+    name: 'Đèn Treo Đá Alabaster Aura',
     slug: 'aura-alabaster-pendant',
     categoryId: 'lighting-decor',
     categoryName: 'Đèn & Trang Trí',
@@ -180,8 +180,8 @@ export const MOCK_PRODUCTS = [
     description: `Aura Alabaster Pendant toát lên ánh sáng dịu nhẹ ấm áp xuyên qua các vân đá cẩm thạch tự nhiên. 
     Mỗi chiếc đèn là một tác phẩm độc bản không trùng lặp vân đá.`,
     colors: [
-      { id: 'c-brass', name: 'Đồng Thau Brushed Brass', hex: '#C5A059', image: 'https://images.unsplash.com/photo-1507473885765-e6ed057f782c?auto=format&fit=crop&w=1000&q=85' },
-      { id: 'c-black', name: 'Thép Đen Oxide', hex: '#222222', image: 'https://images.unsplash.com/photo-1513506003901-1e6a229e2d15?auto=format&fit=crop&w=1000&q=85' },
+      { id: 'c-brass', name: 'Đồng Thau Brushed Brass', hex: '#C5A059', image: 'https://images.unsplash.com/photo-1513506003901-1e6a229e2d15?auto=format&fit=crop&w=1000&q=85' },
+      { id: 'c-black', name: 'Thép Đen Oxide', hex: '#222222', image: 'https://images.unsplash.com/photo-1540932239986-30128078f3c5?auto=format&fit=crop&w=1000&q=85' },
     ],
     sizes: [
       { id: 's-single', name: 'Đơn (Ø25cm)', priceAdjustment: 0 },
@@ -191,8 +191,8 @@ export const MOCK_PRODUCTS = [
       { id: 'm-alabaster', name: 'Đá Alabaster Tự Nhiên', priceAdjustment: 0 },
     ],
     gallery: [
-      'https://images.unsplash.com/photo-1507473885765-e6ed057f782c?auto=format&fit=crop&w=1000&q=85',
       'https://images.unsplash.com/photo-1513506003901-1e6a229e2d15?auto=format&fit=crop&w=1000&q=85',
+      'https://images.unsplash.com/photo-1540932239986-30128078f3c5?auto=format&fit=crop&w=1000&q=85',
     ],
     skuMatrix: {
       'c-brass_s-single_m-alabaster': { stock: 10, price: 680 },
@@ -317,8 +317,9 @@ export const MOCK_PRODUCTS = [
     inStock: true,
     shortDescription: 'Ghế xoay văn phòng điều hành bọc da Nappa chân thép sơn tĩnh điện đen cao cấp.',
     description: `Zenith Curved Desk Chair kết hợp hoàn hảo tính chuẩn nhân trắc học ergonomic với phong cách hiện đại tối giản.`,
+    image: 'https://images.unsplash.com/photo-1505797149-43b0069ec26b?auto=format&fit=crop&w=1000&q=85',
     colors: [
-      { id: 'c-tan', name: 'Da Bò Tân Saddle Tan', hex: '#A0522D', image: 'https://images.unsplash.com/photo-1580481072645-022f9a6d83d0?auto=format&fit=crop&w=1000&q=85' },
+      { id: 'c-tan', name: 'Da Bò Tân Saddle Tan', hex: '#A0522D', image: 'https://images.unsplash.com/photo-1505797149-43b0069ec26b?auto=format&fit=crop&w=1000&q=85' },
       { id: 'c-blackleather', name: 'Da Đen Obsidian', hex: '#1C1C1C', image: 'https://images.unsplash.com/photo-1524758631624-e2822e304c36?auto=format&fit=crop&w=1000&q=85' },
     ],
     sizes: [
@@ -328,7 +329,7 @@ export const MOCK_PRODUCTS = [
       { id: 'm-nappa', name: 'Da Bò Nappa Thật', priceAdjustment: 0 },
     ],
     gallery: [
-      'https://images.unsplash.com/photo-1580481072645-022f9a6d83d0?auto=format&fit=crop&w=1000&q=85',
+      'https://images.unsplash.com/photo-1505797149-43b0069ec26b?auto=format&fit=crop&w=1000&q=85',
       'https://images.unsplash.com/photo-1524758631624-e2822e304c36?auto=format&fit=crop&w=1000&q=85',
     ],
     skuMatrix: {

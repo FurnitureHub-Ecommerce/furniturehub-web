@@ -119,17 +119,19 @@ button {
   font-family: inherit;
 }
 
-h1,
-h2,
-h3,
-h4,
-h5,
-h6 {
-  font-family: var(--font-serif);
-  line-height: 1.08;
-  letter-spacing: -0.02em;
-  font-weight: 600;
-  color: var(--lumora-text-main);
+@layer base {
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: var(--font-serif);
+    line-height: 1.25;
+    letter-spacing: -0.02em;
+    font-weight: 600;
+    color: var(--lumora-text-main);
+  }
 }
 
 #root {
@@ -175,21 +177,34 @@ select {
   color: inherit;
 }
 
+/* ---------- Main & Layout Scope Protection ---------- */
+main {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+}
+
 /* ---------- Utilities ---------- */
 .container {
   width: 100%;
   max-width: var(--container-max);
-  margin-inline: auto;
-  padding-inline: var(--space-md);
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: var(--space-md);
+  padding-right: var(--space-md);
+  box-sizing: border-box;
 }
 
 @media (min-width: 768px) {
   .container {
-    padding-inline: var(--space-xl);
+    padding-left: var(--space-xl);
+    padding-right: var(--space-xl);
   }
 }
 
 .section {
+  width: 100%;
+  box-sizing: border-box;
   padding-block: var(--space-2xl);
 }
 
@@ -209,12 +224,17 @@ select {
 .section-heading__badge {
   display: inline-block;
   font-family: var(--font-sans);
-  font-size: 0.75rem;
-  font-weight: 600;
-  letter-spacing: 0.25em;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.22em;
   text-transform: uppercase;
-  color: var(--lumora-accent-wood);
+  color: #92400E;
+  background-color: #FEF3C7;
+  padding: 4px 14px;
+  border-radius: 9999px;
+  border: 1px solid rgba(217, 119, 6, 0.25);
   margin-bottom: var(--space-xs);
+  box-shadow: 0 1px 2px rgba(180, 83, 9, 0.05);
 }
 
 .section-heading__title {

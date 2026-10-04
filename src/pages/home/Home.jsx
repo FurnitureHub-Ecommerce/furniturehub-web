@@ -39,7 +39,7 @@ export function Home() {
       let errorMsg = '';
 
       if (catResult.status === 'fulfilled') {
-        const catData = catResult.value;
+        const catData = catResult.value?.data;
         setCategories(Array.isArray(catData) ? catData : catData?.categories || []);
       } else {
         hasError = true;
@@ -47,7 +47,7 @@ export function Home() {
       }
 
       if (prodResult.status === 'fulfilled') {
-        const prodData = prodResult.value;
+        const prodData = prodResult.value?.data;
         setProducts(Array.isArray(prodData) ? prodData : prodData?.products || []);
       } else {
         hasError = true;
@@ -69,7 +69,7 @@ export function Home() {
   }, [fetchHomeData]);
 
   return (
-    <main className="home-page" id="main-content">
+    <div className="home-page" id="main-content">
       {/* Toast Notification */}
       {toastMessage && (
         <div className="toast-notification" role="status" aria-live="polite">
@@ -148,7 +148,7 @@ export function Home() {
       <div ref={testimonialRef} className="scroll-fade-section">
         <Testimonials />
       </div>
-    </main>
+    </div>
   );
 }
 
