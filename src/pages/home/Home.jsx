@@ -69,7 +69,7 @@ export function Home() {
   }, [fetchHomeData]);
 
   return (
-    <main className="home-page" id="main-content">
+    <div className="home-page" id="main-content">
       {/* Toast Notification */}
       {toastMessage && (
         <div className="toast-notification" role="status" aria-live="polite">
@@ -148,7 +148,7 @@ export function Home() {
       <div ref={testimonialRef} className="scroll-fade-section">
         <Testimonials />
       </div>
-    </main>
+    </div>
   );
 }
 

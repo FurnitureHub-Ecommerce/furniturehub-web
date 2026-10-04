@@ -40,8 +40,8 @@ export function ProductCardWithVariants({ product, isListView = false }) {
       onMouseLeave={() => setIsHovered(false)}
     >
       {/* Image Container */}
-      <div className={`relative overflow-hidden bg-stone-100 ${
-        isListView ? 'w-full sm:w-64 h-52 sm:h-full shrink-0' : 'aspect-[4/3] w-full'
+      <div className={`aspect-[4/3] w-full overflow-hidden bg-gray-50 rounded-t-xl relative shrink-0 ${
+        isListView ? 'sm:w-64 sm:h-full sm:rounded-l-xl sm:rounded-tr-none' : ''
       }`}>
         <Link to={`/product/${product.slug || product._id || product.id}`} className="block w-full h-full">
           <img

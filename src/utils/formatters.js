@@ -50,6 +50,10 @@ export const PRODUCT_IMAGE_OVERRIDES = {
     'https://images.unsplash.com/photo-1567538096630-e0c55bd6374c?auto=format&fit=crop&w=1000&q=85',
     'https://images.unsplash.com/photo-1503602642458-232111445657?auto=format&fit=crop&w=1000&q=85'
   ],
+  'Kệ Sách Đứng 5 Tầng Khung Sắt Vesta': [
+    'https://images.unsplash.com/photo-1594643156334-a28a2a0d9e79?auto=format&fit=crop&w=1000&q=85',
+    'https://images.unsplash.com/photo-1598300042247-d088f8ab3a91?auto=format&fit=crop&w=1000&q=85'
+  ],
 };
 
 // Natural ratings and review distribution for luxury catalogue

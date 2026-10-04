@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Heart, ShoppingBag, Eye, Check, AlertCircle, RefreshCw, PackageX } from 'lucide-react';
+import { Heart, ShoppingBag, Eye, Check, AlertCircle, RefreshCw, PackageX, ArrowRight } from 'lucide-react';
 import { PRODUCTS as MOCK_PRODUCTS } from '../../../data/lumoraData';
 import { useShop } from '../../../context/ShopContext';
 import Rating from '../../common/Rating/Rating';
@@ -255,6 +255,39 @@ export function ProductShowcase({
                 })}
           </div>
         )}
+
+        {/* Nút Khám Phá Toàn Bộ Sản Phẩm */}
+        <div style={{ display: 'flex', justifyContent: 'center', marginTop: '48px' }}>
+          <Link
+            to="/products"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '10px',
+              padding: '14px 32px',
+              backgroundColor: '#1E1E1E',
+              color: '#FFFFFF',
+              borderRadius: '9999px',
+              fontSize: '0.9rem',
+              fontWeight: '600',
+              letterSpacing: '0.04em',
+              textDecoration: 'none',
+              boxShadow: '0 4px 14px rgba(0, 0, 0, 0.1)',
+              transition: 'all 0.25s ease',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = 'var(--lumora-accent-wood, #C29A62)';
+              e.currentTarget.style.transform = 'translateY(-2px)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = '#1E1E1E';
+              e.currentTarget.style.transform = 'translateY(0)';
+            }}
+          >
+            <span>XEM TẤT CẢ SẢN PHẨM</span>
+            <ArrowRight size={18} />
+          </Link>
+        </div>
       </div>
     </section>
   );

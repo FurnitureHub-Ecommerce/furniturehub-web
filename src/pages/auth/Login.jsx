@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, useLocation, Link } from "react-router-dom";
 import { authAPI } from "../../services/api";
 import { Eye, EyeOff, ArrowLeft, CheckCircle2, AlertCircle } from "lucide-react";
 import bgImage from "../../assets/background.jpg";
@@ -16,6 +16,7 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
 
   const navigate = useNavigate();
+  const location = useLocation();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -47,6 +48,13 @@ const Login = () => {
         message: "Đăng nhập thành công! Đang chuyển hướng...",
       });
 
+      // Lấy trang trước đó nếu có (ví dụ: đang ở /cart, /wishlist, /checkout hoặc trang chi tiết sản phẩm)
+      const fromPath = location.state?.from?.pathname || location.state?.from;
+      // Khách hàng: chuyển hướng về trang trước đó HOẶC Trang Chủ ("/"), tuyệt đối không ép nhảy vào /products
+      const customerDestination = (fromPath && fromPath !== "/login" && fromPath !== "/register" && fromPath !== "/products")
+        ? fromPath
+        : "/";
+
       setTimeout(() => {
         if (userRole === "ADMIN") {
           navigate("/admin/dashboard");
@@ -55,7 +63,7 @@ const Login = () => {
         } else if (userRole === "STAFF") {
           navigate("/staff");
         } else {
-          navigate("/products");
+          navigate(customerDestination);
         }
       }, 1000);
     } catch (err) {

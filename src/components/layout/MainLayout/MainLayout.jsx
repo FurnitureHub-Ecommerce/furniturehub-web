@@ -7,15 +7,18 @@ import QuickViewModal from '../../common/QuickViewModal/QuickViewModal';
 
 function MainLayout({ children }) {
   return (
-    <>
+    <div className="min-h-screen flex flex-col bg-white">
       <Header />
-      {children}
+      <main className="flex-1 w-full">
+        {children}
+      </main>
       <Footer />
       <SearchModal />
       <CartDrawer />
       <QuickViewModal />
-    </>
+    </div>
   );
 }
 
+export const CustomerLayout = MainLayout;
 export default MainLayout;

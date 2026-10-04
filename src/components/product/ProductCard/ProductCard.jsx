@@ -28,11 +28,11 @@ function ProductCard({ product }) {
   return (
     <article className="product-card group" aria-label={name}>
       {/* ---- Image ---- */}
-      <div className="product-card__img-wrap relative overflow-hidden">
+      <div className="aspect-[4/3] w-full overflow-hidden bg-gray-50 rounded-t-xl relative">
         <img
           src={finalImage}
           alt={name}
-          className="product-card__img group-hover:scale-105 transition-transform duration-500 ease-out"
+          className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500 ease-out"
           loading="lazy"
           onError={(e) => {
             e.currentTarget.onerror = null;

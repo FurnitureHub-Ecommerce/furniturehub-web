@@ -73,6 +73,7 @@ export function Footer() {
           <div className="footer__col">
             <h4 className="footer__heading">Bộ Sưu Tập</h4>
             <ul className="footer__list">
+              <li><Link to="/products" style={{ fontWeight: '600', color: '#FFF' }}>Tất Cả Sản Phẩm</Link></li>
               <li><Link to="/category/living-room">Không Gian Wabi-Sabi</Link></li>
               <li><Link to="/category/dining-room">Phòng Ăn Solace</Link></li>
               <li><Link to="/category/bedroom">Thiền Viện Bắc Âu</Link></li>

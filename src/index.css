@@ -119,17 +119,19 @@ button {
   font-family: inherit;
 }
 
-h1,
-h2,
-h3,
-h4,
-h5,
-h6 {
-  font-family: var(--font-serif);
-  line-height: 1.08;
-  letter-spacing: -0.02em;
-  font-weight: 600;
-  color: var(--lumora-text-main);
+@layer base {
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: var(--font-serif);
+    line-height: 1.25;
+    letter-spacing: -0.02em;
+    font-weight: 600;
+    color: var(--lumora-text-main);
+  }
 }
 
 #root {
@@ -175,21 +177,34 @@ select {
   color: inherit;
 }
 
+/* ---------- Main & Layout Scope Protection ---------- */
+main {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+}
+
 /* ---------- Utilities ---------- */
 .container {
   width: 100%;
   max-width: var(--container-max);
-  margin-inline: auto;
-  padding-inline: var(--space-md);
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: var(--space-md);
+  padding-right: var(--space-md);
+  box-sizing: border-box;
 }
 
 @media (min-width: 768px) {
   .container {
-    padding-inline: var(--space-xl);
+    padding-left: var(--space-xl);
+    padding-right: var(--space-xl);
   }
 }
 
 .section {
+  width: 100%;
+  box-sizing: border-box;
   padding-block: var(--space-2xl);
 }
 

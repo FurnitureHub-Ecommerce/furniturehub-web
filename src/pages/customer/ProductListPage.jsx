@@ -2,11 +2,11 @@ import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { useParams, useSearchParams, Link } from 'react-router-dom';
 import { 
   Filter, SlidersHorizontal, Grid3X3, List, X, 
-  RotateCcw, Search, AlertTriangle, RefreshCw
+  RotateCcw, Search, AlertTriangle, RefreshCw,
+  Heart, ShoppingBag, Eye, Star
 } from 'lucide-react';
 import { productAPI, categoryAPI, brandAPI } from '../../services/api';
-import ProductCardWithVariants from '../../components/product/ProductCardWithVariants';
-import { ProductGridSkeleton } from '../../components/common/ProductSkeleton';
+import { useShop } from '../../context/ShopContext';
 import { 
   formatCurrency, 
   formatCategoryName, 
@@ -19,6 +19,7 @@ const DEFAULT_FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1555041469-a58
 export function ProductListPage() {
   const { id: categoryIdFromUrl } = useParams();
   const [searchParams, setSearchParams] = useSearchParams();
+  const { wishlist, toggleWishlist, addToCart, setQuickViewProduct } = useShop();
   
   // Loading & API States
   const [isLoading, setIsLoading] = useState(true);
@@ -45,7 +46,7 @@ export function ProductListPage() {
     const brandObj = typeof p.brandId === 'object' && p.brandId !== null ? p.brandId : null;
     const price = p.minPrice ?? p.price ?? p.basePrice ?? 0;
 
-    // Check media mismatch overrides (Luna, Aura, Ergonomic, Koster)
+    // Check media overrides
     const overrideImages = PRODUCT_IMAGE_OVERRIDES[p.name];
     let images = overrideImages || (Array.isArray(p.images) && p.images.length > 0 
       ? [...p.images] 
@@ -77,16 +78,10 @@ export function ProductListPage() {
       colors: p.colors || [
         { id: 'c-nat', name: 'Tiêu chuẩn', hex: '#8B5A2B', image: images[0] }
       ],
-      sizes: p.sizes || [
-        { id: 's-std', name: 'Tiêu chuẩn', priceAdjustment: 0 }
-      ],
-      materials: p.materials || [
-        { id: 'm-std', name: 'Chất liệu cao cấp', priceAdjustment: 0 }
-      ],
     };
   };
 
-  // Fetch Data 100% from Backend API via src/services/api.js
+  // Fetch Data 100% from Backend API
   const loadData = useCallback(async () => {
     setIsLoading(true);
     setApiError(null);
@@ -240,9 +235,9 @@ export function ProductListPage() {
   }, [productsData, searchQuery, selectedCategories, selectedBrands, priceRange, onlyInStock, sortBy]);
 
   return (
-    <div className="bg-[#FAF8F5] min-h-screen py-8 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-[#FAF8F5] py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
-        {/* Breadcrumb Navigation (No debug badge) */}
+        {/* Breadcrumb Navigation */}
         <div className="mb-6 flex items-center justify-between">
           <nav className="flex items-center gap-2 text-xs text-stone-500">
             <Link to="/" className="hover:text-amber-800 transition-colors">Trang Chủ</Link>
@@ -251,20 +246,39 @@ export function ProductListPage() {
           </nav>
         </div>
 
-        {/* Page Banner Header (text-white & text-gray-200 with high contrast on dark banner) */}
-        <div className="mb-8 p-8 rounded-2xl bg-gradient-to-r from-stone-900 via-stone-800 to-amber-950 shadow-lg relative overflow-hidden">
-          <div className="relative z-10 max-w-2xl">
-            <span className="text-xs font-bold uppercase tracking-widest text-amber-400 mb-2 block">
+        {/* Khối Banner (Trên cùng): Bọc trong w-full bg-[#2A1810] text-white rounded-2xl p-8 mb-8 shadow-sm overflow-hidden */}
+        <div 
+          className="w-full bg-[#2A1810] text-white rounded-2xl p-8 mb-8 shadow-sm overflow-hidden"
+          style={{
+            backgroundColor: '#2A1810',
+            color: '#FFFFFF',
+            borderRadius: '16px',
+            padding: '32px',
+            marginBottom: '32px',
+            overflow: 'hidden',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
+          }}
+        >
+          <div className="max-w-2xl">
+            <span 
+              className="text-xs font-bold uppercase tracking-widest text-[#D4AF37] mb-2 block"
+              style={{ color: '#D4AF37', letterSpacing: '0.1em', marginBottom: '8px', display: 'block' }}
+            >
               BỘ SƯU TẬP ĐỘC QUYỀN LUMORA
             </span>
-            <h1 className="font-serif text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-3 tracking-tight">
+            <h1
+              className="font-serif text-3xl sm:text-4xl lg:text-5xl font-bold !text-white text-white mb-3 tracking-tight leading-snug"
+              style={{ color: '#FFFFFF', margin: '0 0 12px 0', lineHeight: 1.25 }}
+            >
               {currentCategoryName}
             </h1>
-            <p className="text-gray-200 text-sm sm:text-base leading-relaxed">
+            <p 
+              className="text-stone-300 text-sm sm:text-base leading-relaxed" 
+              style={{ color: '#E5E5E5', margin: 0, lineHeight: 1.6 }}
+            >
               Khám phá không gian sống sang trọng với nghệ thuật thiết kế tối giản, chất liệu gỗ đạt chuẩn bảo tồn bền vững và hoàn thiện thủ công tinh xảo.
             </p>
           </div>
-          <div className="absolute -right-10 -bottom-10 w-64 h-64 bg-amber-600/10 rounded-full blur-3xl pointer-events-none" />
         </div>
 
         {/* Error Alert Banner */}
@@ -272,7 +286,7 @@ export function ProductListPage() {
           <div className="mb-8 p-4 bg-rose-50 border border-rose-200 rounded-xl flex items-center justify-between gap-4">
             <div className="flex items-center gap-3 text-rose-800 text-sm">
               <AlertTriangle size={20} className="text-rose-600 shrink-0" />
-              <span>{apiError}</span>
+              <span className="leading-normal">{apiError}</span>
             </div>
             <button
               onClick={loadData}
@@ -284,91 +298,122 @@ export function ProductListPage() {
           </div>
         )}
 
-        {/* Toolbar & Filter Bar */}
-        <div className="bg-white p-4 rounded-xl border border-stone-200/80 shadow-sm mb-6 flex flex-wrap items-center justify-between gap-4">
-          {/* Search Box */}
-          <div className="relative flex-1 min-w-[240px]">
-            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-400" />
+        {/* Thanh Toolbar & Search (Nằm tách rời hoàn toàn dưới Banner, cách ra một khoảng mb-8) */}
+        <div 
+          className="flex flex-col md:flex-row items-center justify-between gap-4 mb-8 bg-white p-4 rounded-xl border border-gray-100 shadow-sm"
+          style={{
+            backgroundColor: '#FFFFFF',
+            padding: '16px',
+            borderRadius: '12px',
+            border: '1px solid #F3F4F6',
+            marginBottom: '32px'
+          }}
+        >
+          {/* Ô Tìm kiếm: padding trái pl-10 để icon không đè lên chữ */}
+          <div className="relative w-full md:w-96" style={{ position: 'relative' }}>
+            <Search 
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5 pointer-events-none" 
+              style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}
+            />
             <input
               type="text"
               placeholder="Tìm theo tên sản phẩm, chất liệu..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 bg-stone-50 border border-stone-200 rounded-lg text-xs text-stone-800 placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-amber-800/20 focus:border-amber-800 transition-all"
+              className="w-full pl-10 pr-10 py-2 border border-gray-200 rounded-lg text-sm text-stone-800 placeholder-gray-400 focus:outline-none focus:border-amber-800 transition-colors"
+              style={{
+                width: '100%',
+                paddingLeft: '40px',
+                paddingRight: '40px',
+                paddingTop: '8px',
+                paddingBottom: '8px',
+                border: '1px solid #E5E7EB',
+                borderRadius: '8px',
+                fontSize: '14px',
+                backgroundColor: '#FFFFFF',
+                outline: 'none',
+                boxSizing: 'border-box'
+              }}
             />
             {searchQuery && (
               <button
                 type="button"
                 onClick={() => setSearchQuery('')}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-600"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-stone-700 p-0.5"
+                style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer' }}
+                aria-label="Xóa từ khóa tìm kiếm"
               >
-                <X size={14} />
+                <X className="w-4 h-4" />
               </button>
             )}
           </div>
 
-          {/* Quick Filters, Sorting & View Toggle */}
-          <div className="flex items-center gap-3 flex-wrap">
-            {/* Mobile Filter Toggle */}
+          {/* Cụm Sắp xếp & Chế độ xem */}
+          <div className="flex items-center gap-3 flex-wrap justify-end w-full md:w-auto">
+            {/* Mobile Filter Toggle Button */}
             <button
               type="button"
               onClick={() => setIsMobileFilterOpen(!isMobileFilterOpen)}
-              className="lg:hidden inline-flex items-center gap-2 px-3 py-2 bg-stone-100 hover:bg-stone-200 text-stone-800 text-xs font-medium rounded-lg transition-colors"
+              className="lg:hidden inline-flex items-center gap-2 px-3.5 py-2 bg-stone-100 hover:bg-stone-200 text-stone-800 text-xs font-medium rounded-lg transition-colors"
             >
-              <SlidersHorizontal size={14} />
+              <SlidersHorizontal className="w-4 h-4" />
               <span>Bộ lọc ({selectedCategories.length + selectedBrands.length})</span>
             </button>
 
-            {/* In-Stock Toggle */}
-            <label className="flex items-center gap-2 text-xs text-stone-700 cursor-pointer select-none">
+            {/* Chỉ còn hàng toggle */}
+            <label className="flex items-center gap-2 text-xs text-stone-700 cursor-pointer select-none bg-stone-50 px-3 py-2 rounded-lg border border-gray-200 hover:bg-stone-100 transition-colors">
               <input
                 type="checkbox"
                 checked={onlyInStock}
                 onChange={(e) => setOnlyInStock(e.target.checked)}
-                className="w-4 h-4 rounded border-stone-300 text-amber-800 focus:ring-amber-700 cursor-pointer"
+                className="w-4 h-4 rounded border-gray-300 text-amber-800 focus:ring-amber-800 cursor-pointer"
               />
               <span>Chỉ còn hàng</span>
             </label>
 
-            {/* Sort Selector */}
-            <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value)}
-              className="py-2 px-3 bg-stone-50 border border-stone-200 rounded-lg text-xs text-stone-800 focus:outline-none focus:ring-2 focus:ring-amber-800/20 focus:border-amber-800 cursor-pointer"
-            >
-              <option value="newest">Mới nhất</option>
-              <option value="price-asc">Giá: Thấp đến Cao</option>
-              <option value="price-desc">Giá: Cao đến Thấp</option>
-              <option value="rating">Đánh giá cao nhất</option>
-            </select>
+            {/* Sắp xếp */}
+            <div className="flex items-center gap-2 text-xs">
+              <span className="text-stone-500 hidden sm:inline">Sắp xếp:</span>
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
+                className="py-2 px-3 bg-stone-50 border border-gray-200 rounded-lg text-xs text-stone-800 focus:outline-none focus:border-amber-800 cursor-pointer"
+                style={{ padding: '6px 12px', borderRadius: '6px', border: '1px solid #E5E7EB', backgroundColor: '#F9FAFB' }}
+              >
+                <option value="newest">Mới nhất</option>
+                <option value="price-asc">Giá: Thấp đến Cao</option>
+                <option value="price-desc">Giá: Cao đến Thấp</option>
+                <option value="rating">Đánh giá cao nhất</option>
+              </select>
+            </div>
 
-            {/* Container Icon Toggle Grid / List: border border-gray-200 rounded-lg p-1 flex items-center shrink-0 */}
-            <div className="border border-gray-200 rounded-lg p-1 flex items-center shrink-0 gap-1 bg-white">
+            {/* Chế độ xem Grid / List */}
+            <div className="border border-gray-200 rounded-lg p-1 flex items-center shrink-0 gap-1 bg-stone-50">
               <button
                 type="button"
                 onClick={() => setViewMode('grid')}
                 className={`p-1.5 rounded-md transition-colors ${
                   viewMode === 'grid'
-                    ? 'bg-amber-800 text-white shadow-sm'
-                    : 'text-stone-500 hover:text-stone-800 hover:bg-stone-100'
+                    ? 'bg-amber-800 text-white shadow-xs'
+                    : 'text-stone-500 hover:text-stone-800 hover:bg-white'
                 }`}
                 title="Chế độ xem lưới (Grid)"
                 aria-label="Chế độ xem lưới"
               >
-                <Grid3X3 size={16} />
+                <Grid3X3 className="w-4 h-4" />
               </button>
               <button
                 type="button"
                 onClick={() => setViewMode('list')}
                 className={`p-1.5 rounded-md transition-colors ${
                   viewMode === 'list'
-                    ? 'bg-amber-800 text-white shadow-sm'
-                    : 'text-stone-500 hover:text-stone-800 hover:bg-stone-100'
+                    ? 'bg-amber-800 text-white shadow-xs'
+                    : 'text-stone-500 hover:text-stone-800 hover:bg-white'
                 }`}
                 title="Chế độ xem danh sách (List)"
                 aria-label="Chế độ xem danh sách"
               >
-                <List size={16} />
+                <List className="w-4 h-4" />
               </button>
             </div>
           </div>
@@ -415,68 +460,99 @@ export function ProductListPage() {
           </div>
         )}
 
-        {/* Main Content Layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-          {/* Desktop Filter Sidebar */}
-          <aside className="hidden lg:block lg:col-span-3 bg-white p-6 rounded-2xl border border-stone-200/80 shadow-sm space-y-6 sticky top-24">
-            <div className="flex items-center justify-between border-b border-stone-100 pb-4">
-              <h2 className="font-serif text-lg font-bold text-stone-900 flex items-center gap-2">
-                <Filter size={18} className="text-amber-800" />
-                <span>Bộ Lọc Sản Phẩm</span>
+        {/* Bố cục Thân trang (Sidebar + Product Grid): Bọc 2 cột trong flex flex-col lg:flex-row gap-8 items-start */}
+        <div className="flex flex-col lg:flex-row gap-8 items-start">
+          {/* Sidebar Bộ lọc (Bên trái): w-full lg:w-64 shrink-0 bg-white p-5 rounded-xl border border-gray-100 */}
+          <aside 
+            className={`w-full lg:w-64 shrink-0 bg-white p-5 rounded-xl border border-gray-100 shadow-sm space-y-6 ${isMobileFilterOpen ? 'block' : 'hidden lg:block'}`}
+            style={{
+              backgroundColor: '#FFFFFF',
+              borderRadius: '12px',
+              border: '1px solid #F3F4F6',
+              padding: '20px',
+              boxSizing: 'border-box'
+            }}
+          >
+            <div className="flex items-center justify-between border-b border-gray-100 pb-3" style={{ borderBottom: '1px solid #F3F4F6', paddingBottom: '12px' }}>
+              <h2 className="font-serif text-base font-bold text-stone-900 flex items-center gap-2" style={{ margin: 0 }}>
+                <Filter className="w-4 h-4 text-amber-800" />
+                <span>Bộ Lọc</span>
               </h2>
               <button
                 type="button"
                 onClick={handleResetFilters}
                 className="text-xs text-stone-500 hover:text-amber-800 flex items-center gap-1 transition-colors"
+                style={{ background: 'none', border: 'none', cursor: 'pointer' }}
               >
-                <RotateCcw size={12} />
+                <RotateCcw className="w-3 h-3" />
                 <span>Đặt lại</span>
               </button>
             </div>
 
-            {/* Category Filter Group */}
+            {/* Category Filter Group: Mỗi dòng danh mục dùng flex items-center justify-between py-1.5 */}
             <div>
-              <h3 className="text-xs font-bold uppercase tracking-wider text-stone-800 mb-3">
-                Danh Mục (Categories)
+              <h3 className="text-xs font-bold uppercase tracking-wider text-stone-800 mb-2.5" style={{ margin: '0 0 8px 0', fontSize: '12px' }}>
+                Danh Mục
               </h3>
-              <div className="space-y-2">
+              <div className="space-y-1">
                 {categoriesData.map((cat) => {
                   const isChecked = selectedCategories.includes(cat.id);
                   return (
-                    <label key={cat.id} className="flex items-center justify-between text-xs text-stone-700 cursor-pointer hover:text-amber-800 transition-colors py-1">
-                      <div className="flex items-center gap-2.5">
+                    <label
+                      key={cat.id}
+                      className="flex items-center justify-between py-1.5 text-sm text-stone-700 cursor-pointer hover:text-amber-800 transition-colors"
+                      style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '6px 0', fontSize: '13px' }}
+                    >
+                      <div className="flex items-center gap-2.5 min-w-0 pr-2" style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0 }}>
                         <input
                           type="checkbox"
                           checked={isChecked}
                           onChange={() => toggleCategory(cat.id)}
-                          className="w-4 h-4 rounded border-stone-300 text-amber-800 focus:ring-amber-700 cursor-pointer"
+                          className="w-4 h-4 rounded border-gray-300 text-amber-800 focus:ring-amber-800 cursor-pointer shrink-0"
                         />
-                        <span className={isChecked ? 'font-bold text-amber-900' : ''}>{formatCategoryName(cat.name)}</span>
+                        <span className={`truncate ${isChecked ? 'font-bold text-amber-900' : ''}`} style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {formatCategoryName(cat.name)}
+                        </span>
                       </div>
-                      {cat.count > 0 && <span className="text-[11px] text-stone-400 bg-stone-100 px-2 py-0.5 rounded-full">{cat.count}</span>}
+                      {cat.count > 0 && (
+                        <span 
+                          className="text-xs text-stone-500 bg-stone-100 px-2 py-0.5 rounded-full shrink-0"
+                          style={{ fontSize: '11px', padding: '2px 8px', borderRadius: '9999px', backgroundColor: '#F3F4F6', color: '#6B7280', flexShrink: 0 }}
+                        >
+                          {cat.count}
+                        </span>
+                      )}
                     </label>
                   );
                 })}
               </div>
             </div>
 
-            {/* Brand Filter Group */}
-            <div className="border-t border-stone-100 pt-5">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-stone-800 mb-3">
-                Thương Hiệu (Brands)
+            {/* Brand Filter Group: Mỗi dòng brand dùng flex items-center justify-between py-1.5 */}
+            <div className="border-t border-gray-100 pt-4" style={{ borderTop: '1px solid #F3F4F6', paddingTop: '16px' }}>
+              <h3 className="text-xs font-bold uppercase tracking-wider text-stone-800 mb-2.5" style={{ margin: '0 0 8px 0', fontSize: '12px' }}>
+                Thương Hiệu
               </h3>
-              <div className="space-y-2">
+              <div className="space-y-1">
                 {brandsData.map((b) => {
                   const isChecked = selectedBrands.includes(b.id);
                   return (
-                    <label key={b.id} className="flex items-center gap-2.5 text-xs text-stone-700 cursor-pointer hover:text-amber-800 transition-colors py-1">
-                      <input
-                        type="checkbox"
-                        checked={isChecked}
-                        onChange={() => toggleBrand(b.id)}
-                        className="w-4 h-4 rounded border-stone-300 text-amber-800 focus:ring-amber-700 cursor-pointer"
-                      />
-                      <span className={isChecked ? 'font-bold text-amber-900' : ''}>{b.name}</span>
+                    <label
+                      key={b.id}
+                      className="flex items-center justify-between py-1.5 text-sm text-stone-700 cursor-pointer hover:text-amber-800 transition-colors"
+                      style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '6px 0', fontSize: '13px' }}
+                    >
+                      <div className="flex items-center gap-2.5 min-w-0" style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0 }}>
+                        <input
+                          type="checkbox"
+                          checked={isChecked}
+                          onChange={() => toggleBrand(b.id)}
+                          className="w-4 h-4 rounded border-gray-300 text-amber-800 focus:ring-amber-800 cursor-pointer shrink-0"
+                        />
+                        <span className={`truncate ${isChecked ? 'font-bold text-amber-900' : ''}`} style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {b.name}
+                        </span>
+                      </div>
                     </label>
                   );
                 })}
@@ -484,62 +560,391 @@ export function ProductListPage() {
             </div>
 
             {/* Price Range Filter Group */}
-            <div className="border-t border-stone-100 pt-5">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-stone-800 mb-3">
-                Khoảng Giá (VND)
+            <div className="border-t border-gray-100 pt-4 space-y-3" style={{ borderTop: '1px solid #F3F4F6', paddingTop: '16px' }}>
+              <h3 className="text-xs font-bold uppercase tracking-wider text-stone-800" style={{ margin: '0 0 8px 0', fontSize: '12px' }}>
+                Khoảng Giá
               </h3>
-              <div className="space-y-3">
-                <input
-                  type="range"
-                  min="0"
-                  max="50000000"
-                  step="500000"
-                  value={priceRange.max}
-                  onChange={(e) => setPriceRange({ ...priceRange, max: Number(e.target.value) })}
-                  className="w-full accent-amber-800 cursor-pointer"
-                />
-                <div className="flex items-center justify-between text-xs text-stone-500 font-semibold">
-                  <span>0 ₫</span>
-                  <span className="text-amber-900 font-bold bg-amber-50 px-2 py-1 rounded">
+              <input
+                type="range"
+                min="0"
+                max="50000000"
+                step="500000"
+                value={priceRange.max}
+                onChange={(e) => setPriceRange({ ...priceRange, max: Number(e.target.value) })}
+                className="w-full accent-amber-800 cursor-pointer"
+                style={{ width: '100%' }}
+              />
+              <div className="grid grid-cols-2 gap-2 text-xs" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', fontSize: '12px' }}>
+                <div>
+                  <span className="text-stone-400 block mb-1" style={{ display: 'block', marginBottom: '4px', color: '#9CA3AF' }}>Từ (Min)</span>
+                  <div className="p-2 bg-stone-50 border border-gray-200 rounded text-stone-800 font-medium" style={{ padding: '6px 8px', backgroundColor: '#F9FAFB', border: '1px solid #E5E7EB', borderRadius: '4px' }}>
+                    0 ₫
+                  </div>
+                </div>
+                <div>
+                  <span className="text-stone-400 block mb-1" style={{ display: 'block', marginBottom: '4px', color: '#9CA3AF' }}>Đến (Max)</span>
+                  <div className="p-2 bg-amber-50 border border-amber-200 rounded text-amber-900 font-bold truncate" style={{ padding: '6px 8px', backgroundColor: '#FEF3C7', border: '1px solid #FDE68A', borderRadius: '4px', color: '#78350F', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {formatCurrency(priceRange.max)}
-                  </span>
+                  </div>
                 </div>
               </div>
             </div>
           </aside>
 
-          {/* Product Grid / List Area */}
-          <div className="lg:col-span-9">
+          {/* Lưới Sản phẩm (Bên phải): flex-1 w-full */}
+          <div className="flex-1 w-full" style={{ flex: 1, width: '100%', minWidth: 0 }}>
             {isLoading ? (
-              <ProductGridSkeleton count={viewMode === 'list' ? 4 : 6} />
+              /* Loading Skeleton thuần Tailwind */
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <div key={i} className="bg-white rounded-xl border border-gray-100 p-4 animate-pulse space-y-4">
+                    <div className="aspect-[4/3] w-full bg-gray-200 rounded-lg"></div>
+                    <div className="h-4 bg-gray-200 rounded w-1/3"></div>
+                    <div className="h-5 bg-gray-200 rounded w-3/4"></div>
+                    <div className="h-6 bg-gray-200 rounded w-1/2"></div>
+                    <div className="h-9 bg-gray-200 rounded w-full"></div>
+                  </div>
+                ))}
+              </div>
             ) : filteredProducts.length === 0 ? (
-              <div className="bg-white p-12 rounded-2xl border border-stone-200/80 text-center shadow-sm">
-                <p className="font-serif text-xl font-bold text-stone-900 mb-2">
+              <div className="bg-white p-12 rounded-2xl border border-gray-100 text-center shadow-sm" style={{ backgroundColor: '#FFFFFF', padding: '48px', borderRadius: '16px', border: '1px solid #F3F4F6', textAlign: 'center' }}>
+                <p className="font-serif text-xl font-bold text-stone-900 mb-2 leading-snug" style={{ margin: '0 0 8px 0', fontSize: '20px' }}>
                   Không tìm thấy sản phẩm nào
                 </p>
-                <p className="text-xs text-stone-500 max-w-md mx-auto mb-6">
+                <p className="text-xs text-stone-500 max-w-md mx-auto mb-6 leading-relaxed" style={{ margin: '0 auto 24px auto', fontSize: '13px', color: '#6B7280', maxWidth: '400px' }}>
                   Vui lòng thử điều chỉnh bộ lọc, khoảng giá hoặc từ khóa tìm kiếm để khám phá các sản phẩm khác.
                 </p>
                 <button
                   type="button"
                   onClick={handleResetFilters}
                   className="px-4 py-2 bg-amber-800 hover:bg-amber-900 text-white text-xs font-semibold rounded-lg transition-colors inline-flex items-center gap-2"
+                  style={{ padding: '8px 16px', backgroundColor: '#92400E', color: '#FFFFFF', borderRadius: '8px', border: 'none', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '8px' }}
                 >
-                  <RotateCcw size={14} />
+                  <RotateCcw className="w-4 h-4" />
                   <span>Xóa bộ lọc</span>
                 </button>
               </div>
             ) : viewMode === 'list' ? (
+              /* Danh sách sản phẩm dạng List thuần Tailwind */
               <div className="flex flex-col gap-4">
-                {filteredProducts.map((product) => (
-                  <ProductCardWithVariants key={product.id} product={product} isListView={true} />
-                ))}
+                {filteredProducts.map((product) => {
+                  const isWishlisted = wishlist.includes(String(product.id || product._id));
+                  return (
+                    <article 
+                      key={product.id}
+                      className="group bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-200 flex flex-col sm:flex-row"
+                      style={{
+                        backgroundColor: '#FFFFFF',
+                        borderRadius: '12px',
+                        border: '1px solid #E5E7EB',
+                        overflow: 'hidden',
+                        display: 'flex',
+                        boxSizing: 'border-box'
+                      }}
+                    >
+                      <div className="w-full sm:w-64 h-56 bg-gray-50 relative shrink-0" style={{ position: 'relative' }}>
+                        <Link to={`/product/${product.slug || product._id || product.id}`} className="block w-full h-full">
+                          <img
+                            src={product.image}
+                            alt={product.name}
+                            onError={(e) => {
+                              e.currentTarget.onerror = null;
+                              e.currentTarget.src = DEFAULT_FALLBACK_IMAGE;
+                            }}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                            style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                            loading="lazy"
+                          />
+                        </Link>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            toggleWishlist(String(product.id || product._id));
+                          }}
+                          className={`absolute top-3 right-3 p-2 rounded-full shadow-sm transition-colors ${
+                            isWishlisted 
+                              ? 'bg-amber-800 text-white' 
+                              : 'bg-white/90 text-stone-700 hover:bg-white hover:text-amber-800'
+                          }`}
+                          style={{
+                            position: 'absolute',
+                            top: '12px',
+                            right: '12px',
+                            padding: '8px',
+                            borderRadius: '50%',
+                            backgroundColor: isWishlisted ? '#92400E' : 'rgba(255,255,255,0.9)',
+                            color: isWishlisted ? '#FFFFFF' : '#374151',
+                            border: 'none',
+                            cursor: 'pointer',
+                            zIndex: 2
+                          }}
+                          aria-label={isWishlisted ? 'Xóa khỏi yêu thích' : 'Thêm vào yêu thích'}
+                        >
+                          <Heart size={16} fill={isWishlisted ? 'currentColor' : 'none'} />
+                        </button>
+                      </div>
+
+                      <div className="p-5 flex flex-col flex-1 justify-between gap-3" style={{ padding: '20px', display: 'flex', flexDirection: 'column', flex: 1, justifyContent: 'space-between' }}>
+                        <div>
+                          <div className="flex items-center justify-between text-xs text-stone-500 mb-1.5" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                            <span className="font-semibold uppercase tracking-wider text-amber-800" style={{ color: '#92400E', fontWeight: 600 }}>
+                              {product.categoryName}
+                            </span>
+                            <div className="flex items-center gap-1 text-amber-600 font-semibold text-xs" style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#D97706' }}>
+                              <Star size={13} fill="currentColor" />
+                              <span>{product.rating}</span>
+                              <span className="text-stone-400 font-normal" style={{ color: '#9CA3AF' }}>({product.reviewCount})</span>
+                            </div>
+                          </div>
+
+                          <h3 className="font-serif text-lg font-bold text-stone-900 group-hover:text-amber-800 transition-colors leading-snug mb-2" style={{ margin: '0 0 8px 0', fontSize: '18px', color: '#1C1917' }}>
+                            <Link to={`/product/${product.slug || product._id || product.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
+                              {product.name}
+                            </Link>
+                          </h3>
+
+                          <p className="text-xs text-stone-500 line-clamp-2 leading-relaxed mb-3" style={{ margin: '0 0 12px 0', color: '#6B7280', fontSize: '13px' }}>
+                            {product.shortDescription}
+                          </p>
+
+                          <div className="flex items-baseline gap-2" style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
+                            <span className="font-bold text-amber-900 text-xl" style={{ color: '#78350F', fontWeight: 700, fontSize: '20px' }}>
+                              {formatCurrency(product.basePrice)}
+                            </span>
+                            {product.oldPrice && (
+                              <span className="text-xs text-stone-400 line-through" style={{ textDecoration: 'line-through', color: '#9CA3AF', fontSize: '13px' }}>
+                                {formatCurrency(product.oldPrice)}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-3 pt-3 border-t border-gray-100" style={{ display: 'flex', alignItems: 'center', gap: '12px', paddingTop: '12px', borderTop: '1px solid #F3F4F6' }}>
+                          <button
+                            type="button"
+                            onClick={() => addToCart(product)}
+                            disabled={!product.inStock}
+                            className="flex-1 py-2.5 px-4 bg-stone-900 hover:bg-amber-800 text-white text-xs font-semibold rounded-lg flex items-center justify-center gap-2 transition-colors disabled:opacity-50"
+                            style={{
+                              flex: 1,
+                              padding: '10px 16px',
+                              backgroundColor: product.inStock ? '#1C1917' : '#9CA3AF',
+                              color: '#FFFFFF',
+                              borderRadius: '8px',
+                              border: 'none',
+                              cursor: product.inStock ? 'pointer' : 'not-allowed',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              gap: '8px',
+                              fontSize: '13px'
+                            }}
+                          >
+                            <ShoppingBag size={14} />
+                            <span>{product.inStock ? 'Thêm giỏ hàng' : 'Hết hàng'}</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setQuickViewProduct(product)}
+                            className="p-2.5 bg-stone-100 hover:bg-stone-200 text-stone-700 rounded-lg transition-colors"
+                            style={{ padding: '10px', backgroundColor: '#F3F4F6', color: '#374151', borderRadius: '8px', border: 'none', cursor: 'pointer' }}
+                            title="Xem nhanh"
+                            aria-label="Xem nhanh"
+                          >
+                            <Eye size={16} />
+                          </button>
+                        </div>
+                      </div>
+                    </article>
+                  );
+                })}
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {filteredProducts.map((product) => (
-                  <ProductCardWithVariants key={product.id} product={product} isListView={false} />
-                ))}
+              /* Danh sách sản phẩm dạng Grid thuần Tailwind */
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+                {filteredProducts.map((product) => {
+                  const isWishlisted = wishlist.includes(String(product.id || product._id));
+                  return (
+                    <article 
+                      key={product.id}
+                      className="group bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-200 flex flex-col h-full"
+                      style={{
+                        backgroundColor: '#FFFFFF',
+                        borderRadius: '12px',
+                        border: '1px solid #E5E7EB',
+                        overflow: 'hidden',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        height: '100%',
+                        boxSizing: 'border-box'
+                      }}
+                    >
+                      {/* Image Box */}
+                      <div 
+                        className="aspect-[4/3] w-full overflow-hidden bg-gray-50 relative shrink-0 block"
+                        style={{ width: '100%', aspectRatio: '4/3', position: 'relative', overflow: 'hidden', backgroundColor: '#F9FAFB' }}
+                      >
+                        <Link to={`/product/${product.slug || product._id || product.id}`} className="block w-full h-full">
+                          <img
+                            src={product.image}
+                            alt={product.name}
+                            onError={(e) => {
+                              e.currentTarget.onerror = null;
+                              e.currentTarget.src = DEFAULT_FALLBACK_IMAGE;
+                            }}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                            style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                            loading="lazy"
+                          />
+                        </Link>
+
+                        {/* Badges */}
+                        <div className="absolute top-3 left-3 flex flex-col gap-1 pointer-events-none" style={{ position: 'absolute', top: '12px', left: '12px', display: 'flex', flexDirection: 'column', gap: '4px', zIndex: 2 }}>
+                          {product.isNew && (
+                            <span className="px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-stone-900 text-white rounded" style={{ padding: '2px 8px', fontSize: '10px', backgroundColor: '#1C1917', color: '#FFFFFF', borderRadius: '4px' }}>
+                              Mới
+                            </span>
+                          )}
+                          {!product.inStock && (
+                            <span className="px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-rose-600 text-white rounded" style={{ padding: '2px 8px', fontSize: '10px', backgroundColor: '#E11D48', color: '#FFFFFF', borderRadius: '4px' }}>
+                              Hết Hàng
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Wishlist Button */}
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            toggleWishlist(String(product.id || product._id));
+                          }}
+                          className={`absolute top-3 right-3 p-2 rounded-full shadow-sm transition-colors ${
+                            isWishlisted 
+                              ? 'bg-amber-800 text-white' 
+                              : 'bg-white/90 text-stone-700 hover:bg-white hover:text-amber-800'
+                          }`}
+                          style={{
+                            position: 'absolute',
+                            top: '12px',
+                            right: '12px',
+                            padding: '8px',
+                            borderRadius: '50%',
+                            backgroundColor: isWishlisted ? '#92400E' : 'rgba(255,255,255,0.9)',
+                            color: isWishlisted ? '#FFFFFF' : '#374151',
+                            border: 'none',
+                            cursor: 'pointer',
+                            zIndex: 2,
+                            boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
+                          }}
+                          aria-label={isWishlisted ? 'Xóa khỏi yêu thích' : 'Thêm vào yêu thích'}
+                        >
+                          <Heart size={16} fill={isWishlisted ? 'currentColor' : 'none'} />
+                        </button>
+                      </div>
+
+                      {/* Content Box */}
+                      <div className="p-4 flex flex-col flex-1 justify-between gap-3" style={{ padding: '16px', display: 'flex', flexDirection: 'column', flex: 1, justifyContent: 'space-between' }}>
+                        <div>
+                          {/* Brand & Category & Rating */}
+                          <div className="flex items-center justify-between text-xs text-stone-500 mb-1.5" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px', fontSize: '12px' }}>
+                            <span className="font-semibold uppercase tracking-wider text-[11px] text-amber-800 truncate pr-2" style={{ color: '#92400E', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                              {product.categoryName}
+                            </span>
+                            <div className="flex items-center gap-1 text-amber-600 font-semibold text-xs shrink-0" style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#D97706', flexShrink: 0 }}>
+                              <Star size={13} fill="currentColor" />
+                              <span>{product.rating}</span>
+                              <span className="text-stone-400 font-normal" style={{ color: '#9CA3AF' }}>({product.reviewCount})</span>
+                            </div>
+                          </div>
+
+                          {/* Product Title */}
+                          <h3 
+                            className="font-serif text-base font-bold text-stone-900 group-hover:text-amber-800 transition-colors line-clamp-2 min-h-[3rem] leading-snug mb-2"
+                            style={{
+                              fontFamily: '"Cormorant Garamond", serif',
+                              fontSize: '16px',
+                              fontWeight: 700,
+                              color: '#1C1917',
+                              margin: '0 0 8px 0',
+                              lineHeight: '1.35',
+                              minHeight: '2.7rem',
+                              display: '-webkit-box',
+                              WebkitLineClamp: 2,
+                              WebkitBoxOrient: 'vertical',
+                              overflow: 'hidden'
+                            }}
+                          >
+                            <Link to={`/product/${product.slug || product._id || product.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
+                              {product.name}
+                            </Link>
+                          </h3>
+
+                          {/* Price */}
+                          <div className="flex items-baseline gap-2 mb-2" style={{ display: 'flex', alignItems: 'baseline', gap: '8px', marginBottom: '8px' }}>
+                            <span className="font-bold text-amber-900 text-lg" style={{ color: '#78350F', fontWeight: 700, fontSize: '18px' }}>
+                              {formatCurrency(product.basePrice)}
+                            </span>
+                            {product.oldPrice && (
+                              <span className="text-xs text-stone-400 line-through" style={{ textDecoration: 'line-through', color: '#9CA3AF', fontSize: '12px' }}>
+                                {formatCurrency(product.oldPrice)}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Bottom Actions */}
+                        <div className="flex items-center gap-2 pt-3 border-t border-gray-100" style={{ display: 'flex', alignItems: 'center', gap: '8px', paddingTop: '12px', borderTop: '1px solid #F3F4F6' }}>
+                          <button
+                            type="button"
+                            onClick={() => addToCart(product)}
+                            disabled={!product.inStock}
+                            className="flex-1 py-2 px-3 bg-stone-900 hover:bg-amber-800 text-white text-xs font-semibold rounded-lg flex items-center justify-center gap-1.5 transition-colors disabled:opacity-50"
+                            style={{
+                              flex: 1,
+                              padding: '8px 12px',
+                              backgroundColor: product.inStock ? '#1C1917' : '#9CA3AF',
+                              color: '#FFFFFF',
+                              borderRadius: '8px',
+                              fontSize: '12px',
+                              fontWeight: 600,
+                              border: 'none',
+                              cursor: product.inStock ? 'pointer' : 'not-allowed',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              gap: '6px'
+                            }}
+                          >
+                            <ShoppingBag size={14} />
+                            <span>{product.inStock ? 'Thêm giỏ' : 'Hết hàng'}</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setQuickViewProduct(product)}
+                            className="p-2 bg-stone-100 hover:bg-stone-200 text-stone-700 rounded-lg transition-colors"
+                            style={{
+                              padding: '8px',
+                              backgroundColor: '#F3F4F6',
+                              color: '#374151',
+                              borderRadius: '8px',
+                              border: 'none',
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center'
+                            }}
+                            title="Xem nhanh"
+                            aria-label="Xem nhanh"
+                          >
+                            <Eye size={16} />
+                          </button>
+                        </div>
+                      </div>
+                    </article>
+                  );
+                })}
               </div>
             )}
           </div>

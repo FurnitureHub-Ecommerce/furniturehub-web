@@ -22,18 +22,19 @@
   position: relative;
   overflow: hidden;
   background-color: #f9f9f9;
-  /* Force 1:1 ratio for uniform grid */
-  aspect-ratio: 1 / 1;
+  /* Cố định tỷ lệ 4:3 chuẩn cho thẻ sản phẩm */
+  aspect-ratio: 4 / 3;
+  width: 100%;
 }
 
 .product-card__img {
   width: 100%;
   height: 100%;
-  object-fit: contain;
+  object-fit: cover;
   object-position: center;
   display: block;
   transition: transform 0.4s ease;
-  padding: 12px;
+  padding: 0;
 }
 
 .product-card:hover .product-card__img {

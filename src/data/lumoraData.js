@@ -20,7 +20,7 @@ export const HERO_BANNERS = [
     priceSnippet: "Bộ sưu tập từ 2.450 USD",
     ctaPrimary: "Khám phá bộ sưu tập",
     ctaSecondary: "Khám phá phòng khách",
-    primaryLink: "/category/living-room",
+    primaryLink: "/products",
     secondaryLink: "/lookbook/wabi-sabi",
     image: "https://megafurniture.sg/cdn/shop/articles/imperfect-elegance-incorporating-wabi-sabi-design-in-your-hdb-space-megafurniture_0d6f8ed0-0874-43a8-9865-5b031d43cd7c.jpg?v=1782809225",
   },
