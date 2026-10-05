@@ -1,0 +1,250 @@
+/* ============================================================
+   LUMORA – Address Selector (Checkout & Orders)
+   src/components/customer/AddressSelector.css
+   ============================================================ */
+
+.address-selector {
+  background-color: #FFFFFF;
+  border: 1px solid var(--lumora-border, #E2DBD0);
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.02);
+  transition: all 0.2s ease;
+}
+
+.address-selector__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.25rem;
+}
+
+.address-selector__title-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.address-selector__pin-icon {
+  color: var(--lumora-accent-wood, #8A6A48);
+}
+
+.address-selector__title {
+  font-family: var(--font-serif, "Cormorant Garamond", serif);
+  font-size: 1.35rem;
+  font-weight: 600;
+  color: var(--lumora-text-main, #252525);
+  margin: 0;
+}
+
+.address-selector__change-btn {
+  background: none;
+  border: none;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--lumora-accent-wood, #8A6A48);
+  cursor: pointer;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.address-selector__change-btn:hover {
+  text-decoration: underline;
+  color: var(--lumora-accent-hover, #705437);
+}
+
+.address-selector__loading {
+  font-size: 0.9rem;
+  color: var(--lumora-text-muted, #6E6860);
+  padding: 1rem 0;
+  text-align: center;
+}
+
+.address-selector__empty {
+  padding: 1.5rem 1rem;
+  text-align: center;
+  background-color: var(--lumora-bg-primary, #F7F4EE);
+  border-radius: 8px;
+  border: 1px dashed var(--lumora-border, #E2DBD0);
+}
+
+.address-selector__empty-text {
+  font-size: 0.92rem;
+  color: var(--lumora-text-muted, #6E6860);
+  margin-bottom: 1rem;
+}
+
+.address-selector__add-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.65rem 1.4rem;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--lumora-accent-wood, #8A6A48);
+  background-color: #FFFFFF;
+  border: 1px solid var(--lumora-accent-wood, #8A6A48);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.address-selector__add-btn:hover {
+  background-color: var(--lumora-accent-wood, #8A6A48);
+  color: #FFFFFF;
+}
+
+.address-selector__add-btn--full {
+  width: 100%;
+  margin-top: 0.75rem;
+  padding: 0.85rem;
+  background-color: var(--lumora-bg-primary, #F7F4EE);
+  border-style: dashed;
+}
+
+.address-selector__card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.1rem 1.25rem;
+  background-color: #FAFAFA;
+  border: 1.5px solid var(--lumora-border, #E2DBD0);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.address-selector__card:hover {
+  border-color: var(--lumora-accent-wood, #8A6A48);
+  background-color: #FFFFFF;
+  box-shadow: 0 4px 12px rgba(138, 106, 72, 0.08);
+}
+
+.address-selector__card--selected {
+  border-color: var(--lumora-accent-wood, #8A6A48);
+  background-color: #FFFDF9;
+  box-shadow: 0 2px 8px rgba(138, 106, 72, 0.1);
+}
+
+.address-selector__radio {
+  margin-right: 1rem;
+  display: flex;
+  align-items: center;
+}
+
+.address-selector__radio-circle {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 2px solid var(--lumora-border, #E2DBD0);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  color: #FFFFFF;
+}
+
+.address-selector__radio-circle--checked {
+  background-color: var(--lumora-accent-wood, #8A6A48);
+  border-color: var(--lumora-accent-wood, #8A6A48);
+}
+
+.address-selector__card-content {
+  flex: 1;
+}
+
+.address-selector__card-top {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  margin-bottom: 0.35rem;
+  flex-wrap: wrap;
+}
+
+.address-selector__receiver-name {
+  font-weight: 700;
+  font-size: 0.98rem;
+  color: var(--lumora-text-main, #252525);
+}
+
+.address-selector__divider {
+  color: var(--lumora-border, #E2DBD0);
+}
+
+.address-selector__phone {
+  font-size: 0.92rem;
+  color: var(--lumora-text-muted, #6E6860);
+  font-weight: 500;
+}
+
+.address-selector__badge-default {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0.2rem 0.6rem;
+  border-radius: 4px;
+  background-color: #FEF3C7;
+  color: #92400E;
+  border: 1px solid #FDE68A;
+}
+
+.address-selector__address-line {
+  font-size: 0.9rem;
+  color: var(--lumora-text-muted, #6E6860);
+  line-height: 1.45;
+  margin: 0;
+}
+
+.address-selector__arrow-icon {
+  color: var(--lumora-text-light, #8F887E);
+  margin-left: 0.75rem;
+}
+
+.address-selector__list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.address-selector__item-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 0.75rem;
+  padding-top: 0.5rem;
+  border-top: 1px dashed var(--lumora-border-subtle, #F0EAE1);
+}
+
+.address-selector__text-btn {
+  background: none;
+  border: none;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--lumora-accent-wood, #8A6A48);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0;
+  transition: all 0.2s ease;
+}
+
+.address-selector__text-btn:hover {
+  text-decoration: underline;
+  color: var(--lumora-accent-hover, #705437);
+}
+
+.address-selector__text-btn--danger {
+  color: #DC2626;
+}
+
+.address-selector__text-btn--danger:hover {
+  color: #B91C1C;
+}

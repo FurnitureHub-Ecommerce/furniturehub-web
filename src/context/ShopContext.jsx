@@ -91,8 +91,20 @@ export function ShopProvider({ children }) {
         localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(normalized));
       }
     } catch (err) {
-      console.warn('Could not sync cart with backend:', err.message);
-      setCartError(err.message);
+      console.warn('Không thể đồng bộ giỏ hàng với máy chủ, tự động dùng dữ liệu đã lưu:', err.message);
+      // Fallback êm dịu: lấy dữ liệu từ localStorage để không làm gián đoạn trải nghiệm người dùng
+      try {
+        const saved = localStorage.getItem(CART_STORAGE_KEY);
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            setCart(parsed);
+          }
+        }
+      } catch {
+        // bỏ qua lỗi đọc bộ nhớ đệm
+      }
+      setCartError(null);
     } finally {
       setIsCartLoading(false);
     }
@@ -137,8 +149,20 @@ export function ShopProvider({ children }) {
       setWishlistProducts(detailed);
       localStorage.setItem(WISHLIST_STORAGE_KEY, JSON.stringify(ids));
     } catch (err) {
-      console.warn('Could not sync wishlist with backend:', err.message);
-      setWishlistError(err.message);
+      console.warn('Không thể đồng bộ danh sách yêu thích với máy chủ, tự động dùng dữ liệu đã lưu:', err.message);
+      // Fallback êm dịu: lấy dữ liệu từ localStorage để không làm gián đoạn trải nghiệm người dùng
+      try {
+        const saved = localStorage.getItem(WISHLIST_STORAGE_KEY);
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            setWishlist(parsed);
+          }
+        }
+      } catch {
+        // bỏ qua lỗi đọc bộ nhớ đệm
+      }
+      setWishlistError(null);
     } finally {
       setIsWishlistLoading(false);
     }

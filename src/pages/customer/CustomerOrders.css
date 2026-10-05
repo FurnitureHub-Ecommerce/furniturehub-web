@@ -1,0 +1,377 @@
+/* ============================================================
+   LUMORA – Customer Orders History & Tracking
+   src/pages/customer/CustomerOrders.css
+   ============================================================ */
+
+.customer-orders-page {
+  padding-top: 2.5rem;
+  padding-bottom: 6rem;
+  max-width: 1040px;
+  margin: 0 auto;
+}
+
+.orders-header {
+  margin-bottom: 2rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid var(--lumora-border, #E2DBD0);
+}
+
+.orders-header__badge {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--lumora-accent-wood, #8A6A48);
+  display: block;
+  margin-bottom: 0.35rem;
+}
+
+.orders-header__title {
+  font-family: var(--font-serif, "Cormorant Garamond", serif);
+  font-size: 2.4rem;
+  font-weight: 600;
+  color: var(--lumora-text-main, #252525);
+  margin-bottom: 0.35rem;
+}
+
+.orders-header__subtitle {
+  font-size: 0.95rem;
+  color: var(--lumora-text-muted, #6E6860);
+  max-width: 600px;
+}
+
+/* Tabs */
+.orders-tabs {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 2rem;
+  overflow-x: auto;
+  padding-bottom: 0.5rem;
+}
+
+.orders-tab {
+  background: none;
+  border: 1px solid var(--lumora-border, #E2DBD0);
+  padding: 0.6rem 1.25rem;
+  border-radius: 9999px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--lumora-text-muted, #6E6860);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+
+.orders-tab:hover {
+  border-color: var(--lumora-accent-wood, #8A6A48);
+  color: var(--lumora-text-main, #252525);
+}
+
+.orders-tab--active {
+  background-color: var(--lumora-accent-wood, #8A6A48);
+  border-color: var(--lumora-accent-wood, #8A6A48);
+  color: #FFFFFF;
+}
+
+/* Error */
+.orders-error {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background-color: #FEF2F2;
+  border: 1px solid #FECACA;
+  border-radius: 10px;
+  padding: 1rem 1.25rem;
+  color: #991B1B;
+  font-size: 0.92rem;
+  margin-bottom: 2rem;
+}
+
+.orders-retry-btn {
+  background: none;
+  border: 1px solid #FECACA;
+  border-radius: 6px;
+  padding: 0.3rem 0.6rem;
+  font-size: 0.8rem;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  color: #991B1B;
+  margin-left: auto;
+}
+
+.orders-loading {
+  text-align: center;
+  padding: 4rem 1rem;
+  color: var(--lumora-text-muted, #6E6860);
+  font-size: 0.95rem;
+}
+
+/* Empty */
+.orders-empty {
+  text-align: center;
+  padding: 5rem 2rem;
+  background-color: #FFFFFF;
+  border: 1px dashed var(--lumora-border, #E2DBD0);
+  border-radius: 16px;
+}
+
+.orders-empty__icon {
+  color: var(--lumora-accent-wood, #8A6A48);
+  margin: 0 auto 1.25rem;
+}
+
+.orders-empty__title {
+  font-family: var(--font-serif, "Cormorant Garamond", serif);
+  font-size: 1.8rem;
+  color: var(--lumora-text-main, #252525);
+  margin-bottom: 0.5rem;
+}
+
+.orders-empty__desc {
+  font-size: 0.95rem;
+  color: var(--lumora-text-muted, #6E6860);
+  max-width: 480px;
+  margin: 0 auto 1.75rem;
+}
+
+.orders-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.85rem 1.8rem;
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: #FFFFFF;
+  background-color: var(--lumora-accent-wood, #8A6A48);
+  border-radius: 8px;
+  text-decoration: none;
+  box-shadow: 0 4px 14px rgba(138, 106, 72, 0.25);
+}
+
+.orders-btn-primary:hover {
+  background-color: var(--lumora-accent-hover, #705437);
+}
+
+/* Orders List */
+.orders-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.order-item-card {
+  background-color: #FFFFFF;
+  border: 1px solid var(--lumora-border, #E2DBD0);
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.02);
+  transition: all 0.2s ease;
+}
+
+.order-item-card:hover {
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.05);
+  border-color: var(--lumora-accent-wood, #8A6A48);
+}
+
+.order-item-card__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.1rem 1.5rem;
+  background-color: var(--lumora-bg-primary, #F7F4EE);
+  border-bottom: 1px solid var(--lumora-border-subtle, #F0EAE1);
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.order-item-card__identifiers {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.order-item-card__id {
+  font-weight: 700;
+  font-size: 0.92rem;
+  color: var(--lumora-text-main, #252525);
+  font-family: monospace;
+}
+
+.order-item-card__date {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.85rem;
+  color: var(--lumora-text-muted, #6E6860);
+}
+
+.order-status-badge {
+  display: inline-block;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+}
+
+.order-status--pending {
+  background-color: #FEF3C7;
+  color: #92400E;
+  border: 1px solid #FDE68A;
+}
+
+.order-status--confirmed {
+  background-color: #DBEAFE;
+  color: #1E40AF;
+  border: 1px solid #BFDBFE;
+}
+
+.order-status--rejected {
+  background-color: #FEE2E2;
+  color: #991B1B;
+  border: 1px solid #FECACA;
+}
+
+.order-status--cancelled {
+  background-color: #F3F4F6;
+  color: #4B5563;
+  border: 1px solid #E5E7EB;
+}
+
+/* Items in Order */
+.order-item-card__items {
+  padding: 1.25rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.order-line-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.4rem 0;
+  border-bottom: 1px dashed var(--lumora-border-subtle, #F0EAE1);
+  font-size: 0.9rem;
+}
+
+.order-line-item:last-child {
+  border-bottom: none;
+}
+
+.order-line-item__info {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+}
+
+.order-line-item__sku {
+  color: var(--lumora-text-main, #252525);
+  font-weight: 500;
+}
+
+.order-line-item__qty {
+  color: var(--lumora-text-muted, #6E6860);
+  font-size: 0.85rem;
+}
+
+.order-line-item__price {
+  font-weight: 600;
+  color: var(--lumora-text-main, #252525);
+}
+
+/* Bottom summary */
+.order-item-card__bottom {
+  padding: 1.25rem 1.5rem;
+  background-color: #FAFAFA;
+  border-top: 1px solid var(--lumora-border-subtle, #F0EAE1);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.order-item-card__shipping-preview {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  color: var(--lumora-text-muted, #6E6860);
+  max-width: 500px;
+}
+
+.order-item-card__total-section {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  margin-left: auto;
+}
+
+.order-item-card__total-group {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+
+.order-item-card__total-label {
+  font-size: 0.88rem;
+  color: var(--lumora-text-muted, #6E6860);
+}
+
+.order-item-card__total-val {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--lumora-accent-wood, #8A6A48);
+  font-family: var(--font-serif, "Cormorant Garamond", serif);
+}
+
+.order-item-card__actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.order-btn-cancel {
+  background: none;
+  border: 1px solid #FECACA;
+  color: #DC2626;
+  border-radius: 6px;
+  padding: 0.4rem 0.8rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.order-btn-cancel:hover:not(:disabled) {
+  background-color: #FEF2F2;
+}
+
+.order-btn-cancel:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.order-btn-view {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.45rem 0.95rem;
+  background-color: var(--lumora-accent-wood, #8A6A48);
+  color: #FFFFFF;
+  border-radius: 6px;
+  text-decoration: none;
+  font-size: 0.82rem;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.order-btn-view:hover {
+  background-color: var(--lumora-accent-hover, #705437);
+}

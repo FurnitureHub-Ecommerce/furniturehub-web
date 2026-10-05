@@ -1,0 +1,313 @@
+/* ============================================================
+   LUMORA – Address Management Page
+   src/pages/customer/AddressManagement.css
+   ============================================================ */
+
+.address-page {
+  padding-top: 2.5rem;
+  padding-bottom: 5rem;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.address-page__nav {
+  margin-bottom: 1.5rem;
+}
+
+.address-page__back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--lumora-text-muted, #6E6860);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.address-page__back-link:hover {
+  color: var(--lumora-accent-wood, #8A6A48);
+}
+
+.address-page__header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1.5rem;
+  margin-bottom: 2.5rem;
+  flex-wrap: wrap;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid var(--lumora-border, #E2DBD0);
+}
+
+.address-page__badge {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--lumora-accent-wood, #8A6A48);
+  display: block;
+  margin-bottom: 0.4rem;
+}
+
+.address-page__title {
+  font-family: var(--font-serif, "Cormorant Garamond", serif);
+  font-size: 2.4rem;
+  font-weight: 600;
+  color: var(--lumora-text-main, #252525);
+  margin-bottom: 0.4rem;
+  line-height: 1.2;
+}
+
+.address-page__subtitle {
+  font-size: 0.95rem;
+  color: var(--lumora-text-muted, #6E6860);
+  max-width: 650px;
+}
+
+.address-page__create-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.85rem 1.6rem;
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: #FFFFFF;
+  background-color: var(--lumora-accent-wood, #8A6A48);
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(138, 106, 72, 0.25);
+  transition: all 0.2s ease;
+}
+
+.address-page__create-btn:hover {
+  background-color: var(--lumora-accent-hover, #705437);
+  box-shadow: 0 6px 18px rgba(138, 106, 72, 0.35);
+  transform: translateY(-1px);
+}
+
+.address-page__error {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem 1.25rem;
+  background-color: #FEF2F2;
+  border: 1px solid #FECACA;
+  border-radius: 10px;
+  color: #991B1B;
+  font-size: 0.92rem;
+  margin-bottom: 2rem;
+}
+
+.address-page__loading {
+  text-align: center;
+  padding: 4rem 1rem;
+  color: var(--lumora-text-muted, #6E6860);
+  font-size: 1rem;
+}
+
+.address-page__empty {
+  text-align: center;
+  padding: 5rem 2rem;
+  background-color: #FFFFFF;
+  border: 1px dashed var(--lumora-border, #E2DBD0);
+  border-radius: 14px;
+}
+
+.address-page__empty-icon {
+  width: 72px;
+  height: 72px;
+  margin: 0 auto 1.5rem;
+  border-radius: 50%;
+  background-color: var(--lumora-bg-primary, #F7F4EE);
+  color: var(--lumora-accent-wood, #8A6A48);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.address-page__empty-title {
+  font-family: var(--font-serif, "Cormorant Garamond", serif);
+  font-size: 1.6rem;
+  color: var(--lumora-text-main, #252525);
+  margin-bottom: 0.5rem;
+}
+
+.address-page__empty-desc {
+  font-size: 0.95rem;
+  color: var(--lumora-text-muted, #6E6860);
+  max-width: 480px;
+  margin: 0 auto 1.8rem;
+}
+
+.address-page__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(480px, 1fr));
+  gap: 1.5rem;
+}
+
+@media (max-width: 640px) {
+  .address-page__grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.address-card {
+  background-color: #FFFFFF;
+  border: 1px solid var(--lumora-border, #E2DBD0);
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.02);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  transition: all 0.25s ease;
+  position: relative;
+}
+
+.address-card:hover {
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+  border-color: var(--lumora-accent-wood, #8A6A48);
+}
+
+.address-card--default {
+  border-color: var(--lumora-accent-wood, #8A6A48);
+  background-color: #FFFDF9;
+}
+
+.address-card__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.address-card__title-group {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.address-card__name {
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: var(--lumora-text-main, #252525);
+}
+
+.address-card__badge-default {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.2rem 0.65rem;
+  border-radius: 4px;
+  background-color: #FEF3C7;
+  color: #92400E;
+  border: 1px solid #FDE68A;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.address-card__phone {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--lumora-text-muted, #6E6860);
+  white-space: nowrap;
+}
+
+.address-card__body {
+  margin-bottom: 1.25rem;
+}
+
+.address-card__info-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+}
+
+.address-card__pin {
+  color: var(--lumora-accent-wood, #8A6A48);
+  margin-top: 0.2rem;
+}
+
+.address-card__address-text {
+  font-size: 0.95rem;
+  color: var(--lumora-text-main, #252525);
+  line-height: 1.5;
+  margin: 0;
+}
+
+.address-card__actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 1rem;
+  border-top: 1px solid var(--lumora-border-subtle, #F0EAE1);
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.address-card__btn-default {
+  background: none;
+  border: 1px solid var(--lumora-border, #E2DBD0);
+  padding: 0.45rem 0.9rem;
+  border-radius: 6px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--lumora-accent-wood, #8A6A48);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  transition: all 0.2s ease;
+}
+
+.address-card__btn-default:hover:not(:disabled) {
+  background-color: var(--lumora-bg-primary, #F7F4EE);
+  border-color: var(--lumora-accent-wood, #8A6A48);
+}
+
+.address-card__actions-right {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.address-card__btn-action {
+  background: none;
+  border: none;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--lumora-text-muted, #6E6860);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.3rem 0.6rem;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.address-card__btn-action:hover:not(:disabled) {
+  color: var(--lumora-text-main, #252525);
+  background-color: rgba(0, 0, 0, 0.04);
+}
+
+.address-card__btn-action--danger {
+  color: #DC2626;
+}
+
+.address-card__btn-action--danger:hover:not(:disabled) {
+  color: #B91C1C;
+  background-color: #FEF2F2;
+}
+
+.address-card__btn-action:disabled,
+.address-card__btn-default:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

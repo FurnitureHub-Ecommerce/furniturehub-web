@@ -5,7 +5,7 @@ const api = axios.create({
   headers: {
     "Content-Type": "application/json",
   },
-  timeout: 10000,
+  timeout: 45000,
 });
 
 // Tự động đính kèm Bearer Token nếu có
@@ -283,6 +283,20 @@ export const addressAPI = {
 
 export const checkoutAPI = {
   validate: (data) => api.post("/api/checkout/validate", data),
+};
+
+// =========== PAYMENT API (CUSTOMER & STAFF/ADMIN) ===========
+
+export const paymentAPI = {
+  // Customer tạo Payment cho Order của mình (COD hoặc BANK_TRANSFER)
+  createPayment: (orderId, data) => api.post(`/api/orders/${orderId}/payment`, data),
+
+  // Customer xem Payment của Order mình
+  getPaymentByOrder: (orderId) => api.get(`/api/orders/${orderId}/payment`),
+
+  // STAFF/ADMIN cập nhật trạng thái thanh toán (pending, paid, cancelled, failed)
+  updatePaymentStatus: (paymentId, data) =>
+    api.patch(`/api/payments/${paymentId}/status`, data),
 };
 
 // =========== REVIEW API (CUSTOMER & PUBLIC) ===========

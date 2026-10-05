@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Search, Heart, ShoppingBag, Menu, X, User, LogOut } from "lucide-react";
+import { Search, Heart, ShoppingBag, Menu, X, User, LogOut, MapPin, Package } from "lucide-react";
 import { useShop } from "../../../context/ShopContext";
 import "./Header.css";
 import logoImg from "../../../assets/images/logo.jpg";
@@ -226,6 +226,24 @@ export function Header() {
                     </div>
 
                     <div className="header__user-dropdown-links">
+                      <Link
+                        to="/orders"
+                        onClick={() => setUserDropdownOpen(false)}
+                        className="header__user-dropdown-item"
+                        role="menuitem"
+                      >
+                        <Package size={14} />
+                        <span>Đơn hàng của tôi</span>
+                      </Link>
+                      <Link
+                        to="/addresses"
+                        onClick={() => setUserDropdownOpen(false)}
+                        className="header__user-dropdown-item"
+                        role="menuitem"
+                      >
+                        <MapPin size={14} />
+                        <span>Sổ địa chỉ nhận hàng</span>
+                      </Link>
                       <Link
                         to="/cart"
                         onClick={() => setUserDropdownOpen(false)}
