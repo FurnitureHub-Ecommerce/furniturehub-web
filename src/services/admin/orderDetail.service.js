@@ -1,10 +1,14 @@
-import { getMonitoring } from './monitoring.service.js';
+export const ORDER_DETAIL_ACCESS_STATE = Object.freeze({
+  code: "BACKEND_AUTHORIZATION_REQUIRED",
+  title: "Chi tiết đơn hàng chưa khả dụng",
+  message:
+    "Backend hiện chưa cấp quyền truy cập API chi tiết đơn hàng cho tài khoản Admin.",
+});
 
-export async function getOrderDetail(orderId) {
-  if (typeof orderId !== 'string' || !orderId) return null;
-  const data = await getMonitoring({ period: 'all' });
-  const order = data.orders.find(item => item.id === orderId);
-  // Không thay mã không tồn tại bằng đơn mẫu hoặc suy diễn dữ liệu dòng hàng.
-  if (!order) return null;
-  return { ...order, statusLabel: data.statuses.find(item => item.id === order.status)?.label ?? order.status };
+export function getOrderDetailAvailability(orderId) {
+  // Route vẫn nhận orderId nhưng không gọi endpoint Customer-only bằng phiên Admin.
+  return {
+    ...ORDER_DETAIL_ACCESS_STATE,
+    orderId: typeof orderId === "string" && orderId.trim() ? orderId.trim() : null,
+  };
 }
