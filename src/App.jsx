@@ -15,6 +15,10 @@ import {
   CartPage,
   WishlistPage,
   CheckoutPage,
+  PaymentSuccessPage,
+  PaymentFailedPage,
+  AddressManagementPage,
+  CustomerOrdersPage,
   CollectionsPage,
   LookbookPage,
 } from "./pages/customer/CustomerPages";
@@ -146,6 +150,86 @@ function App() {
               element={
                 <CustomerLayout>
                   <CheckoutPage />
+                </CustomerLayout>
+              }
+            />
+            <Route
+              path="/payment-success"
+              element={
+                <CustomerLayout>
+                  <PaymentSuccessPage />
+                </CustomerLayout>
+              }
+            />
+            <Route
+              path="/payment-success/:orderId?"
+              element={
+                <CustomerLayout>
+                  <PaymentSuccessPage />
+                </CustomerLayout>
+              }
+            />
+            <Route
+              path="/checkout/success"
+              element={
+                <CustomerLayout>
+                  <PaymentSuccessPage />
+                </CustomerLayout>
+              }
+            />
+            <Route
+              path="/order/success/:orderId?"
+              element={
+                <CustomerLayout>
+                  <PaymentSuccessPage />
+                </CustomerLayout>
+              }
+            />
+            <Route
+              path="/payment-failed"
+              element={
+                <CustomerLayout>
+                  <PaymentFailedPage />
+                </CustomerLayout>
+              }
+            />
+            <Route
+              path="/payment-failed/:orderId?"
+              element={
+                <CustomerLayout>
+                  <PaymentFailedPage />
+                </CustomerLayout>
+              }
+            />
+            <Route
+              path="/checkout/failed"
+              element={
+                <CustomerLayout>
+                  <PaymentFailedPage />
+                </CustomerLayout>
+              }
+            />
+            <Route
+              path="/order/failed/:orderId?"
+              element={
+                <CustomerLayout>
+                  <PaymentFailedPage />
+                </CustomerLayout>
+              }
+            />
+            <Route
+              path="/addresses"
+              element={
+                <CustomerLayout>
+                  <AddressManagementPage />
+                </CustomerLayout>
+              }
+            />
+            <Route
+              path="/orders"
+              element={
+                <CustomerLayout>
+                  <CustomerOrdersPage />
                 </CustomerLayout>
               }
             />

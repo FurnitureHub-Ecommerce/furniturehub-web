@@ -715,93 +715,13 @@ export function WishlistPage() {
 }
 
 // ==========================================
-// 4. CHECKOUT PAGE
+// 4. CHECKOUT PAGE (Tasks 6, 7, 8)
 // ==========================================
-export function CheckoutPage() {
-  const { cart, cartSubtotal, clearCart } = useShop();
-  const navigate = useNavigate();
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isSuccess, setIsSuccess] = useState(false);
-
-  const handleSubmit = async (event) => {
-    event.preventDefault();
-    setIsSubmitting(true);
-
-    try {
-      // Create order via orderAPI if addresses available or direct
-      // Simulating clean checkout
-      await new Promise((res) => setTimeout(res, 800));
-      await clearCart();
-      setIsSuccess(true);
-    } catch (err) {
-      alert("Lỗi khi xử lý đơn hàng: " + err.message);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  if (isSuccess) {
-    return (
-      <div className="section container" style={{ paddingTop: "80px", paddingBottom: "100px", textAlign: "center" }}>
-        <div style={{ maxWidth: "500px", margin: "0 auto", backgroundColor: "#fff", padding: "40px", borderRadius: "16px", border: "1px solid #E5E7EB", boxShadow: "0 4px 12px rgba(0,0,0,0.03)" }}>
-          <div style={{ width: "56px", height: "56px", borderRadius: "50%", backgroundColor: "#ECFDF5", color: "#059669", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 20px" }}>
-            <Check size={28} />
-          </div>
-          <h1 style={{ fontFamily: '"Bodoni Moda", serif', fontSize: "2rem", marginBottom: "12px" }}>Đặt Hàng Thành Công!</h1>
-          <p style={{ color: "#6B7280", fontSize: "0.95rem", marginBottom: "28px" }}>
-            Đơn hàng của bạn đã được ghi nhận trên hệ thống LUMORA. Đội ngũ CSKH sẽ liên hệ xác nhận trong thời gian sớm nhất.
-          </p>
-          <button
-            onClick={() => navigate("/products")}
-            className="wishlist-page__primary-btn"
-            style={{ width: "100%", justifyContent: "center" }}
-          >
-            Tiếp tục mua sắm <ArrowRight size={16} />
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="section container checkout-page">
-      <div className="wishlist-page__header">
-        <span className="section-heading__badge">SECURE CHECKOUT</span>
-        <h1 style={{ fontFamily: '"Bodoni Moda", serif' }}>Thanh Toán</h1>
-        <p>Hoàn tất thông tin để chúng tôi chuẩn bị đơn hàng cho bạn.</p>
-      </div>
-      <div className="checkout-layout">
-        <form className="checkout-form" onSubmit={handleSubmit}>
-          <h2>Thông tin giao hàng</h2>
-          <label>Họ và tên<input required name="name" placeholder="Nguyễn Văn A" /></label>
-          <label>Email<input required type="email" name="email" placeholder="you@example.com" /></label>
-          <label>Số điện thoại<input required name="phone" placeholder="090 123 4567" /></label>
-          <label>Địa chỉ giao hàng<textarea required name="address" rows="4" placeholder="Số nhà, đường, phường/xã, quận/huyện, tỉnh/thành phố" /></label>
-          <button className="wishlist-page__primary-btn" type="submit" disabled={isSubmitting || cart.length === 0}>
-            {isSubmitting ? "Đang xử lý..." : "Xác nhận đặt hàng"} <Check size={17} />
-          </button>
-        </form>
-        <aside className="wishlist-summary checkout-summary">
-          <h2 style={{ fontFamily: '"Bodoni Moda", serif' }}>Đơn hàng của bạn</h2>
-          {cart.map((item) => {
-            const p = item.product || {};
-            const itemPrice = item.unitPrice || p.price || 0;
-            return (
-              <div className="checkout-summary__item" key={item.itemId || p.id}>
-                <span>{p.name} <small>x{item.quantity}</small></span>
-                <strong>{formatVND(itemPrice * item.quantity)}</strong>
-              </div>
-            );
-          })}
-          <div className="checkout-summary__total">
-            <span>Tổng cộng</span>
-            <strong>{formatVND(cartSubtotal)}</strong>
-          </div>
-        </aside>
-      </div>
-    </div>
-  );
-}
+export { default as CheckoutPage } from "./CheckoutPage";
+export { default as PaymentSuccessPage } from "./PaymentSuccessPage";
+export { default as PaymentFailedPage } from "./PaymentFailedPage";
+export { default as AddressManagementPage } from "./AddressManagementPage";
+export { default as CustomerOrdersPage } from "./CustomerOrdersPage";
 
 export function CollectionsPage() {
   return <CategoryPage />;
