@@ -234,6 +234,14 @@ function App() {
               }
             />
             <Route
+              path="/orders/:orderId"
+              element={
+                <CustomerLayout>
+                  <CustomerOrdersPage />
+                </CustomerLayout>
+              }
+            />
+            <Route
               path="/lookbook"
               element={
                 <CustomerLayout>

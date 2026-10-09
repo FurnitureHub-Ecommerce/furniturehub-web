@@ -1,0 +1,295 @@
+/* ============================================================
+   LUMORA – Modern Luxury Cancel Order Modal
+   src/components/order/CancelOrderModal/CancelOrderModal.css
+   ============================================================ */
+
+.cancel-modal__overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(30, 26, 23, 0.65);
+  backdrop-filter: blur(6px);
+  z-index: 1050;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.25rem;
+  animation: cancelModalFadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.cancel-modal__container {
+  background-color: #FFFFFF;
+  border-radius: 16px;
+  width: 100%;
+  max-width: 560px;
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.22);
+  border: 1px solid var(--lumora-border, #E2DBD0);
+  overflow: hidden;
+  animation: cancelModalSlideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.cancel-modal__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 1.5rem 1.75rem 1.25rem;
+  border-bottom: 1px solid var(--lumora-border-subtle, #F0EAE1);
+  background-color: var(--lumora-bg-primary, #F7F4EE);
+}
+
+.cancel-modal__badge {
+  display: inline-block;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #B91C1C;
+  margin-bottom: 0.25rem;
+}
+
+.cancel-modal__title {
+  font-family: var(--font-serif, "Cormorant Garamond", serif);
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--lumora-text-main, #252525);
+  line-height: 1.2;
+}
+
+.cancel-modal__close-btn {
+  background: none;
+  border: none;
+  color: var(--lumora-text-muted, #6E6860);
+  cursor: pointer;
+  padding: 0.4rem;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.cancel-modal__close-btn:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+  color: var(--lumora-text-main, #252525);
+}
+
+.cancel-modal__body {
+  padding: 1.5rem 1.75rem;
+  max-height: 68vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+/* Alert */
+.cancel-modal__alert {
+  display: flex;
+  gap: 0.85rem;
+  padding: 1rem 1.15rem;
+  background-color: #FEF2F2;
+  border: 1px solid #FECACA;
+  border-radius: 10px;
+  color: #991B1B;
+}
+
+.cancel-modal__alert-icon {
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: #DC2626;
+}
+
+.cancel-modal__alert-text {
+  font-size: 0.88rem;
+  line-height: 1.5;
+  margin: 0;
+}
+
+/* Summary Box */
+.cancel-modal__summary {
+  background-color: var(--lumora-bg-primary, #F7F4EE);
+  border: 1px solid var(--lumora-border-subtle, #F0EAE1);
+  border-radius: 10px;
+  padding: 0.9rem 1.15rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.cancel-modal__summary-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.88rem;
+  color: var(--lumora-text-muted, #6E6860);
+}
+
+.cancel-modal__summary-row strong {
+  color: var(--lumora-text-main, #252525);
+}
+
+.cancel-modal__summary-total {
+  color: var(--lumora-accent-wood, #8A6A48) !important;
+  font-weight: 700;
+  font-family: var(--font-serif, "Cormorant Garamond", serif);
+  font-size: 1.05rem;
+}
+
+/* Reasons */
+.cancel-modal__field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.cancel-modal__label {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--lumora-text-main, #252525);
+}
+
+.cancel-modal__reasons {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.cancel-modal__reason-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--lumora-border, #E2DBD0);
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.86rem;
+  color: var(--lumora-text-main, #252525);
+  background-color: #FFFFFF;
+  transition: all 0.2s ease;
+}
+
+.cancel-modal__reason-item:hover {
+  background-color: #FAF8F5;
+  border-color: var(--lumora-accent-wood, #8A6A48);
+}
+
+.cancel-modal__reason-item--active {
+  border-color: #DC2626;
+  background-color: #FFF5F5;
+  color: #991B1B;
+  font-weight: 500;
+}
+
+.cancel-modal__radio {
+  accent-color: #DC2626;
+}
+
+.cancel-modal__textarea {
+  width: 100%;
+  border: 1px solid var(--lumora-border, #E2DBD0);
+  border-radius: 8px;
+  padding: 0.75rem;
+  font-size: 0.86rem;
+  font-family: inherit;
+  resize: vertical;
+  color: var(--lumora-text-main, #252525);
+  outline: none;
+  transition: border-color 0.2s ease;
+}
+
+.cancel-modal__textarea:focus {
+  border-color: #DC2626;
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1);
+}
+
+/* Error */
+.cancel-modal__error-alert {
+  padding: 0.75rem 1rem;
+  background-color: #FEF2F2;
+  border: 1px solid #FECACA;
+  border-radius: 8px;
+  color: #991B1B;
+  font-size: 0.85rem;
+}
+
+/* Footer */
+.cancel-modal__footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  padding: 1.15rem 1.75rem;
+  border-top: 1px solid var(--lumora-border-subtle, #F0EAE1);
+  background-color: #FAFAFA;
+}
+
+.cancel-modal__btn-secondary {
+  padding: 0.7rem 1.25rem;
+  border: 1px solid var(--lumora-border, #E2DBD0);
+  background-color: #FFFFFF;
+  border-radius: 8px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--lumora-text-main, #252525);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.cancel-modal__btn-secondary:hover:not(:disabled) {
+  background-color: #F7F4EE;
+}
+
+.cancel-modal__btn-danger {
+  padding: 0.7rem 1.4rem;
+  border: none;
+  background-color: #DC2626;
+  border-radius: 8px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #FFFFFF;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  box-shadow: 0 4px 14px rgba(220, 38, 38, 0.25);
+  transition: all 0.2s ease;
+}
+
+.cancel-modal__btn-danger:hover:not(:disabled) {
+  background-color: #B91C1C;
+}
+
+.cancel-modal__btn-danger:disabled,
+.cancel-modal__btn-secondary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.cancel-modal__spinner {
+  animation: cancelSpin 1s linear infinite;
+}
+
+@keyframes cancelSpin {
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes cancelModalFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes cancelModalSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}

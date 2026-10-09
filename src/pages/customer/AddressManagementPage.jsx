@@ -93,7 +93,7 @@ export default function AddressManagementPage() {
     } catch (err) {
       alert(
         "Lỗi thiết lập mặc định: " +
-          getApiErrorMessage(err, "Không thể đặt làm mặc định."),
+        getApiErrorMessage(err, "Không thể đặt làm mặc định."),
       );
     } finally {
       setActionLoadingId(null);
@@ -175,9 +175,8 @@ export default function AddressManagementPage() {
             return (
               <div
                 key={id}
-                className={`address-card ${
-                  addr.isDefault ? "address-card--default" : ""
-                }`}
+                className={`address-card ${addr.isDefault ? "address-card--default" : ""
+                  }`}
               >
                 <div className="address-card__header">
                   <div className="address-card__title-group">
