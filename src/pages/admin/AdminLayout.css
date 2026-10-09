@@ -33,17 +33,6 @@
 .lumora-admin button:disabled {
   cursor: not-allowed;
 }
-/* .la-sidebar {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 280px;
-  min-height: 100vh;
-  background: #fff;
-  padding: 30px 24px 0;
-  z-index: 30;
-} */
- 
 .la-sidebar {
   position: fixed;
   top: 0;
@@ -167,11 +156,13 @@
   color: var(--la-muted);
 }
 .la-workspace {
+  margin-left: 280px;
   min-width: 0;
 }
 .la-header {
   min-height: 70px;
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 14px;
   padding: 12px 24px;
@@ -252,6 +243,7 @@
   font-weight: 650;
   line-height: 1.2;
   max-width: 80px;
+  overflow-wrap: anywhere;
 }
 .la-profile small {
   display: block;
@@ -261,6 +253,9 @@
   margin-top: 4px;
 }
 .la-avatar-slot {
+  display: grid;
+  place-items: center;
+  color: var(--la-muted);
   width: 32px;
   height: 32px;
   flex-shrink: 0;
@@ -269,9 +264,9 @@
   border: 1px solid var(--la-line);
 }
 .la-content {
-  width: 100%;
-  margin: 0;
-  padding: 24px; /* Hoặc 0 nếu bạn muốn sát mép hoàn toàn */
+  max-width: 1800px;
+  margin-inline: auto;
+  padding: 0 24px 40px;
 }
 .la-menu-toggle,
 .la-drawer-close,
@@ -296,7 +291,9 @@
   .la-header {
     gap: 20px;
   }
-  
+  .la-content {
+    padding-inline: 32px;
+  }
   .la-search {
     max-width: 440px;
     margin-left: auto;
@@ -318,13 +315,13 @@
     visibility: visible;
     transform: translateX(0);
   }
-  .la-backdrop {
+  .lumora-admin .la-backdrop {
     display: block;
     position: fixed;
     inset: 0;
     z-index: 20;
     background: #28201865;
-    border-radius: 0 !important;
+    border-radius: 0;
   }
   .la-menu-toggle {
     display: inline-flex;
