@@ -1,43 +1,40 @@
 import api from "../api.js";
 
-export async function getRoles() {
-  try {
-    const response = await api.get("/api/users");
-    const users = response.data?.users ?? response.data ?? [];
-    const totalUsers = users.length;
-    
-    // Xây dựng danh sách roles dựa trên dữ liệu thực tế từ database
-    const roleDefinitions = [
-      { id: "Admin", name: "Quản trị viên", description: "Toàn quyền quản trị hệ thống", caption: "Full access" },
-      { id: "STAFF", name: "Nhân viên", description: "Vận hành cửa hàng và đơn hàng", caption: "Operational" },
-      { id: "STORAGE_MANAGER", name: "Quản lý kho", description: "Quản lý tồn kho và kho bãi", caption: "Inventory" },
-      { id: "CUSTOMER", name: "Khách hàng", description: "Người mua hàng", caption: "End-user" }
-    ];
+const roleLabels = {
+  ADMIN: { name: "Quản trị viên", description: "Vai trò ứng dụng dành cho khu vực quản trị", caption: "ADMINISTRATION" },
+  MANAGER: { name: "Quản lý", description: "Vai trò quản lý được ứng dụng nhận diện", caption: "MANAGEMENT" },
+  STAFF: { name: "Nhân viên", description: "Vai trò ứng dụng dành cho khu vực vận hành", caption: "OPERATIONS" },
+  STORAGE: { name: "Nhân viên kho", description: "Vai trò ứng dụng dành cho khu vực kho", caption: "STORAGE" },
+  STORAGE_MANAGER: { name: "Quản lý kho", description: "Vai trò ứng dụng dành cho quản lý kho", caption: "VAULT & LOGISTICS" },
+  CUSTOMER: { name: "Khách hàng", description: "Vai trò ứng dụng dành cho khách hàng", caption: "CUSTOMER" },
+};
 
-    const roles = roleDefinitions.map(role => {
-      const count = users.filter(u => u.role === role.id).length;
-      return {
-        ...role,
-        count,
-        percentage: totalUsers ? (count / totalUsers) * 100 : 0
-      };
-    });
-
-    return {
-      roles,
-      totalUsers,
-      actions: [
-        { id: "read", name: "Xem", code: "READ" },
-        { id: "create", name: "Tạo mới", code: "CREATE" },
-        { id: "update", name: "Cập nhật", code: "UPDATE" },
-        { id: "delete", name: "Xóa", code: "DELETE" }
-      ],
-      matrices: {},
-      moduleCount: 5,
-      cellCount: 20
-    };
-  } catch (error) {
-    console.error("Lỗi khi tải dữ liệu phân quyền:", error);
-    throw error;
+function userRows(body) {
+  const rows = [body, body?.rows, body?.users, body?.data].find(Array.isArray);
+  if (!rows || rows.some(user => !user || typeof user !== "object" || Array.isArray(user))) {
+    throw new Error("Phản hồi danh sách người dùng không đúng định dạng.");
   }
+  return rows;
+}
+
+function normalizedRole(value) {
+  if (typeof value !== "string" || !value.trim()) throw new Error("Tài khoản thiếu vai trò hợp lệ.");
+  const role = value.trim().replace(/[\s-]+/g, "_").toUpperCase();
+  if (!roleLabels[role]) throw new Error(`Vai trò "${value}" chưa được ứng dụng nhận diện.`);
+  return role;
+}
+
+export async function getRoles() {
+  const response = await api.get("/api/users");
+  const users = userRows(response.data).map(user => ({ ...user, normalizedRole: normalizedRole(user.role) }));
+  const loadedUsers = users.length;
+  const presentRoles = [...new Set(users.map(user => user.normalizedRole))];
+
+  // Đây là nhãn vai trò của ứng dụng, không phải Role Entity hoặc permission từ Backend.
+  const roles = presentRoles.map(id => {
+    const count = users.filter(user => user.normalizedRole === id).length;
+    return { id, ...roleLabels[id], count, percentage: loadedUsers ? (count / loadedUsers) * 100 : null };
+  });
+
+  return { roles, loadedUsers, permissionMatrix: null };
 }
