@@ -5,7 +5,7 @@ const api = axios.create({
   headers: {
     "Content-Type": "application/json",
   },
-  timeout: 10000,
+  timeout: 45000,
 });
 
 // Tự động đính kèm Bearer Token nếu có
@@ -234,14 +234,79 @@ export const storageAPI = {
 // =========== ORDER API ===========
 
 export const orderAPI = {
+  // Admin & Staff
   getOrders: (params = {}) => api.get("/api/orders", { params }),
-
   getOrdersById: (id) => api.get(`/api/orders/${id}`),
-
   updateOrderStatus: (id, status) =>
     api.patch(`/api/orders/${id}/status`, { status }),
+
+  // Customer
+  createOrder: (orderData) => api.post("/api/orders", orderData),
+  getMyOrders: (params = {}) => api.get("/api/orders/my-orders", { params }),
+  getMyOrderById: (id) => api.get(`/api/orders/${id}`),
+  getOrderTracking: (id) => api.get(`/api/orders/${id}/tracking`),
+  cancelOrder: (id) => api.patch(`/api/orders/${id}/cancel`),
 };
 
+// =========== CART API (CUSTOMER) ===========
 
+export const cartAPI = {
+  getCart: () => api.get("/api/cart"),
+  addItem: ({ variantId, quantity }) =>
+    api.post("/api/cart/items", { variantId, quantity }),
+  updateItemQuantity: (itemId, quantity) =>
+    api.patch(`/api/cart/items/${itemId}`, { quantity }),
+  removeItem: (itemId) => api.delete(`/api/cart/items/${itemId}`),
+  clearCart: () => api.delete("/api/cart"),
+};
+
+// =========== WISHLIST API (CUSTOMER) ===========
+
+export const wishlistAPI = {
+  getWishlist: () => api.get("/api/wishlist"),
+  addToWishlist: (productId) => api.post("/api/wishlist", { productId }),
+  removeFromWishlist: (productId) => api.delete(`/api/wishlist/${productId}`),
+};
+
+// =========== ADDRESS API (CUSTOMER) ===========
+
+export const addressAPI = {
+  getAddresses: () => api.get("/api/addresses"),
+  getAddressById: (id) => api.get(`/api/addresses/${id}`),
+  createAddress: (data) => api.post("/api/addresses", data),
+  updateAddress: (id, data) => api.put(`/api/addresses/${id}`, data),
+  deleteAddress: (id) => api.delete(`/api/addresses/${id}`),
+  setDefaultAddress: (id) => api.patch(`/api/addresses/${id}/default`),
+};
+
+// =========== CHECKOUT API (CUSTOMER) ===========
+
+export const checkoutAPI = {
+  validate: (data) => api.post("/api/checkout/validate", data),
+};
+
+// =========== PAYMENT API (CUSTOMER & STAFF/ADMIN) ===========
+
+export const paymentAPI = {
+  // Customer tạo Payment cho Order của mình (COD hoặc BANK_TRANSFER)
+  createPayment: (orderId, data) => api.post(`/api/orders/${orderId}/payment`, data),
+
+  // Customer xem Payment của Order mình
+  getPaymentByOrder: (orderId) => api.get(`/api/orders/${orderId}/payment`),
+
+  // STAFF/ADMIN cập nhật trạng thái thanh toán (pending, paid, cancelled, failed)
+  updatePaymentStatus: (paymentId, data) =>
+    api.patch(`/api/payments/${paymentId}/status`, data),
+};
+
+// =========== REVIEW API (CUSTOMER & PUBLIC) ===========
+
+export const reviewAPI = {
+  getProductReviews: (productId) => api.get(`/api/reviews/product/${productId}`),
+  createReview: (data) => api.post("/api/reviews", data),
+  updateReview: (id, data) => api.patch(`/api/reviews/${id}`, data),
+  deleteReview: (id) => api.delete(`/api/reviews/${id}`),
+};
 
 export default api;
+

@@ -2,10 +2,11 @@ import { Suspense, lazy } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 
 import { ShopProvider } from "./context/ShopContext";
+import { AuthProvider } from "./context/AuthContext";
 import { ProtectedRoute } from "./pages/auth/ProtectedRoute";
 
 // =========== LAYOUTS & PAGES (CUSTOMER) ===========
-import MainLayout from "./components/layout/MainLayout/MainLayout";
+import CustomerLayout from "./components/layout/MainLayout/MainLayout";
 import Home from "./pages/home/Home";
 import ProductListPage from "./pages/customer/ProductListPage";
 import ProductDetailPage from "./pages/customer/ProductDetailPage";
@@ -14,6 +15,10 @@ import {
   CartPage,
   WishlistPage,
   CheckoutPage,
+  PaymentSuccessPage,
+  PaymentFailedPage,
+  AddressManagementPage,
+  CustomerOrdersPage,
   CollectionsPage,
   LookbookPage,
 } from "./pages/customer/CustomerPages";
@@ -65,7 +70,8 @@ const AdminRoles = lazy(() => import("./pages/admin/roles/AdminRoles"));
 
 function App() {
   return (
-    <ShopProvider>
+    <AuthProvider>
+      <ShopProvider>
       <BrowserRouter>
         <Suspense
           fallback={
@@ -86,73 +92,153 @@ function App() {
             <Route
               path="/"
               element={
-                <MainLayout>
+                <CustomerLayout>
                   <Home />
-                </MainLayout>
+                </CustomerLayout>
               }
             />
             <Route
               path="/products"
               element={
-                <MainLayout>
+                <CustomerLayout>
                   <ProductListPage />
-                </MainLayout>
+                </CustomerLayout>
               }
             />
             <Route
               path="/collections"
               element={
-                <MainLayout>
+                <CustomerLayout>
                   <CollectionsPage />
-                </MainLayout>
+                </CustomerLayout>
               }
             />
             <Route
               path="/category/:id"
               element={
-                <MainLayout>
+                <CustomerLayout>
                   <CategoryPage />
-                </MainLayout>
+                </CustomerLayout>
               }
             />
             <Route
               path="/product/:slug"
               element={
-                <MainLayout>
+                <CustomerLayout>
                   <ProductDetailPage />
-                </MainLayout>
+                </CustomerLayout>
               }
             />
             <Route
               path="/cart"
               element={
-                <MainLayout>
+                <CustomerLayout>
                   <CartPage />
-                </MainLayout>
+                </CustomerLayout>
               }
             />
             <Route
               path="/wishlist"
               element={
-                <MainLayout>
+                <CustomerLayout>
                   <WishlistPage />
-                </MainLayout>
+                </CustomerLayout>
               }
             />
             <Route
               path="/checkout"
               element={
-                <MainLayout>
+                <CustomerLayout>
                   <CheckoutPage />
-                </MainLayout>
+                </CustomerLayout>
+              }
+            />
+            <Route
+              path="/payment-success"
+              element={
+                <CustomerLayout>
+                  <PaymentSuccessPage />
+                </CustomerLayout>
+              }
+            />
+            <Route
+              path="/payment-success/:orderId?"
+              element={
+                <CustomerLayout>
+                  <PaymentSuccessPage />
+                </CustomerLayout>
+              }
+            />
+            <Route
+              path="/checkout/success"
+              element={
+                <CustomerLayout>
+                  <PaymentSuccessPage />
+                </CustomerLayout>
+              }
+            />
+            <Route
+              path="/order/success/:orderId?"
+              element={
+                <CustomerLayout>
+                  <PaymentSuccessPage />
+                </CustomerLayout>
+              }
+            />
+            <Route
+              path="/payment-failed"
+              element={
+                <CustomerLayout>
+                  <PaymentFailedPage />
+                </CustomerLayout>
+              }
+            />
+            <Route
+              path="/payment-failed/:orderId?"
+              element={
+                <CustomerLayout>
+                  <PaymentFailedPage />
+                </CustomerLayout>
+              }
+            />
+            <Route
+              path="/checkout/failed"
+              element={
+                <CustomerLayout>
+                  <PaymentFailedPage />
+                </CustomerLayout>
+              }
+            />
+            <Route
+              path="/order/failed/:orderId?"
+              element={
+                <CustomerLayout>
+                  <PaymentFailedPage />
+                </CustomerLayout>
+              }
+            />
+            <Route
+              path="/addresses"
+              element={
+                <CustomerLayout>
+                  <AddressManagementPage />
+                </CustomerLayout>
+              }
+            />
+            <Route
+              path="/orders"
+              element={
+                <CustomerLayout>
+                  <CustomerOrdersPage />
+                </CustomerLayout>
               }
             />
             <Route
               path="/lookbook"
               element={
-                <MainLayout>
+                <CustomerLayout>
                   <LookbookPage />
-                </MainLayout>
+                </CustomerLayout>
               }
             />
 
@@ -236,6 +322,7 @@ function App() {
         </Suspense>
       </BrowserRouter>
     </ShopProvider>
+    </AuthProvider>
   );
 }
 
