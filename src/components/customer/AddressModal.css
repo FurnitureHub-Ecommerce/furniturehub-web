@@ -117,24 +117,15 @@
   letter-spacing: 0.01em;
 }
 
-.address-modal__input-icon-wrap {
-  position: relative;
-  display: flex;
-  align-items: center;
+/* Inputs & Textareas */
+.address-modal__field input.pl-11 {
+  padding-left: 2.75rem !important; /* pl-11: 44px */
+  padding-right: 1rem !important;   /* pr-4: 16px */
+  padding-top: 0.625rem !important; /* py-2.5: 10px */
+  padding-bottom: 0.625rem !important;
 }
 
-.address-modal__icon {
-  position: absolute;
-  left: 0.85rem;
-  color: var(--lumora-text-light, #8F887E);
-  pointer-events: none;
-}
-
-.address-modal__input-icon-wrap input {
-  padding-left: 2.35rem;
-}
-
-.address-modal__field input,
+.address-modal__field input:not(.pl-11),
 .address-modal__field textarea {
   width: 100%;
   padding: 0.65rem 0.85rem;

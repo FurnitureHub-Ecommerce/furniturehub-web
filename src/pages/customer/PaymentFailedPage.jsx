@@ -1,5 +1,5 @@
 import React from "react";
-import { Link, useSearchParams, useLocation } from "react-router-dom";
+import { Link, useSearchParams, useLocation, useParams } from "react-router-dom";
 import {
   AlertTriangle,
   RotateCcw,
@@ -13,10 +13,11 @@ import "./PaymentResult.css";
 
 export default function PaymentFailedPage() {
   const [searchParams] = useSearchParams();
+  const { orderId: paramOrderId } = useParams();
   const location = useLocation();
 
   const queryReason = searchParams.get("reason");
-  const queryOrderId = searchParams.get("orderId");
+  const queryOrderId = searchParams.get("orderId") || paramOrderId;
 
   const reason =
     location.state?.reason ||

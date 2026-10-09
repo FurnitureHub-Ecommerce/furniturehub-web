@@ -154,6 +154,22 @@ function App() {
               }
             />
             <Route
+              path="/payment-success"
+              element={
+                <CustomerLayout>
+                  <PaymentSuccessPage />
+                </CustomerLayout>
+              }
+            />
+            <Route
+              path="/payment-success/:orderId?"
+              element={
+                <CustomerLayout>
+                  <PaymentSuccessPage />
+                </CustomerLayout>
+              }
+            />
+            <Route
               path="/checkout/success"
               element={
                 <CustomerLayout>
@@ -166,6 +182,22 @@ function App() {
               element={
                 <CustomerLayout>
                   <PaymentSuccessPage />
+                </CustomerLayout>
+              }
+            />
+            <Route
+              path="/payment-failed"
+              element={
+                <CustomerLayout>
+                  <PaymentFailedPage />
+                </CustomerLayout>
+              }
+            />
+            <Route
+              path="/payment-failed/:orderId?"
+              element={
+                <CustomerLayout>
+                  <PaymentFailedPage />
                 </CustomerLayout>
               }
             />

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import {
   MapPin,
   Plus,
@@ -17,6 +17,8 @@ import "./AddressManagement.css";
 
 export default function AddressManagementPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const redirectUrl = searchParams.get("redirect");
   const [addresses, setAddresses] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -102,9 +104,15 @@ export default function AddressManagementPage() {
     <div className="address-page container">
       {/* Breadcrumb & Navigation */}
       <div className="address-page__nav">
-        <Link to="/" className="address-page__back-link">
-          <ArrowLeft size={16} /> Quay lại Trang Chủ
-        </Link>
+        {redirectUrl ? (
+          <Link to={redirectUrl} className="address-page__back-link">
+            <ArrowLeft size={16} /> Quay lại Trang Thanh Toán (Checkout)
+          </Link>
+        ) : (
+          <Link to="/" className="address-page__back-link">
+            <ArrowLeft size={16} /> Quay lại Trang Chủ
+          </Link>
+        )}
       </div>
 
       {/* Header */}

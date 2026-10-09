@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Link, useLocation, useSearchParams, useNavigate } from "react-router-dom";
+import { Link, useLocation, useSearchParams, useNavigate, useParams } from "react-router-dom";
 import {
   CheckCircle2,
   Package,
@@ -24,10 +24,11 @@ const formatVND = (price) => formatCurrency(price);
 
 export default function PaymentSuccessPage() {
   const [searchParams] = useSearchParams();
+  const { orderId: paramOrderId } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
 
-  const queryOrderId = searchParams.get("orderId");
+  const queryOrderId = searchParams.get("orderId") || paramOrderId;
   const queryMethod = searchParams.get("method");
 
   const [order, setOrder] = useState(location.state?.order || null);

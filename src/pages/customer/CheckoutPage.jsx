@@ -201,8 +201,8 @@ export default function CheckoutPage() {
         });
         setShowBankModal(true);
       } else {
-        // COD -> Directly navigate to success screen
-        navigate(`/checkout/success?orderId=${orderId}&method=COD`, {
+        // COD -> Directly navigate to payment success screen
+        navigate(`/payment-success?orderId=${orderId}&method=COD`, {
           state: { order: orderData, payment: paymentRes?.data?.payment },
         });
       }
@@ -213,10 +213,10 @@ export default function CheckoutPage() {
       );
       setSubmitError(errorMsg);
 
-      // In case of stock error or fatal failure, offer to redirect to failed page
-      if (err.response?.status === 400 && err.response?.data?.errors?.length > 0) {
-        // Detailed error already shown
-      }
+      // Điều hướng sang /payment-failed theo quy trình kiểm tra thanh toán
+      navigate(`/payment-failed?reason=${encodeURIComponent(errorMsg)}`, {
+        state: { reason: errorMsg },
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -683,14 +683,45 @@ export default function CheckoutPage() {
               </div>
             </div>
 
-            <div className="vietqr-modal__footer">
+            <div className="vietqr-modal__footer" style={{ display: "flex", gap: "12px", justifyContent: "flex-end" }}>
+              <button
+                type="button"
+                className="vietqr-btn-cancel"
+                style={{
+                  padding: "12px 20px",
+                  borderRadius: "8px",
+                  border: "1px solid #D1D5DB",
+                  background: "#FFFFFF",
+                  color: "#4B5563",
+                  fontWeight: 600,
+                  cursor: "pointer",
+                }}
+                onClick={() => {
+                  setShowBankModal(false);
+                  const orderId = createdOrder._id || createdOrder.id;
+                  navigate(
+                    `/payment-failed?orderId=${orderId}&reason=${encodeURIComponent(
+                      "Quý khách đã hủy hoặc chưa hoàn tất thao tác chuyển khoản ngân hàng.",
+                    )}`,
+                    {
+                      state: {
+                        orderId,
+                        reason: "Quý khách đã hủy hoặc chưa hoàn tất thao tác chuyển khoản ngân hàng.",
+                      },
+                    },
+                  );
+                }}
+              >
+                Hủy / Thanh Toán Sau
+              </button>
               <button
                 type="button"
                 className="vietqr-btn-complete"
                 onClick={() => {
                   setShowBankModal(false);
+                  const orderId = createdOrder._id || createdOrder.id;
                   navigate(
-                    `/checkout/success?orderId=${createdOrder._id}&method=BANK_TRANSFER`,
+                    `/payment-success?orderId=${orderId}&method=BANK_TRANSFER`,
                     {
                       state: { order: createdOrder },
                     },

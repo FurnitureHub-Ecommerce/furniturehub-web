@@ -190,8 +190,8 @@ export default function AddressModal({
               <label htmlFor="receiverName">
                 Họ và tên người nhận <span className="text-red-500">*</span>
               </label>
-              <div className="address-modal__input-icon-wrap">
-                <User size={16} className="address-modal__icon" />
+              <div className="relative flex items-center">
+                <User className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none w-5 h-5" />
                 <input
                   id="receiverName"
                   name="receiverName"
@@ -200,6 +200,7 @@ export default function AddressModal({
                   value={formData.receiverName}
                   onChange={handleChange}
                   required
+                  className="w-full pl-11 pr-4 py-2.5 text-sm bg-white border border-[#E2DBD0] rounded-lg text-[#252525] focus:outline-none focus:border-[#8A6A48] focus:ring-2 focus:ring-[#8A6A48]/20 transition-all box-border"
                 />
               </div>
             </div>
@@ -208,8 +209,8 @@ export default function AddressModal({
               <label htmlFor="phone">
                 Số điện thoại liên hệ <span className="text-red-500">*</span>
               </label>
-              <div className="address-modal__input-icon-wrap">
-                <Phone size={16} className="address-modal__icon" />
+              <div className="relative flex items-center">
+                <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none w-5 h-5" />
                 <input
                   id="phone"
                   name="phone"
@@ -218,6 +219,7 @@ export default function AddressModal({
                   value={formData.phone}
                   onChange={handleChange}
                   required
+                  className="w-full pl-11 pr-4 py-2.5 text-sm bg-white border border-[#E2DBD0] rounded-lg text-[#252525] focus:outline-none focus:border-[#8A6A48] focus:ring-2 focus:ring-[#8A6A48]/20 transition-all box-border"
                 />
               </div>
             </div>
@@ -228,8 +230,8 @@ export default function AddressModal({
               <label htmlFor="city">
                 Tỉnh / Thành phố <span className="text-red-500">*</span>
               </label>
-              <div className="address-modal__input-icon-wrap">
-                <MapPin size={16} className="address-modal__icon" />
+              <div className="relative flex items-center">
+                <MapPin className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none w-5 h-5" />
                 <input
                   id="city"
                   name="city"
@@ -239,6 +241,7 @@ export default function AddressModal({
                   value={formData.city}
                   onChange={handleChange}
                   required
+                  className="w-full pl-11 pr-4 py-2.5 text-sm bg-white border border-[#E2DBD0] rounded-lg text-[#252525] focus:outline-none focus:border-[#8A6A48] focus:ring-2 focus:ring-[#8A6A48]/20 transition-all box-border"
                 />
                 <datalist id="city-suggestions">
                   {POPULAR_CITIES.map((c) => (
@@ -252,8 +255,8 @@ export default function AddressModal({
               <label htmlFor="ward">
                 Phường / Xã / Thị trấn <span className="text-red-500">*</span>
               </label>
-              <div className="address-modal__input-icon-wrap">
-                <Home size={16} className="address-modal__icon" />
+              <div className="relative flex items-center">
+                <Home className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none w-5 h-5" />
                 <input
                   id="ward"
                   name="ward"
@@ -262,6 +265,7 @@ export default function AddressModal({
                   value={formData.ward}
                   onChange={handleChange}
                   required
+                  className="w-full pl-11 pr-4 py-2.5 text-sm bg-white border border-[#E2DBD0] rounded-lg text-[#252525] focus:outline-none focus:border-[#8A6A48] focus:ring-2 focus:ring-[#8A6A48]/20 transition-all box-border"
                 />
               </div>
             </div>
@@ -279,6 +283,7 @@ export default function AddressModal({
               value={formData.addressLine}
               onChange={handleChange}
               required
+              className="w-full px-4 py-2.5 text-sm bg-white border border-[#E2DBD0] rounded-lg text-[#252525] focus:outline-none focus:border-[#8A6A48] focus:ring-2 focus:ring-[#8A6A48]/20 transition-all box-border resize-y min-h-[75px]"
             />
           </div>
 
