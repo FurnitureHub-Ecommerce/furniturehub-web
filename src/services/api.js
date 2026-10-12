@@ -237,8 +237,8 @@ export const orderAPI = {
   // Admin & Staff
   getOrders: (params = {}) => api.get("/api/orders", { params }),
   getOrdersById: (id) => api.get(`/api/orders/${id}`),
-  updateOrderStatus: (id, status) =>
-    api.patch(`/api/orders/${id}/status`, { status }),
+  confirmOrderStatus: (id) =>
+    api.patch(`/api/orders/${id}/confirm`),
 
   // Customer
   createOrder: (orderData) => api.post("/api/orders", orderData),

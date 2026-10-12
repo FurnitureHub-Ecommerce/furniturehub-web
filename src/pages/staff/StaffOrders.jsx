@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { MapPin, Check, Clock, Shield } from "lucide-react";
 import { orderAPI } from "../../services/api";
 import OrderTable from "../../components/order/OrderTable/OrderTable";
@@ -14,6 +14,38 @@ const StaffOrders = () => {
   const [error, setError] = useState(null);
 
   const [showNotification, setShowNotification] = useState(true);
+  const [confirming, setConfirming] = useState(false);
+  const [confirmError, setConfirmError] = useState(null);
+  const [successToast, setSuccessToast] = useState(null); // { orderId, shortId }
+
+  // ── Confirm order (pending → confirmed) ───────────────
+  const showToast = useCallback((orderId, shortId) => {
+    setSuccessToast({ orderId, shortId });
+    setTimeout(() => setSuccessToast(null), 3500);
+  }, []);
+
+  const handleConfirmOrder = async () => {
+    if (!selectedOrder || confirming) return;
+    try {
+      setConfirming(true);
+      setConfirmError(null);
+      await orderAPI.confirmOrderStatus(selectedOrder._id);
+      // Optimistically update status in local list
+      setOrderList((prev) =>
+        prev.map((o) =>
+          o._id === selectedOrder._id ? { ...o, status: "confirmed" } : o
+        )
+      );
+      showToast(selectedOrder._id, selectedOrder._id.slice(-8).toUpperCase());
+    } catch (err) {
+      console.error("Confirm order failed:", err);
+      setConfirmError(
+        err?.response?.data?.message || "Xác nhận thất bại. Vui lòng thử lại."
+      );
+    } finally {
+      setConfirming(false);
+    }
+  };
 
   // ── Fetch orders on mount ──────────────────────────────
   // useEffect cannot be async directly, so we define an
@@ -108,6 +140,24 @@ const StaffOrders = () => {
 
   return (
     <div className="staff-orders">
+      {/* ── Success Toast ──────────────────────────────── */}
+      {successToast && (
+        <div className="confirm-toast confirm-toast--enter">
+          <div className="confirm-toast__icon">✓</div>
+          <div className="confirm-toast__body">
+            <span className="confirm-toast__title">Xác nhận thành công!</span>
+            <span className="confirm-toast__sub">
+              Đơn hàng #{successToast.shortId} đã được duyệt.
+            </span>
+          </div>
+          <button
+            className="confirm-toast__close"
+            onClick={() => setSuccessToast(null)}
+          >
+            ×
+          </button>
+        </div>
+      )}
       {/* Role Guard Banner */}
       <div className="role-guard-banner">
         <div className="role-guard__left">
@@ -273,11 +323,22 @@ const StaffOrders = () => {
 
             {/* Action Buttons */}
             <div className="order-actions">
-              <button className="btn-approve">
-                <Check size={16} />
-                DUYỆT & PHÂN BỔ
-              </button>
+              {selectedOrder.status === "pending" && (
+                <button
+                  className="btn-approve"
+                  onClick={handleConfirmOrder}
+                  disabled={confirming}
+                >
+                  <Check size={16} />
+                  {confirming ? "ĐANG XÁC NHẬN..." : "DUYỆT & PHÂN BỔ"}
+                </button>
+              )}
               <button className="btn-decline">TỪ CHỐI / HỦY</button>
+              {confirmError && (
+                <span style={{ fontSize: 12, color: "#dc2626", marginTop: 4 }}>
+                  {confirmError}
+                </span>
+              )}
             </div>
 
             {/* Dispatch Notification */}
