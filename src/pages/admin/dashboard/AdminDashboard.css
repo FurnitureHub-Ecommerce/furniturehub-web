@@ -936,3 +936,19 @@
         white-space: normal;
     }
     }
+
+.la-dashboard .la-api-missing { font-size: 19px; line-height: 1.5; color: var(--la-muted); }
+.la-dashboard .la-api-chart-empty { min-height: 280px; display: grid; place-items: center; background: var(--la-soft); color: var(--la-muted); margin-top: 20px; }
+.la-dashboard .la-api-empty { padding: 30px 0; color: var(--la-muted); }
+.la-dashboard .la-api-statuses { list-style: none; margin-top: 24px; display: grid; gap: 20px; }
+.la-dashboard .la-api-statuses li > div { display: flex; justify-content: space-between; gap: 12px; overflow-wrap: anywhere; }
+.la-dashboard .la-api-statuses progress { width: 100%; height: 8px; accent-color: var(--la-accent); }
+.la-dashboard .la-api-supplement { margin-top: 24px; }
+.la-dashboard .la-api-supplement dl { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; margin-top: 20px; }
+.la-dashboard .la-api-supplement dl > div { background: var(--la-soft); padding: 14px; overflow-wrap: anywhere; }
+.la-dashboard .la-api-supplement dt { color: var(--la-muted); font-size: 11px; }
+.la-dashboard .la-api-supplement dd { margin-top: 8px; }
+.la-dashboard .la-panel { min-width: 0; }
+.la-dashboard .la-report-controls { flex-wrap: wrap; }
+@media (max-width: 1279px) { .la-dashboard .la-api-supplement dl { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 767px) { .la-dashboard .la-api-supplement dl { grid-template-columns: minmax(0, 1fr); } .la-dashboard .la-report-controls { max-width: 100%; } .la-dashboard .la-button { white-space: normal; } }

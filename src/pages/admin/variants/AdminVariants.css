@@ -360,3 +360,22 @@
     width: min(220px, 75vw);
   }
 }
+
+.lv-page .lv-api-note { font-size: 11px; margin: 12px 0 20px; }
+.lv-page .lv-api-product { display: flex; align-items: center; gap: 12px; }
+.lv-page .lv-api-thumbnail { display: grid; place-items: center; width: 48px; height: 58px; flex-shrink: 0; background: var(--la-soft); color: var(--la-muted); }
+.lv-page .lv-api-thumbnail img { width: 100%; height: 100%; object-fit: cover; }
+.lv-page .lv-api-attributes { display: grid; gap: 10px; }
+.lv-page .lv-api-attributes dt { font-size: 10px; color: var(--la-muted); }
+.lv-page .lv-api-attributes dd { overflow-wrap: anywhere; }
+.lv-page .lv-api-price { font: 500 20px/1.4 var(--font-serif); }
+.lv-page .lv-api-out { color: #a23f31; background: #fff0ee; }
+.lv-page .lv-api-footer { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px; padding: 16px; background: var(--la-soft); color: var(--la-muted); font-size: 11px; }
+.lv-page .lv-api-policy { display: flex; align-items: flex-start; gap: 14px; margin: 24px 0; padding: 24px; background: var(--la-soft); }
+.lv-page .lv-api-policy svg { flex-shrink: 0; color: var(--la-accent); }
+.lv-page .lv-api-policy h2 { font: 500 25px/1.2 var(--font-serif); margin-bottom: 8px; }
+.lv-page .lv-kpis article { min-width: 0; }
+.lv-page .lv-intro { flex-wrap: wrap; }
+.lv-page td { overflow-wrap: anywhere; }
+.lv-page .lv-state { padding: 40px 20px; text-align: center; }
+.lv-page .lv-state button { margin-top: 12px; }

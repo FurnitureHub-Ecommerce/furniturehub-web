@@ -1,98 +1,75 @@
-import { productAPI } from "../api.js";
+﻿import { productAPI } from "../api.js";
 
-function recordsFrom(data) {
-  if (Array.isArray(data)) return data;
-  if (Array.isArray(data?.variants)) return data.variants;
-  if (Array.isArray(data?.items)) return data.items;
-  if (Array.isArray(data?.data)) return data.data;
-  if (Array.isArray(data?.data?.variants)) return data.data.variants;
-  return [];
+export function recordsFrom(data, key) {
+  const candidates = [data, data?.[key], data?.data?.[key], data?.items, data?.data];
+  const rows = candidates.find(Array.isArray);
+  if (!rows || rows.some(row => !row || typeof row !== "object" || Array.isArray(row))) {
+    throw new Error("Phản hồi danh sách không đúng định dạng.");
+  }
+  return rows;
 }
 
-export async function getVariants(params = {}) {
-  try {
-    // 1. Lấy danh sách sản phẩm admin
-    const productsRes = await productAPI.getProductsAdmin();
-    const productsData = productsRes?.data?.products ?? productsRes?.data ?? productsRes ?? [];
-    const products = Array.isArray(productsData) ? productsData : [];
+export const entityId = entity => typeof entity === "object" && entity !== null
+  ? entity._id ?? entity.id ?? entity.productId ?? entity.categoryId ?? entity.brandId : entity;
 
-    // 2. Gọi API /api/products/{productId}/variants/admin cho từng sản phẩm để lấy đúng variant và giá
-    const allVariantsPromises = products.map(async (product) => {
-      const productId = product._id || product.id;
-      if (!productId) return [];
+export function realNumber(value) {
+  // null, chuỗi rỗng và boolean không phải giá trị 0 từ Backend.
+  if (typeof value !== "number" && typeof value !== "string") return null;
+  if (typeof value === "string" && !value.trim()) return null;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) && parsed >= 0 ? parsed : null;
+}
 
-      try {
-        const variantRes = await productAPI.getProductVariantsAdmin(productId);
-        const variantList = recordsFrom(variantRes?.data);
-        
-        return variantList.map((v) => ({
-          ...v,
-          _id: v._id || v.id || v.variantId,
-          sku: v.sku || `SKU-${Math.random().toString(36).substring(2, 7)}`,
-          // Lấy giá ưu tiên từ variant, nếu không có thì lấy giá của sản phẩm cha
-          price: Number(v.price ?? v.salePrice ?? v.unitPrice ?? product.price ?? 0),
-          size: v.size || "Standard",
-          material: v.material || product.material || "Gỗ/Kim loại",
-          color: v.color || "Tiêu chuẩn",
-          isActive: v.isActive ?? product.isActive ?? true,
-          productId: productId,
-          product: product,
-        }));
-      } catch (err) {
-        console.error(`Lỗi tải variant cho sản phẩm ${productId}:`, err);
-        // Fallback nếu sản phẩm đã chứa sẵn mảng variants bên trong
-        if (Array.isArray(product.variants)) {
-          return product.variants.map((v) => ({
-            ...v,
-            _id: v._id || v.id || v.variantId,
-            sku: v.sku || `SKU-${Math.random().toString(36).substring(2, 7)}`,
-            price: Number(v.price ?? v.salePrice ?? v.unitPrice ?? product.price ?? 0),
-            size: v.size || "Standard",
-            material: v.material || product.material || "Gỗ/Kim loại",
-            color: v.color || "Tiêu chuẩn",
-            isActive: v.isActive ?? product.isActive ?? true,
-            productId: productId,
-            product: product,
-          }));
-        }
-        return [];
-      }
-    });
+export function activeState(record) {
+  if (typeof record.isActive === "boolean") return record.isActive;
+  if (record.status === "active") return true;
+  if (record.status === "inactive") return false;
+  return null;
+}
 
-    const nestedVariants = await Promise.all(allVariantsPromises);
-    const allVariants = nestedVariants.flat();
-
-    // 3. Lọc dữ liệu theo các tiêu chí (search, material, status)
-    const search = (params.search || "").toLowerCase();
-    const materialFilter = params.material || "";
-    const statusFilter = params.status || "";
-
-    const filtered = allVariants.filter((v) => {
-      const matchSearch =
-        !search ||
-        (v.sku && v.sku.toLowerCase().includes(search)) ||
-        (v.product?.name && v.product.name.toLowerCase().includes(search)) ||
-        (v.material && v.material.toLowerCase().includes(search));
-
-      const matchMaterial = !materialFilter || v.material === materialFilter;
-      const matchStatus =
-        !statusFilter || (statusFilter === "active" ? v.isActive !== false : v.isActive === false);
-
-      return matchSearch && matchMaterial && matchStatus;
-    });
-
-    return {
-      rows: filtered,
-      total: filtered.length,
-      totals: {
-        variants: allVariants.length,
-        products: products.length,
-        active: allVariants.filter((v) => v.isActive !== false).length,
-      },
-      materials: [...new Set(allVariants.map((v) => v.material).filter(Boolean))].sort((a, b) => a.localeCompare(b, "vi")),
-    };
-  } catch (error) {
-    console.error("Lỗi khi tải danh sách SKU:", error);
-    return { rows: [], total: 0, totals: { variants: 0, products: 0, active: 0 }, materials: [] };
+export async function loadProductVariants(products) {
+  const result = [];
+  // Chia lô hữu hạn để không đồng thời gửi request cho toàn bộ danh sách Product.
+  for (let offset = 0; offset < products.length; offset += 4) {
+    const batch = await Promise.all(products.slice(offset, offset + 4).map(async product => {
+      const productId = entityId(product);
+      if (!productId) throw new Error("Product thiếu ID để tải danh sách Variant.");
+      const response = await productAPI.getProductVariantsAdmin(productId);
+      return recordsFrom(response.data, "variants").map(variant => {
+        const stock = realNumber(variant.availableStock);
+        return {
+          ...variant,
+          _id: variant._id ?? variant.id ?? variant.variantId,
+          productId,
+          product,
+          price: realNumber(variant.price),
+          availableStock: stock !== null && Number.isInteger(stock) ? stock : null,
+          isActive: activeState(variant),
+        };
+      });
+    }));
+    result.push(...batch);
   }
+  return result;
+}
+
+export async function getVariants({ search = "", material = "", status = "" } = {}) {
+  const response = await productAPI.getProductsAdmin();
+  const products = recordsFrom(response.data, "products");
+  const groups = await loadProductVariants(products);
+  const variants = groups.flat();
+  const query = search.trim().toLocaleLowerCase("vi");
+  const rows = variants.filter(variant => {
+    const matchSearch = [variant.sku, variant.product?.name, variant.material]
+      .some(value => typeof value === "string" && value.toLocaleLowerCase("vi").includes(query));
+    return (!query || matchSearch) && (!material || variant.material === material)
+      && (!status || variant.isActive === (status === "active"));
+  });
+  return {
+    rows,
+    loaded: variants.length,
+    materials: [...new Set(variants.map(variant => variant.material).filter(value => typeof value === "string" && value.trim()))].sort((a, b) => a.localeCompare(b, "vi")),
+    // Chưa xác minh pagination của Product/Variant API, không coi tập đã tải là toàn hệ thống.
+    totals: { variants: null, products: null, active: null },
+  };
 }

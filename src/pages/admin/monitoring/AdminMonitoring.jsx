@@ -1,43 +1,722 @@
-import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
-import { Truck, Warehouse, Banknote, Award, Plane, Network, Download, Clock, AlertTriangle, ClipboardCheck, Package, Info, CheckCircle } from 'lucide-react';
-import { getMonitoring } from '../../../services/admin/monitoring.service.js';
-import './AdminMonitoring.css';
+import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
+import {
+  AlertTriangle,
+  Award,
+  Banknote,
+  ClipboardCheck,
+  Clock,
+  Download,
+  Info,
+  Network,
+  Package,
+  Plane,
+  Truck,
+  Warehouse,
+} from "lucide-react";
+import {
+  getInventoryMonitoring,
+  getOrderMonitoring,
+} from "../../../services/admin/monitoring.service.js";
+import "./AdminMonitoring.css";
 
-const money = value => new Intl.NumberFormat('en-IE', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(value);
-const quantity = value => new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 1 }).format(value);
-const dateTime = value => new Intl.DateTimeFormat('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh', day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }).format(new Date(value));
+const displayNumber = (value) =>
+  typeof value === "number"
+    ? new Intl.NumberFormat("vi-VN").format(value)
+    : "Chưa có dữ liệu";
+
+const money = (value) =>
+  typeof value === "number"
+    ? new Intl.NumberFormat("vi-VN", {
+        style: "currency",
+        currency: "VND",
+        maximumFractionDigits: 0,
+      }).format(value)
+    : "Chưa có dữ liệu";
+
+const dateTime = (value) =>
+  new Intl.DateTimeFormat("vi-VN", {
+    timeZone: "Asia/Ho_Chi_Minh",
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(new Date(value));
+
+const ORDER_STATUS_OPTIONS = [
+  { id: "", label: "Tất cả đơn hàng" },
+  { id: "pending", label: "Chờ xác nhận" },
+  { id: "confirmed", label: "Đã xác nhận" },
+  { id: "rejected", label: "Đã từ chối" },
+  { id: "cancelled", label: "Đã hủy" },
+];
+
+function getOrderStatusLabel(status) {
+  return (
+    ORDER_STATUS_OPTIONS.find((option) => option.id === status)?.label ?? status
+  );
+}
 
 function Pending({ children, reason, dark = false }) {
-  return <span className="lm-pending" tabIndex={0} aria-label={reason}><button type="button" disabled className={`lm-button ${dark ? 'lm-dark' : ''}`}>{children}</button><span role="tooltip">{reason}</span></span>;
+  return (
+    <span className="lm-pending" tabIndex={0} aria-label={reason}>
+      <button
+        type="button"
+        disabled
+        className={"lm-button " + (dark ? "lm-dark" : "")}
+      >
+        {children}
+      </button>
+      <span role="tooltip">{reason}</span>
+    </span>
+  );
+}
+
+function getStockStatus(row) {
+  if (row.isLowStock === null) return "Chưa có dữ liệu";
+  return row.isLowStock ? "Chạm ngưỡng thấp" : "Trên ngưỡng";
+}
+
+function getVariantLabel(row) {
+  return row.sku || row.variantId || "Chưa có dữ liệu SKU";
+}
+
+function getAttributes(row) {
+  const values = [row.material, row.color, row.size].filter(Boolean);
+  return values.length ? values.join(" · ") : "Chưa có dữ liệu thuộc tính";
 }
 
 export default function AdminMonitoring() {
-  const [query, setQuery] = useState({ period: 'all', status: '' });
-  const [state, setState] = useState({ data: null, loading: true, error: '' });
-  const [expanded, setExpanded] = useState(false);
-  const [retry, setRetry] = useState(0);
+  const [orderQuery, setOrderQuery] = useState({
+    page: 1,
+    limit: 10,
+    status: "",
+  });
+  const [orderState, setOrderState] = useState({
+    data: null,
+    loading: true,
+    error: "",
+  });
+  const [orderRetry, setOrderRetry] = useState(0);
+  const [inventoryState, setInventoryState] = useState({
+    data: null,
+    loading: true,
+    error: "",
+  });
+  const [inventoryQuery, setInventoryQuery] = useState({
+    page: 1,
+    limit: 10,
+  });
+  const [inventoryRetry, setInventoryRetry] = useState(0);
+
   useEffect(() => {
     let cancelled = false;
-    getMonitoring(query).then(data => { if (!cancelled) setState({ data, loading: false, error: '' }); }).catch(error => { if (!cancelled) setState({ data: null, loading: false, error: error.message }); });
-    return () => { cancelled = true; };
-  }, [query, retry]);
-  function update(values) { setState(previous => ({ ...previous, loading: true, error: '' })); setQuery(previous => ({ ...previous, ...values })); setExpanded(false); }
-  const data = state.data;
-  const rows = data ? expanded ? data.orders : data.orders.slice(0, 3) : [];
-  return <div className="lm-page">
-    <p className="lm-eyebrow">TRUNG TÂM KIỂM SOÁT <span>• ĐƠN HÀNG & CHUỖI CUNG ỨNG LIÊN HUB</span></p>
-    <section className="lm-heading"><div><h1>Giám Sát Đơn Hàng & Tồn Kho Toàn Hệ Thống</h1><p>Giám sát đơn hàng, dung tích kho và vật tư cần theo dõi trong không gian LUMORA.</p></div><div className="lm-toolbar"><label><Clock size={15} />Ngày tạo đơn:<select aria-label="Khoảng thời gian theo ngày tạo đơn" value={query.period} onChange={event => update({ period: event.target.value })}><option value="all">Tất cả</option><option value="today">Hôm nay</option><option value="7d">7 ngày</option><option value="30d">30 ngày</option></select></label><Pending reason="Chưa có nguồn và định nghĩa báo cáo SLA"><Download size={15} />Tải báo cáo kiểm soát SLA</Pending><span className="lm-incident">Cảnh báo sự cố: Chưa tích hợp</span></div></section>
-    {state.error ? <section className="lm-state" role="alert"><h2>Không thể tải dữ liệu giám sát</h2><p>{state.error}</p><button className="lm-button" onClick={() => { setState({ data: null, loading: true, error: '' }); setRetry(value => value + 1); }}>Thử lại</button></section> : !data ? <div className="lm-state" role="status">Đang tải dữ liệu demo…<div className="lm-skeleton" /></div> : <>
-      <p className="lm-demo-note"><b>Dữ liệu demo</b> Mốc cố định: {data.referenceDate} (UTC+07:00). Hôm nay, 7 ngày và 30 ngày đều kết thúc tại mốc này. Không có realtime hoặc đồng bộ Backend.</p>
-      <section className="lm-kpis" aria-label="Tổng quan giám sát"><article className="lm-card"><div className="lm-kpi-label">TỔNG GIÁ TRỊ ĐANG CHẠY<Banknote size={22} /></div><strong>{money(data.runningValue)}</strong><p>Đơn chưa hoàn tất trong kỳ chọn.</p><small>Tăng trưởng: Chưa tích hợp</small></article><article className="lm-card"><div className="lm-kpi-label">ĐƠN VIP SOVEREIGN<Award size={22} /></div><strong className="lm-unknown">Chưa tích hợp</strong><p>Chưa có tiêu chí phân hạng VIP.</p></article><article className="lm-card"><div className="lm-kpi-label">TUÂN THỦ VẬN CHUYỂN<Plane size={22} /></div><strong className="lm-unknown">Chưa tích hợp</strong><p>Chưa có thời hạn cam kết và dữ liệu SLA.</p></article><article className="lm-card lm-capacity"><div className="lm-kpi-label">TẢI KHO TRUNG CHUYỂN<Network size={22} /></div><strong>{quantity(data.usagePercent)}%</strong><p>{quantity(data.occupiedM3)} / {quantity(data.capacityM3)} m³</p><small>Tổng dung tích sử dụng / tổng sức chứa demo.</small></article></section>
-      <section className="lm-orders" aria-busy={state.loading}><header className="lm-section-heading"><h2><Truck size={23} />Live Order Monitoring Deck</h2><span className="lm-pill">Dữ liệu demo • Không realtime</span></header><p className="lm-explanation">Tab đếm theo kỳ đã chọn. “Tất cả” bao gồm đơn hoàn tất; KPI giá trị đang chạy không đổi khi chuyển tab.</p><div className="lm-tabs" role="group" aria-label="Trạng thái đơn hàng"><button aria-pressed={!query.status} className={!query.status ? 'lm-active' : ''} onClick={() => update({ status: '' })}>Tất cả đơn hàng <b>{data.totalOrders}</b></button>{data.statuses.map(status => <button key={status.id} aria-pressed={query.status === status.id} className={query.status === status.id ? 'lm-active' : ''} onClick={() => update({ status: status.id })}>{status.label}<b>{status.count}</b></button>)}</div>
-        <div className="lm-order-box">{state.loading ? <div className="lm-state" role="status">Đang lọc đơn hàng…<div className="lm-skeleton" /></div> : rows.length ? <div className="lm-table-scroll" tabIndex={0} aria-label="Bảng giám sát đơn hàng, cuộn ngang khi cần"><table className="lm-table lm-order-table"><thead><tr>{['MÃ ĐƠN / THỜI GIAN', 'KHÁCH HÀNG', 'CẤU KIỆN NGHỆ THUẬT', 'TRỊ GIÁ', 'HUB ĐIỀU PHỐI', 'TRẠNG THÁI VẬN HÀNH', 'GHI CHÚ KỸ THUẬT'].map(label => <th scope="col" key={label}>{label}</th>)}</tr></thead><tbody>{rows.map(order => <tr key={order.id}><td><Link className="lm-order-id" to={"/admin/orders/" + encodeURIComponent(order.id)}>#{order.id}</Link><small>{dateTime(order.createdAt)}</small></td><td><div className="lm-customer"><span aria-hidden="true">{order.customer.split(' ').slice(0, 2).map(word => word[0]).join('')}</span><strong>{order.customer}</strong></div></td><td><div className="lm-item"><span className="lm-image-placeholder" role="img" aria-label="Chưa có ảnh sản phẩm gốc"><Package size={22} /></span><div>{order.itemName}<small>{order.materials}</small></div></div></td><td className="lm-money">{money(order.total)}</td><td>{order.warehouse.name}</td><td><span className={`lm-status lm-status-${order.status}`}>{data.statuses.find(status => status.id === order.status).label}</span></td><td><span className="lm-note">{order.note}</span></td></tr>)}</tbody></table></div> : <div className="lm-state" role="status"><Package size={30} /><h3>Không có đơn hàng phù hợp</h3><p>Thử chọn kỳ khác hoặc tab Tất cả đơn hàng.</p><button className="lm-button" onClick={() => update({ period: 'all', status: '' })}>Xóa bộ lọc</button></div>}
-          <footer className="lm-order-footer"><span aria-live="polite">{state.loading ? 'Đang tải…' : `Hiển thị ${rows.length} trên ${data.orders.length} đơn phù hợp • Tổng ${money(data.filteredValue)}`}</span>{data.orders.length > 3 && <button disabled={state.loading} aria-expanded={expanded} onClick={() => setExpanded(value => !value)}>{expanded ? 'Thu gọn danh sách ↑' : 'Xem tất cả danh sách đơn hàng →'}</button>}</footer>
+
+    getOrderMonitoring(orderQuery)
+      .then((data) => {
+        if (!cancelled) {
+          setOrderState({ data, loading: false, error: "" });
+        }
+      })
+      .catch((error) => {
+        if (!cancelled) {
+          setOrderState({
+            data: null,
+            loading: false,
+            error:
+              error?.message ||
+              "Không thể tải dữ liệu Order. Vui lòng thử lại.",
+          });
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [orderQuery, orderRetry]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    getInventoryMonitoring(inventoryQuery)
+      .then((data) => {
+        if (!cancelled) {
+          setInventoryState({ data, loading: false, error: "" });
+        }
+      })
+      .catch((error) => {
+        if (!cancelled) {
+          setInventoryState({
+            data: null,
+            loading: false,
+            error:
+              error?.message ||
+              "Không thể tải dữ liệu Inventory. Vui lòng thử lại.",
+          });
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [inventoryQuery, inventoryRetry]);
+
+  function retryInventory() {
+    setInventoryState((current) => ({ ...current, loading: true, error: "" }));
+    setInventoryRetry((value) => value + 1);
+  }
+
+  function changeInventoryPage(page) {
+    setInventoryState((current) => ({ ...current, loading: true, error: "" }));
+    setInventoryQuery((current) => ({ ...current, page }));
+  }
+
+  function changeInventoryLimit(limit) {
+    setInventoryState((current) => ({ ...current, loading: true, error: "" }));
+    setInventoryQuery({ page: 1, limit });
+  }
+
+  function retryOrders() {
+    setOrderState((current) => ({ ...current, loading: true, error: "" }));
+    setOrderRetry((value) => value + 1);
+  }
+
+  function changeOrderStatus(status) {
+    setOrderState((current) => ({ ...current, loading: true, error: "" }));
+    setOrderQuery((current) => ({ ...current, page: 1, status }));
+  }
+
+  function changeOrderPage(page) {
+    setOrderState((current) => ({ ...current, loading: true, error: "" }));
+    setOrderQuery((current) => ({ ...current, page }));
+  }
+
+  function changeOrderLimit(limit) {
+    setOrderState((current) => ({ ...current, loading: true, error: "" }));
+    setOrderQuery((current) => ({ ...current, page: 1, limit }));
+  }
+
+  const rows = inventoryState.data?.rows ?? [];
+  const orders = orderState.data?.orders ?? [];
+  const orderPagination = orderState.data?.pagination;
+  const inventoryPagination = inventoryState.data?.pagination;
+
+  return (
+    <div className="lm-page">
+      <p className="lm-eyebrow">
+        TRUNG TÂM KIỂM SOÁT
+        <span>• ĐƠN HÀNG & TỒN KHO</span>
+      </p>
+
+      <section className="lm-heading">
+        <div>
+          <h1>Giám Sát Đơn Hàng & Tồn Kho Toàn Hệ Thống</h1>
+          <p>
+            Theo dõi Order và Inventory từ Backend trong chế độ chỉ đọc, với
+            trạng thái request độc lập cho từng domain.
+          </p>
+        </div>
+        <div className="lm-toolbar">
+          <label title="Bộ lọc này thuộc dữ liệu đơn hàng và chưa được tích hợp">
+            <Clock size={15} />
+            Kỳ đơn hàng:
+            <select disabled aria-label="Kỳ đơn hàng chưa tích hợp">
+              <option>Chưa tích hợp</option>
+            </select>
+          </label>
+          <Pending reason="Chưa có nguồn và định nghĩa báo cáo SLA">
+            <Download size={15} />
+            Tải báo cáo kiểm soát SLA
+          </Pending>
+          <span className="lm-incident">
+            Cảnh báo sự cố: Chưa tích hợp
+          </span>
         </div>
       </section>
-      <section className="lm-inventory"><header className="lm-section-heading"><h2><Warehouse size={23} />Global Multi-Hub Inventory Monitoring</h2><span className="lm-pill">Snapshot demo</span></header><p className="lm-explanation">Dữ liệu kho và vật tư là snapshot cố định, không thay đổi theo bộ lọc ngày tạo đơn. Cảnh báo khi lượng vật tư nhỏ hơn hoặc bằng ngưỡng.</p><div className="lm-warehouse-grid">{data.warehouses.map((warehouse, index) => <article className="lm-card" key={warehouse.id}><header><h3>{index + 1}. {warehouse.name}</h3><span className={`lm-stock-badge ${warehouse.lowStockCount ? 'lm-stock-alert' : ''}`}>{warehouse.lowStockCount ? 'CẢNH BÁO VẬT TƯ' : 'CHƯA CÓ CẢNH BÁO TRONG FIXTURE'}</span></header><p className="lm-warehouse-description">{warehouse.description}</p><dl><div><dt>Lưu kho:</dt><dd>{quantity(warehouse.finishedPackages)} kiện thành phẩm</dd></div><div><dt>Tổng giá trị:</dt><dd className="lm-muted">Chưa tích hợp</dd></div><div><dt>Dung tích sử dụng:</dt><dd>{quantity(warehouse.usagePercent)}%</dd></div></dl><div className="lm-progress" role="meter" aria-label={`Dung tích ${warehouse.name}`} aria-valuemin={0} aria-valuemax={100} aria-valuenow={warehouse.usagePercent}><span style={{ width: `${warehouse.usagePercent}%` }} /></div><small>{quantity(warehouse.occupiedM3)} / {quantity(warehouse.capacityM3)} m³</small><div className="lm-warehouse-alert">{warehouse.lowStockCount ? <AlertTriangle size={18} /> : <CheckCircle size={18} />}<span>{warehouse.lowStockCount ? `${warehouse.lowStockCount} vật tư chạm ngưỡng trong fixture` : 'Không có vật tư chạm ngưỡng trong fixture'}</span></div></article>)}</div></section>
-      <section className="lm-card lm-watchlist"><header><div className="lm-watchlist-title"><span><ClipboardCheck size={26} /></span><div><h2>Critical Material Low-Stock Watchlist</h2><p>Vật tư dưới hoặc bằng ngưỡng dự trữ • {data.lowStock.length} kết quả demo</p></div></div><span className="lm-pill">Đồng bộ mỏ đá & xưởng cưa: Chưa tích hợp</span></header>{data.lowStock.length ? <div className="lm-table-scroll" tabIndex={0} aria-label="Danh sách vật tư cần theo dõi, cuộn ngang khi cần"><table className="lm-table lm-material-table"><thead><tr>{['CHỦNG LOẠI / MÃ VẬT LIỆU', 'VỊ TRÍ LƯU KHO', 'MỨC TỒN / NGƯỠNG', 'THỜI GIAN CUNG ỨNG', 'TÁC ĐỘNG SẢN XUẤT', 'LỆNH CAN THIỆP'].map(label => <th key={label} scope="col">{label}</th>)}</tr></thead><tbody>{data.lowStock.map(material => <tr key={material.id}><td><div className="lm-material-name"><Package size={24} /><div><strong>{material.name}</strong><small>SKU: {material.sku}</small></div></div></td><td>{material.warehouse.name}<small>{material.location}</small></td><td><div className="lm-stock-values"><strong>{quantity(material.quantity)} {material.unit}</strong><span>/ Tối thiểu {quantity(material.threshold)} {material.unit}</span></div><div className="lm-progress"><span style={{ width: `${Math.min(100, material.quantity / material.threshold * 100)}%` }} /></div></td><td>{material.leadDays} ngày<small>{material.supplier} (demo)</small></td><td><span className="lm-impact">{material.impact}</span></td><td><Pending dark reason="Đặt hàng khẩn cấp thuộc nghiệp vụ mua/nhập hàng, Admin chỉ giám sát">Kích hoạt đặt hàng khẩn cấp</Pending></td></tr>)}</tbody></table></div> : <p className="lm-state">Không có vật tư chạm ngưỡng trong fixture.</p>}<p className="lm-explanation"><Info size={13} />Số lượng chỉ so sánh với ngưỡng của cùng vật tư, cùng đơn vị; không cộng khối, m³ và kg với nhau.</p></section>
-    </>}
-  </div>;
+
+      <p className="lm-demo-note">
+        <b>Dữ liệu Backend</b>
+        Order và Inventory được tải từ hai API độc lập. Realtime, Payment, SLA
+        và đồng bộ kho liên Hub chưa được tích hợp.
+      </p>
+
+      <section className="lm-kpis" aria-label="Tổng quan giám sát">
+        <article className="lm-card">
+          <div className="lm-kpi-label">
+            TỔNG ĐƠN HÀNG
+            <Banknote size={22} />
+          </div>
+          <strong>
+            {orderState.loading
+              ? "…"
+              : orderState.error
+                ? "Chưa có dữ liệu"
+                : orderPagination?.totalItems}
+          </strong>
+          <p>Tổng số Order do Backend cung cấp theo bộ lọc trạng thái hiện tại.</p>
+        </article>
+        <article className="lm-card">
+          <div className="lm-kpi-label">
+            ĐƠN TRÊN TRANG HIỆN TẠI
+            <Award size={22} />
+          </div>
+          <strong>
+            {orderState.loading || orderState.error
+              ? "Chưa có dữ liệu"
+              : orders.length}
+          </strong>
+          <p>Trang {orderPagination?.page ?? 1}, không dùng làm tổng hệ thống.</p>
+        </article>
+        <article className="lm-card">
+          <div className="lm-kpi-label">
+            TUÂN THỦ VẬN CHUYỂN
+            <Plane size={22} />
+          </div>
+          <strong className="lm-unknown">Chưa tích hợp</strong>
+          <p>Chưa có thời hạn cam kết và dữ liệu SLA.</p>
+        </article>
+        <article className="lm-card lm-capacity">
+          <div className="lm-kpi-label">
+            TẢI KHO TRUNG CHUYỂN
+            <Network size={22} />
+          </div>
+          <strong className="lm-unknown">Chưa tích hợp</strong>
+          <p>Chưa có contract sức chứa hoặc mức sử dụng kho.</p>
+        </article>
+      </section>
+
+      <section className="lm-orders">
+        <header className="lm-section-heading">
+          <h2>
+            <Truck size={23} />
+            Live Order Monitoring Deck
+          </h2>
+          <span className="lm-pill">REAL ORDER API</span>
+        </header>
+        <p className="lm-explanation">
+          Bộ lọc trạng thái và phân trang được xử lý tại Backend. Payment,
+          warehouse, staff và SLA chưa được tích hợp.
+        </p>
+        <div className="lm-tabs" role="group" aria-label="Trạng thái Order">
+          {ORDER_STATUS_OPTIONS.map((option) => (
+            <button
+              key={option.id || "all"}
+              type="button"
+              aria-pressed={orderQuery.status === option.id}
+              className={orderQuery.status === option.id ? "lm-active" : ""}
+              disabled={orderState.loading}
+              onClick={() => changeOrderStatus(option.id)}
+            >
+              {option.label}
+              {option.id === orderQuery.status && orderPagination ? (
+                <b>{orderPagination.totalItems}</b>
+              ) : null}
+            </button>
+          ))}
+        </div>
+        <div className="lm-order-box">
+          {orderState.loading ? (
+            <div className="lm-state" role="status">
+              Đang tải dữ liệu Order…
+              <div className="lm-skeleton" />
+            </div>
+          ) : orderState.error ? (
+            <div className="lm-state" role="alert">
+              <AlertTriangle size={30} />
+              <h3>Không thể tải dữ liệu Order</h3>
+              <p>{orderState.error}</p>
+              <button className="lm-button" onClick={retryOrders}>
+                Thử lại
+              </button>
+            </div>
+          ) : orders.length === 0 ? (
+            <div className="lm-state" role="status">
+              <Package size={30} />
+              <h3>Không có Order phù hợp</h3>
+              <p>Backend trả về danh sách rỗng cho trang và trạng thái đã chọn.</p>
+            </div>
+          ) : (
+            <div
+              className="lm-table-scroll"
+              tabIndex={0}
+              aria-label="Bảng giám sát Order, cuộn ngang khi cần"
+            >
+              <table className="lm-table lm-order-table">
+                <thead>
+                  <tr>
+                    <th scope="col">MÃ ORDER / THỜI GIAN</th>
+                    <th scope="col">NGƯỜI NHẬN</th>
+                    <th scope="col">ITEM SNAPSHOT</th>
+                    <th scope="col">TỔNG GIÁ TRỊ</th>
+                    <th scope="col">TRẠNG THÁI</th>
+                    <th scope="col">THANH TOÁN / ĐIỀU PHỐI</th>
+                    <th scope="col">CHI TIẾT</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {orders.map((order) => {
+                    const firstItem = order.items[0];
+                    const attributes = firstItem
+                      ? [
+                          firstItem.color,
+                          firstItem.size,
+                          firstItem.material,
+                        ]
+                          .filter(Boolean)
+                          .join(" · ")
+                      : "";
+
+                    return (
+                      <tr key={order.orderId}>
+                        <td>
+                          <strong className="lm-order-id">
+                            #{order.orderId}
+                          </strong>
+                          <small>{dateTime(order.createdAt)}</small>
+                        </td>
+                        <td>
+                          <div className="lm-customer">
+                            <span aria-hidden="true">
+                              {order.shippingAddress.receiverName
+                                ?.split(" ")
+                                .slice(0, 2)
+                                .map((word) => word[0])
+                                .join("") || "?"}
+                            </span>
+                            <div>
+                              <strong>
+                                {order.shippingAddress.receiverName ||
+                                  "Chưa có dữ liệu người nhận"}
+                              </strong>
+                              <small>
+                                User ID: {order.userId || "Chưa có dữ liệu"}
+                              </small>
+                            </div>
+                          </div>
+                        </td>
+                        <td>
+                          <div className="lm-item">
+                            <span
+                              className="lm-image-placeholder"
+                              role="img"
+                              aria-label="Item snapshot"
+                            >
+                              <Package size={22} />
+                            </span>
+                            <div>
+                              {firstItem?.productName ||
+                                "Chưa có item snapshot"}
+                              <small>
+                                {order.items.length} item
+                                {firstItem?.sku ? " · SKU: " + firstItem.sku : ""}
+                              </small>
+                              {firstItem ? (
+                                <small>
+                                  {attributes || "Chưa có thuộc tính"} · Giá lịch
+                                  sử: {money(firstItem.unitPrice)}
+                                </small>
+                              ) : null}
+                            </div>
+                          </div>
+                        </td>
+                        <td className="lm-money">
+                          {money(order.totalAmount)}
+                          <small>Subtotal: {money(order.subtotal)}</small>
+                        </td>
+                        <td>
+                          <span
+                            className={"lm-status lm-status-" + order.status}
+                          >
+                            {getOrderStatusLabel(order.status)}
+                          </span>
+                        </td>
+                        <td>
+                          <span className="lm-note">Payment: Chưa tích hợp</span>
+                          <small>Warehouse / Staff / SLA: Chưa tích hợp</small>
+                        </td>
+                        <td>
+                          <span
+                            className="lm-muted"
+                            title="GET /api/orders/:id không cho phép Admin"
+                          >
+                            Chi tiết chưa khả dụng cho Admin
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+          <footer className="lm-order-footer">
+            <span aria-live="polite">
+              {orderPagination
+                ? "Trang " +
+                  orderPagination.page +
+                  " / " +
+                  Math.max(orderPagination.totalPages, 1) +
+                  " · Tổng " +
+                  orderPagination.totalItems +
+                  " Order"
+                : "Chưa có metadata phân trang"}
+            </span>
+            <label>
+              Dòng mỗi trang:
+              <select
+                value={orderQuery.limit}
+                disabled={orderState.loading}
+                onChange={(event) =>
+                  changeOrderLimit(Number(event.target.value))
+                }
+              >
+                <option value={5}>5</option>
+                <option value={10}>10</option>
+                <option value={20}>20</option>
+              </select>
+            </label>
+            <nav aria-label="Phân trang Order">
+              <button
+                type="button"
+                disabled={
+                  orderState.loading || !orderPagination || orderPagination.page <= 1
+                }
+                onClick={() => changeOrderPage(orderPagination.page - 1)}
+              >
+                Trước
+              </button>
+              <button
+                type="button"
+                disabled={
+                  orderState.loading ||
+                  !orderPagination ||
+                  orderPagination.totalPages === 0 ||
+                  orderPagination.page >= orderPagination.totalPages
+                }
+                onClick={() => changeOrderPage(orderPagination.page + 1)}
+              >
+                Sau
+              </button>
+            </nav>
+          </footer>
+        </div>
+      </section>
+
+      <section className="lm-inventory">
+        <header className="lm-section-heading">
+          <h2>
+            <Warehouse size={23} />
+            Global Multi-Hub Inventory Monitoring
+          </h2>
+          <span className="lm-pill">REAL INVENTORY API</span>
+        </header>
+        <p className="lm-explanation">
+          Phân bổ kho, vị trí, sức chứa và mức sử dụng chưa có contract được xác
+          minh.
+        </p>
+        <div className="lm-card lm-state" role="status">
+          <Warehouse size={30} />
+          <h3>Phân bổ đa kho chưa tích hợp</h3>
+          <p>Không suy diễn warehouse hoặc location từ Inventory ID.</p>
+        </div>
+      </section>
+
+      <section className="lm-card lm-watchlist">
+        <header>
+          <div className="lm-watchlist-title">
+            <span>
+              <ClipboardCheck size={26} />
+            </span>
+            <div>
+              <h2>Inventory Snapshot</h2>
+              <p>
+                Quantity, availableStock và threshold được giữ theo field API
+                riêng biệt.
+              </p>
+            </div>
+          </div>
+          <span className="lm-pill">
+            {inventoryPagination
+              ? `${inventoryPagination.totalItems} INVENTORY`
+              : "SERVER PAGINATION"}
+          </span>
+        </header>
+
+        {inventoryState.loading ? (
+          <div className="lm-state" role="status">
+            Đang tải dữ liệu Inventory…
+            <div className="lm-skeleton" />
+          </div>
+        ) : inventoryState.error ? (
+          <div className="lm-state" role="alert">
+            <AlertTriangle size={30} />
+            <h3>Không thể tải dữ liệu Inventory</h3>
+            <p>{inventoryState.error}</p>
+            <button className="lm-button" onClick={retryInventory}>
+              Thử lại
+            </button>
+          </div>
+        ) : rows.length === 0 ? (
+          <div className="lm-state" role="status">
+            <Package size={30} />
+            <h3>Chưa có bản ghi Inventory</h3>
+            <p>API trả về một danh sách hợp lệ nhưng không có dữ liệu.</p>
+          </div>
+        ) : (
+          <div
+            className="lm-table-scroll"
+            tabIndex={0}
+            aria-label="Danh sách Inventory, cuộn ngang khi cần"
+          >
+            <table className="lm-table lm-material-table">
+              <thead>
+                <tr>
+                  <th scope="col">SKU / VARIANT</th>
+                  <th scope="col">SỐ LƯỢNG TỒN KHO</th>
+                  <th scope="col">AVAILABLE STOCK</th>
+                  <th scope="col">NGƯỠNG</th>
+                  <th scope="col">TRẠNG THÁI</th>
+                  <th scope="col">CHI TIẾT</th>
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map((row) => (
+                  <tr key={row.inventoryId}>
+                    <td>
+                      <div className="lm-material-name">
+                        <Package size={24} />
+                        <div>
+                          <strong>{getVariantLabel(row)}</strong>
+                          <small>
+                            {row.productName || "Chưa có dữ liệu Product"}
+                          </small>
+                          <small>{getAttributes(row)}</small>
+                        </div>
+                      </div>
+                    </td>
+                    <td>
+                      <strong>{displayNumber(row.quantity)}</strong>
+                      <small>Inventory.quantity</small>
+                    </td>
+                    <td>
+                      <div className="lm-stock-values">
+                        <strong>
+                          Inventory: {displayNumber(row.inventoryAvailableStock)}
+                        </strong>
+                      </div>
+                      <small>
+                        Variant: {displayNumber(row.variantAvailableStock)}
+                      </small>
+                    </td>
+                    <td>
+                      <strong>{displayNumber(row.lowStockThreshold)}</strong>
+                      <small>Inventory.lowStockThreshold</small>
+                    </td>
+                    <td>
+                      <span
+                        className={
+                          "lm-stock-badge " +
+                          (row.isLowStock ? "lm-stock-alert" : "")
+                        }
+                      >
+                        {getStockStatus(row)}
+                      </span>
+                    </td>
+                    <td>
+                      {row.variantId ? (
+                        <Link
+                          className="lm-order-id"
+                          to={
+                            "/admin/inventory/" +
+                            encodeURIComponent(row.variantId)
+                          }
+                        >
+                          Xem chi tiết
+                        </Link>
+                      ) : (
+                        <span
+                          className="lm-muted"
+                          title="Bản ghi không có Variant ID hợp lệ"
+                        >
+                          Chưa khả dụng
+                        </span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        <footer className="lm-order-footer">
+          <span aria-live="polite">
+            {inventoryPagination
+              ? "Trang " +
+                inventoryPagination.page +
+                " / " +
+                inventoryPagination.totalPages +
+                " · Hiển thị " +
+                rows.length +
+                " / tổng " +
+                inventoryPagination.totalItems +
+                " Inventory"
+              : "Chưa có metadata phân trang"}
+          </span>
+          <label>
+            Dòng mỗi trang:
+            <select
+              value={inventoryQuery.limit}
+              disabled={inventoryState.loading}
+              onChange={(event) =>
+                changeInventoryLimit(Number(event.target.value))
+              }
+            >
+              <option value={5}>5</option>
+              <option value={10}>10</option>
+              <option value={20}>20</option>
+            </select>
+          </label>
+          <nav aria-label="Phân trang Inventory">
+            <button
+              type="button"
+              disabled={
+                inventoryState.loading ||
+                !inventoryPagination ||
+                inventoryPagination.page <= 1
+              }
+              onClick={() =>
+                changeInventoryPage(inventoryPagination.page - 1)
+              }
+            >
+              Trước
+            </button>
+            <button
+              type="button"
+              disabled={
+                inventoryState.loading ||
+                !inventoryPagination ||
+                inventoryPagination.totalPages === 0 ||
+                inventoryPagination.page >= inventoryPagination.totalPages
+              }
+              onClick={() =>
+                changeInventoryPage(inventoryPagination.page + 1)
+              }
+            >
+              Sau
+            </button>
+          </nav>
+        </footer>
+
+        <p className="lm-explanation">
+          <Info size={13} />
+          Low-stock chỉ được suy ra cho {rows.length} row trên trang hiện tại khi
+          cả quantity và threshold đều là số. Bộ lọc cục bộ không được áp dụng
+          trên tập Inventory toàn hệ thống. Endpoint low-stock và transactions
+          chưa được tích hợp do chưa xác minh envelope.
+        </p>
+      </section>
+    </div>
+  );
 }
