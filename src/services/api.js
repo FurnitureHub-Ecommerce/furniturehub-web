@@ -245,6 +245,7 @@ export const orderAPI = {
   getMyOrders: (params = {}) => api.get("/api/orders/my-orders", { params }),
   getMyOrderById: (id) => api.get(`/api/orders/${id}`),
   getOrderTracking: (id) => api.get(`/api/orders/${id}/tracking`),
+  trackOrder: (id) => api.get(`/api/orders/${id}/tracking`),
   cancelOrder: (id, data = {}) => api.patch(`/api/orders/${id}/cancel`, data),
 };
 

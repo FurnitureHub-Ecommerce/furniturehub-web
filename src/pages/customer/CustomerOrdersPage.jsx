@@ -22,6 +22,8 @@ import OrderStatusBadge from "../../components/order/OrderStatusbadge/OrderStatu
 import OrderStatusStepper from "../../components/order/OrderStatusStepper/OrderStatusStepper";
 import OrderDetailModal from "../../components/order/OrderDetailModal/OrderDetailModal";
 import CancelOrderModal from "../../components/order/CancelOrderModal/CancelOrderModal";
+import OrderTrackingTimeline from "../../components/customer/OrderTrackingTimeline";
+import QuickOrderTrack from "../../components/customer/QuickOrderTrack";
 import "./CustomerOrders.css";
 
 const FALLBACK_PRODUCT_IMAGE =
@@ -204,6 +206,11 @@ export default function CustomerOrdersPage() {
         </p>
       </div>
 
+      {/* Task 6: Tra Cứu Tiến Độ Đơn Hàng Nhanh (Quick Track) */}
+      <QuickOrderTrack
+        onViewOrderDetail={(id) => handleOpenDetail({ _id: id })}
+      />
+
       {/* Tabs Filter */}
       <div className="orders-tabs" role="tablist">
         <button
@@ -377,9 +384,9 @@ export default function CustomerOrdersPage() {
                   </div>
                 </div>
 
-                {/* Task 18: Stepper Progress Timeline (Compact preview) */}
+                {/* Task 6: Stepper Progress Timeline (Compact preview) */}
                 <div className="order-item-card__stepper-wrap">
-                  <OrderStatusStepper
+                  <OrderTrackingTimeline
                     status={ord.status}
                     variant="compact"
                     createdAt={ord.createdAt}
@@ -473,6 +480,22 @@ export default function CustomerOrdersPage() {
                           Hủy Đơn Hàng
                         </button>
                       )}
+
+                      {/* Task 6: Theo dõi timeline nhanh & chi tiết */}
+                      <button
+                        type="button"
+                        className="order-btn-view"
+                        style={{
+                          backgroundColor: "#FAF8F5",
+                          borderColor: "#E2DBD0",
+                          color: "#8A6A48",
+                          marginRight: "0.5rem",
+                        }}
+                        onClick={() => handleOpenDetail(ord)}
+                        title="Theo dõi tiến trình chi tiết"
+                      >
+                        <Truck size={14} /> Theo Dõi
+                      </button>
 
                       {/* Task 16: Xem chi tiết mở OrderDetailModal */}
                       <button

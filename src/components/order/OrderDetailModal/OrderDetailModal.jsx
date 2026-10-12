@@ -20,6 +20,7 @@ import { orderAPI, paymentAPI, getApiErrorMessage } from "../../../services/api"
 import { formatCurrency, PRODUCT_IMAGE_OVERRIDES } from "../../../utils/formatters";
 import OrderStatusBadge from "../OrderStatusbadge/OrderStatusBadge";
 import OrderStatusStepper from "../OrderStatusStepper/OrderStatusStepper";
+import OrderTrackingTimeline from "../../customer/OrderTrackingTimeline";
 import "./OrderDetailModal.css";
 
 const FALLBACK_PRODUCT_IMAGE =
@@ -192,16 +193,18 @@ export default function OrderDetailModal({
             </div>
           ) : (
             <>
-              {/* Task 18: Stepper Progress Timeline */}
+              {/* Task 6: Stepper Progress Timeline LUMORA */}
               <div className="order-modal__section">
                 <span className="order-modal__section-heading">
-                  TIẾN TRÌNH ĐƠN HÀNG
+                  TIẾN TRÌNH ĐƠN HÀNG WHITE-GLOVE
                 </span>
-                <OrderStatusStepper
+                <OrderTrackingTimeline
+                  orderId={activeOrderId}
                   status={order?.status || "pending"}
                   variant="full"
                   createdAt={order?.createdAt}
                   updatedAt={order?.updatedAt}
+                  cancelReason={order?.cancelReason}
                 />
               </div>
 
