@@ -586,6 +586,7 @@
     opacity: 0;
     transform: translateY(-20px) scale(0.96);
   }
+
   to {
     opacity: 1;
     transform: translateY(0) scale(1);
@@ -952,15 +953,19 @@
 .activity-item__dot--order {
   background: #8a6a48;
 }
+
 .activity-item__dot--fulfillment {
   background: #10b981;
 }
+
 .activity-item__dot--alert {
   background: #f59e0b;
 }
+
 .activity-item__dot--dispatch {
   background: #6366f1;
 }
+
 .activity-item__dot--client {
   background: #c89d5c;
 }
