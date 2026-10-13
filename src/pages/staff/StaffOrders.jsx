@@ -1,89 +1,169 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useRef } from "react";
+import { useSearchParams } from "react-router-dom";
 import { MapPin, Check, Clock, Shield } from "lucide-react";
 import { orderAPI } from "../../services/api";
 import OrderTable from "../../components/order/OrderTable/OrderTable";
 
 const StaffOrders = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // Helper: read initial page from URL -> fallback to localStorage -> fallback to 1
+  const getInitialPage = () => {
+    const fromUrl = parseInt(searchParams.get("page"), 10);
+    if (!isNaN(fromUrl) && fromUrl >= 1) return fromUrl;
+    const fromStorage = parseInt(localStorage.getItem("staff_last_page"), 10);
+    if (!isNaN(fromStorage) && fromStorage >= 1) return fromStorage;
+    return 1;
+  };
+
+  // Helper: read initial orderId from URL -> fallback to localStorage -> null
+  const getInitialOrderId = () => {
+    const fromUrl = searchParams.get("orderId");
+    if (fromUrl) return fromUrl;
+    return localStorage.getItem("staff_last_order_id") || null;
+  };
+
   // ── State ──────────────────────────────────────────────
-  // orders from the API
   const [orderList, setOrderList] = useState([]);
-  // track which order the user clicked in the table
-  const [selectedOrderId, setSelectedOrderId] = useState(null);
-  // UI feedback states
+  const [currentPage, setCurrentPage] = useState(getInitialPage);
+  const [selectedOrderId, setSelectedOrderId] = useState(getInitialOrderId);
+  const [standaloneOrder, setStandaloneOrder] = useState(null);
+  const [detailLoading, setDetailLoading] = useState(false);
+
+  const [pagination, setPagination] = useState({
+    page: 1,
+    limit: 10,
+    totalPages: 1,
+    totalItems: 0,
+  });
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-
   const [showNotification, setShowNotification] = useState(true);
-  const [confirming, setConfirming] = useState(false);
-  const [confirmError, setConfirmError] = useState(null);
-  const [successToast, setSuccessToast] = useState(null); // { orderId, shortId }
 
-  // ── Confirm order (pending → confirmed) ───────────────
-  const showToast = useCallback((orderId, shortId) => {
-    setSuccessToast({ orderId, shortId });
-    setTimeout(() => setSuccessToast(null), 3500);
-  }, []);
+  // Track initial mount so we respect restored orderId
+  const isInitialMount = useRef(true);
 
-  const handleConfirmOrder = async () => {
-    if (!selectedOrder || confirming) return;
-    try {
-      setConfirming(true);
-      setConfirmError(null);
-      await orderAPI.confirmOrderStatus(selectedOrder._id);
-      // Optimistically update status in local list
-      setOrderList((prev) =>
-        prev.map((o) =>
-          o._id === selectedOrder._id ? { ...o, status: "confirmed" } : o,
-        ),
-      );
-      showToast(selectedOrder._id, selectedOrder._id.slice(-8).toUpperCase());
-    } catch (err) {
-      console.error("Confirm order failed:", err);
-      setConfirmError(
-        err?.response?.data?.message || "Xác nhận thất bại. Vui lòng thử lại.",
-      );
-    } finally {
-      setConfirming(false);
+  // Helper: Sync current page & orderId to both URL and localStorage
+  const syncStateToUrlAndStorage = (page, orderId) => {
+    const params = { page: page.toString() };
+    if (orderId) params.orderId = orderId;
+    setSearchParams(params, { replace: true });
+    localStorage.setItem("staff_last_page", page.toString());
+    if (orderId) {
+      localStorage.setItem("staff_last_order_id", orderId);
     }
   };
 
-  // ── Fetch orders on mount ──────────────────────────────
-  // useEffect cannot be async directly, so we define an
-  // async function INSIDE it and call it immediately.
+  // If the target order isn't in current page's list, fetch it by ID directly
+  const fetchStandaloneOrder = async (orderId, fallbackOrders = []) => {
+    try {
+      setDetailLoading(true);
+      const res = await orderAPI.getOrdersById(orderId);
+      const ord = res.data?.order || res.data;
+      if (ord && ord._id) {
+        setStandaloneOrder(ord);
+        setSelectedOrderId(ord._id);
+        syncStateToUrlAndStorage(currentPage, ord._id);
+      } else if (fallbackOrders.length > 0) {
+        setSelectedOrderId(fallbackOrders[0]._id);
+        setStandaloneOrder(null);
+        syncStateToUrlAndStorage(currentPage, fallbackOrders[0]._id);
+      }
+    } catch (err) {
+      console.warn("Could not fetch standalone order by ID:", err);
+      if (fallbackOrders.length > 0) {
+        setSelectedOrderId(fallbackOrders[0]._id);
+        setStandaloneOrder(null);
+        syncStateToUrlAndStorage(currentPage, fallbackOrders[0]._id);
+      }
+    } finally {
+      setDetailLoading(false);
+    }
+  };
+
+  // ── Fetch orders whenever currentPage changes ──────────
   useEffect(() => {
     const fetchOrders = async () => {
       try {
         setLoading(true);
         setError(null);
 
-        // Call GET /api/orders?page=1&limit=10
-        // Axios wraps the HTTP response; the actual JSON body is in `res.data`
-        const res = await orderAPI.getOrders({ page: 1, limit: 10 });
-
-        // Your backend returns { orders: [...], page, limit, total }
-        // We grab the array from res.data.orders
+        const res = await orderAPI.getOrders({ page: currentPage, limit: 10 });
         const orders = res.data.orders || [];
-        setOrderList(orders);
+        const meta = res.data.pagination || {};
 
-        // Auto-select the first order so the detail panel isn't empty
-        if (orders.length > 0) {
-          setSelectedOrderId(orders[0]._id);
+        setOrderList(orders);
+        setPagination({
+          page: meta.page || currentPage,
+          limit: meta.limit || 10,
+          totalPages: meta.totalPages || 1,
+          totalItems: meta.totalItems ?? orders.length,
+        });
+
+        if (isInitialMount.current) {
+          isInitialMount.current = false;
+          const initialTargetId = getInitialOrderId();
+
+          if (initialTargetId) {
+            const found = orders.find((o) => o._id === initialTargetId);
+            if (found) {
+              setSelectedOrderId(found._id);
+              setStandaloneOrder(null);
+              syncStateToUrlAndStorage(currentPage, found._id);
+            } else {
+              // Target order is on another page -> fetch directly
+              setSelectedOrderId(initialTargetId);
+              fetchStandaloneOrder(initialTargetId, orders);
+            }
+          } else if (orders.length > 0) {
+            setSelectedOrderId(orders[0]._id);
+            setStandaloneOrder(null);
+            syncStateToUrlAndStorage(currentPage, orders[0]._id);
+          }
+        } else {
+          // Page transition: auto-select first order of the new page
+          setStandaloneOrder(null);
+          if (orders.length > 0) {
+            setSelectedOrderId(orders[0]._id);
+            syncStateToUrlAndStorage(currentPage, orders[0]._id);
+          } else {
+            setSelectedOrderId(null);
+          }
         }
       } catch (err) {
         console.error("Failed to fetch orders:", err);
         setError("Không thể tải danh sách đơn hàng. Vui lòng thử lại.");
       } finally {
-        // Whether success or failure, stop the loading spinner
         setLoading(false);
       }
     };
 
     fetchOrders();
-  }, []); // empty deps array → runs once on mount
+  }, [currentPage]);
+
+  // Handler when user clicks an order row in table
+  const handleSelectOrder = (orderId) => {
+    setSelectedOrderId(orderId);
+    setStandaloneOrder(null);
+    syncStateToUrlAndStorage(currentPage, orderId);
+  };
+
+  // Handler when user navigates page
+  const handlePageChange = (newPage) => {
+    if (
+      newPage >= 1 &&
+      newPage <= pagination.totalPages &&
+      newPage !== currentPage
+    ) {
+      setCurrentPage(newPage);
+    }
+  };
 
   // ── Derived state ───────────────────────────────────────
-  // Find the full order object that matches what the user clicked
-  const selectedOrder = orderList.find((o) => o._id === selectedOrderId);
+  // Find full order from list or use standalone fetched order
+  const selectedOrder =
+    orderList.find((o) => o._id === selectedOrderId) || standaloneOrder;
 
   // ── Helper: format VND currency ────────────────────────
   const formatVND = (amount) =>
@@ -114,8 +194,8 @@ const StaffOrders = () => {
     return map[status] || status;
   };
 
-  // ── Loading state ──────────────────────────────────────
-  if (loading) {
+  // ── Loading state (initial load only) ──────────────────
+  if (loading && orderList.length === 0) {
     return (
       <div
         className="staff-orders"
@@ -127,7 +207,7 @@ const StaffOrders = () => {
   }
 
   // ── Error state ────────────────────────────────────────
-  if (error) {
+  if (error && orderList.length === 0) {
     return (
       <div
         className="staff-orders"
@@ -189,22 +269,41 @@ const StaffOrders = () => {
         <div className="staff-page-header__actions">
           <span className="sla-badge">
             <Shield size={14} />
-            Tổng: {orderList.length} đơn hàng
+            Tổng: {pagination.totalItems || orderList.length} đơn hàng
           </span>
         </div>
       </div>
 
       {/* Two-Column Layout */}
       <div className="order-desk-layout">
-        {/* Left: Active Orders Table — pass real data */}
+        {/* Left: Active Orders Table — pass real data & pagination */}
         <OrderTable
           orders={orderList}
           selectedOrderId={selectedOrderId}
-          onSelectOrder={setSelectedOrderId}
+          onSelectOrder={handleSelectOrder}
+          currentPage={currentPage}
+          totalPages={pagination.totalPages}
+          totalItems={pagination.totalItems}
+          onPageChange={handlePageChange}
+          loading={loading}
         />
 
         {/* Right: Order Detail Panel */}
-        {selectedOrder && (
+        {detailLoading ? (
+          <div
+            className="order-inspection"
+            style={{
+              padding: 60,
+              textAlign: "center",
+              color: "#8c857b",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            Đang tải chi tiết đơn hàng...
+          </div>
+        ) : selectedOrder ? (
           <div className="order-inspection">
             {/* Header */}
             <div className="order-inspection__header">
@@ -213,7 +312,7 @@ const StaffOrders = () => {
                   CHI TIẾT ĐƠN HÀNG
                 </span>
                 <div className="order-inspection__id">
-                  {selectedOrder._id.slice(-8).toUpperCase()}
+                  {selectedOrder._id.toUpperCase()}
                 </div>
               </div>
               <div className="order-inspection__priority">
@@ -360,6 +459,20 @@ const StaffOrders = () => {
                 </button>
               </div>
             )}
+          </div>
+        ) : (
+          <div
+            className="order-inspection"
+            style={{
+              padding: 60,
+              textAlign: "center",
+              color: "#8c857b",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            Vui lòng chọn một đơn hàng để xem chi tiết
           </div>
         )}
       </div>
