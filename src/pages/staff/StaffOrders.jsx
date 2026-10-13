@@ -33,14 +33,14 @@ const StaffOrders = () => {
       // Optimistically update status in local list
       setOrderList((prev) =>
         prev.map((o) =>
-          o._id === selectedOrder._id ? { ...o, status: "confirmed" } : o
-        )
+          o._id === selectedOrder._id ? { ...o, status: "confirmed" } : o,
+        ),
       );
       showToast(selectedOrder._id, selectedOrder._id.slice(-8).toUpperCase());
     } catch (err) {
       console.error("Confirm order failed:", err);
       setConfirmError(
-        err?.response?.data?.message || "Xác nhận thất bại. Vui lòng thử lại."
+        err?.response?.data?.message || "Xác nhận thất bại. Vui lòng thử lại.",
       );
     } finally {
       setConfirming(false);
