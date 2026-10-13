@@ -23,10 +23,15 @@ const StaffOrders = () => {
     return localStorage.getItem("staff_last_order_id") || null;
   };
 
+  const getInitialStatus = () => {
+    return searchParams.get("status") || localStorage.getItem("staff_last_status") || "";
+  };
+
   // ── State ──────────────────────────────────────────────
   const [orderList, setOrderList] = useState([]);
   const [currentPage, setCurrentPage] = useState(getInitialPage);
   const [selectedOrderId, setSelectedOrderId] = useState(getInitialOrderId);
+  const [statusFilter, setStatusFilter] = useState(getInitialStatus);
   const [standaloneOrder, setStandaloneOrder] = useState(null);
   const [detailLoading, setDetailLoading] = useState(false);
 
@@ -47,14 +52,20 @@ const StaffOrders = () => {
   // Track initial mount so we respect restored orderId
   const isInitialMount = useRef(true);
 
-  // Helper: Sync current page & orderId to both URL and localStorage
-  const syncStateToUrlAndStorage = (page, orderId) => {
+  // Helper: Sync current page, orderId & status to both URL and localStorage
+  const syncStateToUrlAndStorage = (page, orderId, status = statusFilter) => {
     const params = { page: page.toString() };
+    if (status) params.status = status;
     if (orderId) params.orderId = orderId;
     setSearchParams(params, { replace: true });
     localStorage.setItem("staff_last_page", page.toString());
     if (orderId) {
       localStorage.setItem("staff_last_order_id", orderId);
+    }
+    if (status) {
+      localStorage.setItem("staff_last_status", status);
+    } else {
+      localStorage.removeItem("staff_last_status");
     }
   };
 
@@ -67,32 +78,37 @@ const StaffOrders = () => {
       if (ord && ord._id) {
         setStandaloneOrder(ord);
         setSelectedOrderId(ord._id);
-        syncStateToUrlAndStorage(currentPage, ord._id);
+        syncStateToUrlAndStorage(currentPage, ord._id, statusFilter);
       } else if (fallbackOrders.length > 0) {
         setSelectedOrderId(fallbackOrders[0]._id);
         setStandaloneOrder(null);
-        syncStateToUrlAndStorage(currentPage, fallbackOrders[0]._id);
+        syncStateToUrlAndStorage(currentPage, fallbackOrders[0]._id, statusFilter);
       }
     } catch (err) {
       console.warn("Could not fetch standalone order by ID:", err);
       if (fallbackOrders.length > 0) {
         setSelectedOrderId(fallbackOrders[0]._id);
         setStandaloneOrder(null);
-        syncStateToUrlAndStorage(currentPage, fallbackOrders[0]._id);
+        syncStateToUrlAndStorage(currentPage, fallbackOrders[0]._id, statusFilter);
       }
     } finally {
       setDetailLoading(false);
     }
   };
 
-  // ── Fetch orders whenever currentPage changes ──────────
+  // ── Fetch orders whenever currentPage or statusFilter changes ──
   useEffect(() => {
     const fetchOrders = async () => {
       try {
         setLoading(true);
         setError(null);
 
-        const res = await orderAPI.getOrders({ page: currentPage, limit: 10 });
+        const queryParams = { page: currentPage, limit: 10 };
+        if (statusFilter) {
+          queryParams.status = statusFilter;
+        }
+
+        const res = await orderAPI.getOrders(queryParams);
         const orders = res.data.orders || [];
         const meta = res.data.pagination || {};
 
@@ -113,7 +129,7 @@ const StaffOrders = () => {
             if (found) {
               setSelectedOrderId(found._id);
               setStandaloneOrder(null);
-              syncStateToUrlAndStorage(currentPage, found._id);
+              syncStateToUrlAndStorage(currentPage, found._id, statusFilter);
             } else {
               // Target order is on another page -> fetch directly
               setSelectedOrderId(initialTargetId);
@@ -122,16 +138,17 @@ const StaffOrders = () => {
           } else if (orders.length > 0) {
             setSelectedOrderId(orders[0]._id);
             setStandaloneOrder(null);
-            syncStateToUrlAndStorage(currentPage, orders[0]._id);
+            syncStateToUrlAndStorage(currentPage, orders[0]._id, statusFilter);
           }
         } else {
-          // Page transition: auto-select first order of the new page
+          // Page or filter transition: auto-select first order of new list
           setStandaloneOrder(null);
           if (orders.length > 0) {
             setSelectedOrderId(orders[0]._id);
-            syncStateToUrlAndStorage(currentPage, orders[0]._id);
+            syncStateToUrlAndStorage(currentPage, orders[0]._id, statusFilter);
           } else {
             setSelectedOrderId(null);
+            syncStateToUrlAndStorage(currentPage, null, statusFilter);
           }
         }
       } catch (err) {
@@ -143,13 +160,25 @@ const StaffOrders = () => {
     };
 
     fetchOrders();
-  }, [currentPage]);
+  }, [currentPage, statusFilter]);
 
   // Handler when user clicks an order row in table
   const handleSelectOrder = (orderId) => {
     setSelectedOrderId(orderId);
     setStandaloneOrder(null);
-    syncStateToUrlAndStorage(currentPage, orderId);
+    syncStateToUrlAndStorage(currentPage, orderId, statusFilter);
+  };
+
+  // Handler when user switches status tab
+  const handleStatusChange = (newStatus) => {
+    setStatusFilter(newStatus);
+    setCurrentPage(1);
+    syncStateToUrlAndStorage(1, null, newStatus);
+  };
+
+  // Handler for direct ID lookup
+  const handleSearchExactId = (id) => {
+    fetchStandaloneOrder(id, orderList);
   };
 
   // Handler when user navigates page
@@ -318,11 +347,14 @@ const StaffOrders = () => {
           orders={orderList}
           selectedOrderId={selectedOrderId}
           onSelectOrder={handleSelectOrder}
+          statusFilter={statusFilter}
+          onStatusChange={handleStatusChange}
           currentPage={currentPage}
           totalPages={pagination.totalPages}
           totalItems={pagination.totalItems}
           onPageChange={handlePageChange}
           loading={loading}
+          onSearchExactId={handleSearchExactId}
         />
 
         {/* Right: Order Detail Panel */}

@@ -1,18 +1,33 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
+import { Search, Calendar, X, RotateCcw } from "lucide-react";
 import OrderStatusBadge from "../OrderStatusbadge/OrderStatusBadge";
 import "./OrderTable.css";
+
+const STATUS_TABS = [
+  { key: "", label: "Tất cả" },
+  { key: "pending", label: "Chờ xác nhận" },
+  { key: "confirmed", label: "Đã xác nhận" },
+  { key: "cancelled", label: "Đã hủy" },
+  { key: "rejected", label: "Bị từ chối" },
+];
 
 const OrderTable = ({
   orders = [],
   selectedOrderId,
   onSelectOrder,
+  statusFilter = "",
+  onStatusChange,
   currentPage = 1,
   totalPages = 1,
   totalItems = 0,
   onPageChange,
   loading = false,
+  onSearchExactId,
 }) => {
   const [jumpPage, setJumpPage] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [dateFilter, setDateFilter] = useState("all"); // 'all' | 'today' | '7days' | '30days' | 'custom'
+  const [customDate, setCustomDate] = useState("");
 
   // Format VND
   const formatVND = (amount) =>
@@ -36,7 +51,74 @@ const OrderTable = ({
       shipping: "Đang giao",
       delivered: "Đã giao",
       cancelled: "Đã hủy",
+      rejected: "Bị từ chối",
     })[s] || s;
+
+  // Filter orders in current page by search term & date
+  const filteredOrders = useMemo(() => {
+    return orders.filter((order) => {
+      // 1. Search term (Mã đơn, Tên người nhận, SĐT)
+      if (searchTerm.trim()) {
+        const term = searchTerm.trim().toLowerCase();
+        const idMatch = order._id.toLowerCase().includes(term);
+        const nameMatch = (order.shippingAddress?.receiverName || "")
+          .toLowerCase()
+          .includes(term);
+        const phoneMatch = (order.shippingAddress?.phone || "")
+          .toLowerCase()
+          .includes(term);
+
+        if (!idMatch && !nameMatch && !phoneMatch) {
+          return false;
+        }
+      }
+
+      // 2. Date filter (Ngày tạo)
+      if (dateFilter !== "all") {
+        const orderDate = new Date(order.createdAt);
+        const now = new Date();
+
+        if (dateFilter === "today") {
+          const isSameDay =
+            orderDate.getDate() === now.getDate() &&
+            orderDate.getMonth() === now.getMonth() &&
+            orderDate.getFullYear() === now.getFullYear();
+          if (!isSameDay) return false;
+        } else if (dateFilter === "7days") {
+          const sevenDaysAgo = new Date();
+          sevenDaysAgo.setDate(now.getDate() - 7);
+          if (orderDate < sevenDaysAgo) return false;
+        } else if (dateFilter === "30days") {
+          const thirtyDaysAgo = new Date();
+          thirtyDaysAgo.setDate(now.getDate() - 30);
+          if (orderDate < thirtyDaysAgo) return false;
+        } else if (dateFilter === "custom" && customDate) {
+          const [year, month, day] = customDate.split("-").map(Number);
+          const isSameDay =
+            orderDate.getFullYear() === year &&
+            orderDate.getMonth() + 1 === month &&
+            orderDate.getDate() === day;
+          if (!isSameDay) return false;
+        }
+      }
+
+      return true;
+    });
+  }, [orders, searchTerm, dateFilter, customDate]);
+
+  // Is searching for a 24-hex MongoDB ID that is missing from current page?
+  const isLookingForObjectId = useMemo(() => {
+    const term = searchTerm.trim();
+    return /^[0-9a-fA-F]{24}$/.test(term) && filteredOrders.length === 0;
+  }, [searchTerm, filteredOrders.length]);
+
+  const hasActiveFilters = searchTerm || dateFilter !== "all" || customDate;
+
+  const handleResetFilters = () => {
+    setSearchTerm("");
+    setDateFilter("all");
+    setCustomDate("");
+  };
 
   // Generate pagination items with ellipses (Approach 1)
   const getPaginationItems = (current, total) => {
@@ -80,16 +162,106 @@ const OrderTable = ({
   return (
     <div className="order-table-wrapper">
       <div className="order-table-header">
-        <h3>Đơn Hàng Đang Hoạt Động</h3>
-        <div className="order-table-meta">
-          <span className="order-route">Tuyến: /staff/orders</span>
-          <input
-            type="text"
-            className="order-filter-input"
-            placeholder="Lọc theo ID, khách hàng..."
-          />
+        {/* Top: Title & Status Tabs */}
+        <div className="order-table-header__top">
+          <div className="order-table-header__title-group">
+            <h3>Đơn Hàng Đang Hoạt Động</h3>
+            <span className="order-route">Tuyến: /staff/orders</span>
+          </div>
+
+          <div className="order-status-tabs" role="tablist">
+            {STATUS_TABS.map((tab) => (
+              <button
+                key={tab.key}
+                type="button"
+                role="tab"
+                aria-selected={statusFilter === tab.key}
+                className={`status-tab ${statusFilter === tab.key ? "status-tab--active" : ""}`}
+                onClick={() => onStatusChange?.(tab.key)}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Toolbar: Universal Search & Date Filters */}
+        <div className="order-table-toolbar">
+          {/* Universal Search (Mã đơn, Người nhận, SĐT) */}
+          <div className="order-search-box">
+            <Search size={14} />
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="order-search-input"
+              placeholder="Tìm theo mã đơn, người nhận, SĐT..."
+            />
+            {searchTerm && (
+              <button
+                type="button"
+                className="order-search-clear"
+                onClick={() => setSearchTerm("")}
+                title="Xóa tìm kiếm"
+              >
+                ×
+              </button>
+            )}
+          </div>
+
+          {/* Date Range Presets & Custom Picker */}
+          <div className="order-date-filters">
+            <select
+              value={dateFilter}
+              onChange={(e) => setDateFilter(e.target.value)}
+              className="order-date-select"
+              aria-label="Lọc theo thời gian"
+            >
+              <option value="all">Tất cả thời gian</option>
+              <option value="today">Hôm nay</option>
+              <option value="7days">7 ngày qua</option>
+              <option value="30days">30 ngày qua</option>
+              <option value="custom">Chọn ngày cụ thể...</option>
+            </select>
+
+            {dateFilter === "custom" && (
+              <input
+                type="date"
+                value={customDate}
+                onChange={(e) => setCustomDate(e.target.value)}
+                className="order-date-input"
+              />
+            )}
+
+            {hasActiveFilters && (
+              <button
+                type="button"
+                onClick={handleResetFilters}
+                className="btn-reset-filters"
+                title="Đặt lại bộ lọc"
+              >
+                <RotateCcw size={12} />
+                Đặt lại
+              </button>
+            )}
+          </div>
         </div>
       </div>
+
+      {/* Global Lookup Hint if exact ID not found in current page */}
+      {isLookingForObjectId && (
+        <div className="lookup-global-hint">
+          <span>
+            Đơn hàng #{searchTerm.slice(-8).toUpperCase()} không có trong trang này.
+          </span>
+          <button
+            type="button"
+            onClick={() => onSearchExactId?.(searchTerm.trim())}
+          >
+            Tìm trên toàn hệ thống
+          </button>
+        </div>
+      )}
 
       <table className={`order-table ${loading ? "order-table--loading" : ""}`}>
         <thead>
@@ -102,21 +274,23 @@ const OrderTable = ({
           </tr>
         </thead>
         <tbody>
-          {orders.length === 0 ? (
+          {filteredOrders.length === 0 ? (
             <tr>
               <td
                 colSpan={5}
                 style={{
                   textAlign: "center",
-                  padding: "32px",
+                  padding: "36px",
                   color: "#8c857b",
                 }}
               >
-                Không có đơn hàng nào
+                {hasActiveFilters
+                  ? "Không có đơn hàng nào khớp với bộ lọc."
+                  : "Không có đơn hàng nào trong trạng thái này."}
               </td>
             </tr>
           ) : (
-            orders.map((order) => (
+            filteredOrders.map((order) => (
               <tr
                 key={order._id}
                 className={`order-row ${selectedOrderId === order._id ? "order-row--selected" : ""}`}
@@ -152,7 +326,9 @@ const OrderTable = ({
 
       <div className="order-table-footer">
         <span>
-          Hiển thị {orders.length} / {totalItems || orders.length} đơn hàng
+          {hasActiveFilters
+            ? `Hiển thị ${filteredOrders.length}/${orders.length} đơn trên trang này (Tổng ${totalItems} đơn)`
+            : `Hiển thị ${orders.length} / ${totalItems || orders.length} đơn hàng`}
         </span>
 
         <div className="pagination-controls">
