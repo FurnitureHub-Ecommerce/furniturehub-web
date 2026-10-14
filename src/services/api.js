@@ -152,7 +152,8 @@ export const productAPI = {
 
   getProductById: (id) => api.get(`/api/products/${id}`),
 
-  updateProduct: (id, productData) => api.patch(`/api/products/${id}`, productData),
+  updateProduct: (id, productData) =>
+    api.patch(`/api/products/${id}`, productData),
 
   deactivateProduct: (id) => api.delete(`/api/products/${id}`),
 
@@ -171,13 +172,15 @@ export const productAPI = {
 export const categoryAPI = {
   getCategories: (params = {}) => api.get("/api/categories", { params }),
 
-  getCategoriesAdmin: (params = {}) => api.get("/api/categories/admin", { params }),
+  getCategoriesAdmin: (params = {}) =>
+    api.get("/api/categories/admin", { params }),
 
   getCategoryById: (id) => api.get(`/api/categories/${id}`),
 
   createCategory: (categoryData) => api.post("/api/categories", categoryData),
 
-  updateCategory: (id, categoryData) => api.patch(`/api/categories/${id}`, categoryData),
+  updateCategory: (id, categoryData) =>
+    api.patch(`/api/categories/${id}`, categoryData),
 
   deactivateCategory: (id) => api.delete(`/api/categories/${id}`),
 };
@@ -205,7 +208,8 @@ export const storageAPI = {
   getInventory: (params = {}) => api.get("/api/inventory", { params }),
 
   // Xem tồn kho chi tiết của một biến thể
-  getInventoryByVariantId: (variantId) => api.get(`/api/inventory/${variantId}`),
+  getInventoryByVariantId: (variantId) =>
+    api.get(`/api/inventory/${variantId}`),
 
   getLowStock: (params = {}) => api.get("/api/inventory/low-stock", { params }),
 
@@ -226,9 +230,12 @@ export const storageAPI = {
   deactivateVariant: (id) => api.delete(`/api/variants/${id}`),
 
   // Các hàm giao dịch kho hàng
-  getInventoryTransactions: (params = {}) => api.get('/api/inventory/transactions', { params }),
-  importInventory: (variantId, data) => api.post(`/api/inventory/${variantId}/import`, data),
-  exportInventory: (variantId, data) => api.post(`/api/inventory/${variantId}/export`, data),
+  getInventoryTransactions: (params = {}) =>
+    api.get("/api/inventory/transactions", { params }),
+  importInventory: (variantId, data) =>
+    api.post(`/api/inventory/${variantId}/import`, data),
+  exportInventory: (variantId, data) =>
+    api.post(`/api/inventory/${variantId}/export`, data),
 };
 
 // =========== ORDER API ===========
@@ -237,8 +244,8 @@ export const orderAPI = {
   // Admin & Staff
   getOrders: (params = {}) => api.get("/api/orders", { params }),
   getOrdersById: (id) => api.get(`/api/orders/${id}`),
-  confirmOrderStatus: (id) =>
-    api.patch(`/api/orders/${id}/confirm`),
+  confirmOrderStatus: (id) => api.patch(`/api/orders/${id}/confirm`),
+  rejectOrderStatus: (id) => api.patch(`/api/orders/${id}/reject`),
 
   // Customer
   createOrder: (orderData) => api.post("/api/orders", orderData),
@@ -289,7 +296,8 @@ export const checkoutAPI = {
 
 export const paymentAPI = {
   // Customer tạo Payment cho Order của mình (COD hoặc BANK_TRANSFER)
-  createPayment: (orderId, data) => api.post(`/api/orders/${orderId}/payment`, data),
+  createPayment: (orderId, data) =>
+    api.post(`/api/orders/${orderId}/payment`, data),
 
   // Customer xem Payment của Order mình
   getPaymentByOrder: (orderId) => api.get(`/api/orders/${orderId}/payment`),
@@ -302,11 +310,11 @@ export const paymentAPI = {
 // =========== REVIEW API (CUSTOMER & PUBLIC) ===========
 
 export const reviewAPI = {
-  getProductReviews: (productId) => api.get(`/api/reviews/product/${productId}`),
+  getProductReviews: (productId) =>
+    api.get(`/api/reviews/product/${productId}`),
   createReview: (data) => api.post("/api/reviews", data),
   updateReview: (id, data) => api.patch(`/api/reviews/${id}`, data),
   deleteReview: (id) => api.delete(`/api/reviews/${id}`),
 };
 
 export default api;
-

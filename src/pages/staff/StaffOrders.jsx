@@ -24,7 +24,11 @@ const StaffOrders = () => {
   };
 
   const getInitialStatus = () => {
-    return searchParams.get("status") || localStorage.getItem("staff_last_status") || "";
+    return (
+      searchParams.get("status") ||
+      localStorage.getItem("staff_last_status") ||
+      ""
+    );
   };
 
   // ── State ──────────────────────────────────────────────
@@ -46,8 +50,10 @@ const StaffOrders = () => {
   const [error, setError] = useState(null);
   const [showNotification, setShowNotification] = useState(true);
   const [confirming, setConfirming] = useState(false);
+  const [rejecting, setRejecting] = useState(false);
   const [confirmError, setConfirmError] = useState(null);
-  const [successToast, setSuccessToast] = useState(null); // { orderId, shortId }
+  const [actionError, setActionError] = useState(null);
+  const [successToast, setSuccessToast] = useState(null); // { orderId, shortId, type, title, sub }
 
   // Track initial mount so we respect restored orderId
   const isInitialMount = useRef(true);
@@ -82,14 +88,22 @@ const StaffOrders = () => {
       } else if (fallbackOrders.length > 0) {
         setSelectedOrderId(fallbackOrders[0]._id);
         setStandaloneOrder(null);
-        syncStateToUrlAndStorage(currentPage, fallbackOrders[0]._id, statusFilter);
+        syncStateToUrlAndStorage(
+          currentPage,
+          fallbackOrders[0]._id,
+          statusFilter,
+        );
       }
     } catch (err) {
       console.warn("Could not fetch standalone order by ID:", err);
       if (fallbackOrders.length > 0) {
         setSelectedOrderId(fallbackOrders[0]._id);
         setStandaloneOrder(null);
-        syncStateToUrlAndStorage(currentPage, fallbackOrders[0]._id, statusFilter);
+        syncStateToUrlAndStorage(
+          currentPage,
+          fallbackOrders[0]._id,
+          statusFilter,
+        );
       }
     } finally {
       setDetailLoading(false);
@@ -197,17 +211,28 @@ const StaffOrders = () => {
   const selectedOrder =
     orderList.find((o) => o._id === selectedOrderId) || standaloneOrder;
 
-  // ── Confirm order (pending → confirmed) ───────────────
-  const showToast = useCallback((orderId, shortId) => {
-    setSuccessToast({ orderId, shortId });
-    setTimeout(() => setSuccessToast(null), 3500);
-  }, []);
+  // ── Toast Notification Helper ────────────────────────
+  const showToast = useCallback(
+    (
+      orderId,
+      shortId,
+      type = "confirm",
+      title = "Xác nhận thành công!",
+      sub = `Đơn hàng #${shortId} đã được duyệt.`,
+    ) => {
+      setSuccessToast({ orderId, shortId, type, title, sub });
+      setTimeout(() => setSuccessToast(null), 3500);
+    },
+    [],
+  );
 
+  // ── Confirm order (pending → confirmed) ───────────────
   const handleConfirmOrder = async () => {
-    if (!selectedOrder || confirming) return;
+    if (!selectedOrder || confirming || rejecting) return;
     try {
       setConfirming(true);
       setConfirmError(null);
+      setActionError(null);
       await orderAPI.confirmOrderStatus(selectedOrder._id);
       // Optimistically update status in local list
       setOrderList((prev) =>
@@ -220,7 +245,13 @@ const StaffOrders = () => {
           prev ? { ...prev, status: "confirmed" } : null,
         );
       }
-      showToast(selectedOrder._id, selectedOrder._id.slice(-8).toUpperCase());
+      showToast(
+        selectedOrder._id,
+        selectedOrder._id.slice(-8).toUpperCase(),
+        "confirm",
+        "Xác nhận thành công!",
+        `Đơn hàng #${selectedOrder._id.slice(-8).toUpperCase()} đã được duyệt.`,
+      );
     } catch (err) {
       console.error("Confirm order failed:", err);
       setConfirmError(
@@ -228,6 +259,52 @@ const StaffOrders = () => {
       );
     } finally {
       setConfirming(false);
+    }
+  };
+
+  // ── Reject order (pending/confirmed → rejected) ────────
+  const handleRejectOrder = async () => {
+    if (!selectedOrder || rejecting || confirming) return;
+
+    const shortId = selectedOrder._id.slice(-8).toUpperCase();
+    const isConfirmed = selectedOrder.status === "confirmed";
+
+    try {
+      setRejecting(true);
+      setActionError(null);
+      setConfirmError(null);
+
+      await orderAPI.rejectOrderStatus(selectedOrder._id);
+
+      // Optimistically update status in local list
+      setOrderList((prev) =>
+        prev.map((o) =>
+          o._id === selectedOrder._id ? { ...o, status: "rejected" } : o,
+        ),
+      );
+      if (standaloneOrder && standaloneOrder._id === selectedOrder._id) {
+        setStandaloneOrder((prev) =>
+          prev ? { ...prev, status: "rejected" } : null,
+        );
+      }
+
+      showToast(
+        selectedOrder._id,
+        shortId,
+        "reject",
+        "Đã từ chối đơn hàng!",
+        isConfirmed
+          ? `Đơn hàng #${shortId} đã bị từ chối và tự động hoàn trả kho.`
+          : `Đơn hàng #${shortId} đã bị từ chối.`,
+      );
+    } catch (err) {
+      console.error("Reject order failed:", err);
+      setActionError(
+        err?.response?.data?.message ||
+          "Từ chối đơn hàng thất bại. Vui lòng thử lại.",
+      );
+    } finally {
+      setRejecting(false);
     }
   };
 
@@ -256,6 +333,7 @@ const StaffOrders = () => {
       shipping: "Đang giao",
       delivered: "Đã giao",
       cancelled: "Đã hủy",
+      rejected: "Bị từ chối",
     };
     return map[status] || status;
   };
@@ -288,13 +366,17 @@ const StaffOrders = () => {
     <div className="staff-orders">
       {/* ── Success Toast ──────────────────────────────── */}
       {successToast && (
-        <div className="confirm-toast confirm-toast--enter">
-          <div className="confirm-toast__icon">✓</div>
+        <div
+          className={`confirm-toast confirm-toast--enter ${
+            successToast.type === "reject" ? "confirm-toast--reject" : ""
+          }`}
+        >
+          <div className="confirm-toast__icon">
+            {successToast.type === "reject" ? "✕" : "✓"}
+          </div>
           <div className="confirm-toast__body">
-            <span className="confirm-toast__title">Xác nhận thành công!</span>
-            <span className="confirm-toast__sub">
-              Đơn hàng #{successToast.shortId} đã được duyệt.
-            </span>
+            <span className="confirm-toast__title">{successToast.title}</span>
+            <span className="confirm-toast__sub">{successToast.sub}</span>
           </div>
           <button
             className="confirm-toast__close"
@@ -495,16 +577,32 @@ const StaffOrders = () => {
                 <button
                   className="btn-approve"
                   onClick={handleConfirmOrder}
-                  disabled={confirming}
+                  disabled={confirming || rejecting}
                 >
                   <Check size={16} />
                   {confirming ? "ĐANG XÁC NHẬN..." : "DUYỆT & PHÂN BỔ"}
                 </button>
               )}
-              <button className="btn-decline">TỪ CHỐI / HỦY</button>
-              {confirmError && (
-                <span style={{ fontSize: 12, color: "#dc2626", marginTop: 4 }}>
-                  {confirmError}
+              {["pending", "confirmed"].includes(selectedOrder.status) && (
+                <button
+                  className="btn-decline"
+                  onClick={handleRejectOrder}
+                  disabled={confirming || rejecting}
+                >
+                  {rejecting ? "ĐANG TỪ CHỐI..." : "TỪ CHỐI / HỦY"}
+                </button>
+              )}
+              {(actionError || confirmError) && (
+                <span
+                  style={{
+                    fontSize: 12,
+                    color: "#dc2626",
+                    marginTop: 6,
+                    width: "100%",
+                    display: "block",
+                  }}
+                >
+                  {actionError || confirmError}
                 </span>
               )}
             </div>
