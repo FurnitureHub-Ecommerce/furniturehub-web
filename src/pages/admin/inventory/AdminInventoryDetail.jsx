@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import {
-  ArrowLeft, Banknote, Barcode, ClipboardCheck, Clock, Download, Layers,
+  ArrowLeft, Banknote, Barcode, ClipboardCheck, Clock, Download, Layers, AlertTriangle, RefreshCw,
   LockKeyhole, MapPin, Package, Ruler, ShieldCheck, Truck, Warehouse, Weight,
 } from "lucide-react";
 import { getInventoryDetail } from "../../../services/admin/inventoryDetail.service.js";
+import { TransactionHistoryPanel } from "./InventoryReadSections.jsx";
 import "./AdminInventoryDetail.css";
 
 const hasValue = (value) =>
@@ -91,9 +92,9 @@ export default function AdminInventoryDetail() {
       </div>
 
       {loading ? (
-        <div className="lid-state" role="status">Đang tải thông tin Variant…</div>
+        <div className="lid-state" role="status"><RefreshCw className="lid-spin" size={24} aria-hidden="true" /><h1>Đang tải thông tin Variant</h1><p>Đang cập nhật dữ liệu SKU và tồn kho từ Backend.</p></div>
       ) : state.error ? (
-        <div className="lid-state" role="alert"><p>{state.error}</p><button onClick={retry}>Thử lại</button></div>
+        <div className="lid-state lid-state-error" role="alert"><AlertTriangle size={26} aria-hidden="true" /><h1>Không thể tải chi tiết SKU</h1><p>{state.error}</p><button onClick={retry}>Thử lại</button></div>
       ) : !variant ? (
         <div className="lid-state" role="status">
           <Package size={30} /><h1>Không tìm thấy Variant</h1>
@@ -108,7 +109,7 @@ export default function AdminInventoryDetail() {
               <p className="lid-readonly"><LockKeyhole size={12} />CHẾ ĐỘ GIÁM SÁT (READ-ONLY)</p>
               <small>Đồng bộ kho: Chưa tích hợp</small>
               <h1>{product?.name ?? "Chưa có thông tin sản phẩm"}</h1>
-              <p>{displayValue(variant.size)} · {displayValue(variant.material)} · {displayValue(variant.color)}</p>
+              <p className="lid-attributes">{displayValue(variant.size)} · {displayValue(variant.material)} · {displayValue(variant.color)}</p>
               <span className="lid-demo">
                 {inventory
                   ? "Dữ liệu Inventory/Variant/Product từ Backend"
@@ -130,15 +131,15 @@ export default function AdminInventoryDetail() {
               </p>
             </article>
             <article>
-              <span>NGƯỠNG AN TOÀN TỐI THIỂU <ShieldCheck size={19} /></span>
-              <strong>{displayNumber(inventory?.lowStockThreshold)}</strong>
-              <p className="lid-inset">Trạng thái: {stockStatus}</p>
-            </article>
-            <article>
               <span>GIÁ NIÊM YẾT THAM CHIẾU <Banknote size={19} /></span>
               <strong className="lid-price">{money(variant.price)}</strong>
               <small>EUR / Variant</small>
               <p className="lid-inset">Giá trị lưu kho: Chưa tích hợp</p>
+            </article>
+            <article>
+              <span>NGƯỠNG AN TOÀN TỐI THIỂU <ShieldCheck size={19} /></span>
+              <strong>{displayNumber(inventory?.lowStockThreshold)}</strong>
+              <p className="lid-inset">Trạng thái: <span className={`lid-stock-status ${hasLowStockDefinition ? inventory.quantity <= inventory.lowStockThreshold ? "lid-stock-low" : "lid-stock-safe" : ""}`}>{stockStatus}</span></p>
             </article>
             <article>
               <span>KIỂM KÊ GẦN NHẤT <ClipboardCheck size={19} /></span>
@@ -186,34 +187,12 @@ export default function AdminInventoryDetail() {
             <div>
               <h3>Nguyên Tắc Bảo Vệ Dữ Liệu Chuỗi Cung Ứng</h3>
               <p>Admin chỉ giám sát; không nhập, xuất, điều chuyển hoặc điều chỉnh tồn kho.</p>
-              <small>Audit Log bất biến: Chưa tích hợp</small>
+              <small>Lịch sử giao dịch kho được đọc từ Backend.</small>
             </div>
             <span className="lid-tag">CHỈ ĐỌC</span>
           </section>
 
-          <section className="lid-history">
-            <header>
-              <div><h2>Sổ Cái Biến Động Tồn Kho</h2><p>Lịch sử tồn kho: Chưa tích hợp</p></div>
-              <label>
-                <span className="lid-filter-label">Loại biến động</span>
-                <select disabled title="Chưa có nguồn lịch sử để lọc"><option>Tất cả loại biến động</option></select>
-              </label>
-            </header>
-            <div className="lid-table-scroll" tabIndex={0} aria-label="Bảng lịch sử tồn kho, cuộn ngang khi cần">
-              <table>
-                <thead><tr><th>THỜI GIAN GHI NHẬN</th><th>LOẠI BIẾN ĐỘNG</th><th>BIẾN THIÊN SỐ LƯỢNG</th><th>MÃ THAM CHIẾU LIÊN KẾT</th></tr></thead>
-                <tbody><tr><td colSpan={4} className="lid-empty">Chưa có dữ liệu lịch sử tồn kho</td></tr></tbody>
-              </table>
-            </div>
-            <footer>
-              <span>Chuỗi sổ cái: Chưa tích hợp</span>
-              <nav aria-label="Phân trang lịch sử">
-                <button disabled title="Chưa có dữ liệu lịch sử">Trước</button>
-                <span>Chưa tích hợp</span>
-                <button disabled title="Chưa có dữ liệu lịch sử">Tiếp</button>
-              </nav>
-            </footer>
-          </section>
+          <TransactionHistoryPanel key={variantId} variantId={variantId} compact />
 
           <div className="lid-bottom">
             <article><h3><MapPin size={17} />PHÂN BỔ VỊ TRÍ LƯU KHO</h3><strong>Chưa tích hợp</strong></article>

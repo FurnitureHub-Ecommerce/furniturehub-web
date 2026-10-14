@@ -6,6 +6,8 @@ import {
   Package,
   RefreshCw,
   Download,
+  ChartNoAxesCombined,
+  CircleAlert,
 } from "lucide-react";
 import { getDashboardStatistics } from "../../../services/admin/dashboard.service.js";
 import "./AdminDashboard.css";
@@ -75,64 +77,88 @@ export default function AdminDashboard() {
   const total = data?.totalOrders;
   return (
     <div className="la-dashboard">
-      <div className="la-context">
-        <span>TỔNG QUAN ĐIỀU HÀNH</span>
-        <span>DỮ LIỆU TỪ BACKEND</span>
+      <div className="la-dashboard-hero">
+        <div className="la-context">
+          <span>TỔNG QUAN ĐIỀU HÀNH</span>
+          <span>DỮ LIỆU TỪ BACKEND</span>
+        </div>
+        <section className="la-page-heading">
+          <div>
+            <h1>
+              Tổng Quan <em>Điều Hành</em>
+            </h1>
+            <p>
+              Theo dõi doanh thu, đơn hàng, sản phẩm và khách hàng trong hệ
+              thống LUMORA.
+            </p>
+          </div>
+          <div className="la-report-controls">
+            <button
+              className="la-button"
+              disabled
+              title="Xuất báo cáo chưa tích hợp"
+            >
+              <Download size={15} />
+              Xuất Báo Cáo (PDF/Excel)
+            </button>
+            <button
+              className="la-button la-button-dark"
+              onClick={reload}
+              disabled={state.loading}
+            >
+              <RefreshCw size={16} aria-hidden="true" />
+              {state.loading ? "Đang tải…" : "Làm Mới Dữ Liệu"}
+            </button>
+          </div>
+        </section>
       </div>
-      <section className="la-page-heading">
-        <div>
-          <h1>
-            Tổng Quan Điều Hành Doanh Nghiệp <em>&</em> Phân Tích Thống Kê
-          </h1>
-          <p>
-            Theo dõi doanh thu, đơn hàng, sản phẩm và khách hàng trong hệ thống
-            LUMORA.
-          </p>
-        </div>
-        <div className="la-report-controls">
-          <button
-            className="la-button"
-            disabled
-            title="Xuất báo cáo chưa tích hợp"
-          >
-            <Download size={15} />
-            Xuất Báo Cáo (PDF/Excel)
-          </button>
-          <button
-            className="la-button la-button-dark"
-            onClick={reload}
-            disabled={state.loading}
-          >
-            <RefreshCw size={15} />
-            Làm Mới Dữ Liệu
-          </button>
-        </div>
-      </section>
       {state.loading ? (
         <div className="la-data-state" role="status">
-          Đang tải thống kê…
+          <Landmark size={27} aria-hidden="true" />
+          <div>
+            <strong>Đang tải thống kê</strong>
+            <p>Dữ liệu điều hành đang được cập nhật…</p>
+          </div>
         </div>
       ) : state.error ? (
-        <div className="la-data-state" role="alert">
-          <p>{state.error}</p>
+        <div className="la-data-state la-data-error" role="alert">
+          <CircleAlert size={27} aria-hidden="true" />
+          <div>
+            <strong>Không thể tải thống kê</strong>
+            <p>{state.error}</p>
+          </div>
           <button className="la-button" onClick={reload}>
             Thử lại
           </button>
         </div>
       ) : (
         <>
+          <div className="la-dashboard-section-heading">
+            <div>
+              <span className="la-eyebrow">BỨC TRANH TOÀN CẢNH</span>
+              <h2>Chỉ Số Cốt Lõi</h2>
+            </div>
+            <p>Số liệu hiện có từ hệ thống LUMORA</p>
+          </div>
           <section className="la-kpis" aria-label="Chỉ số tổng quan">
-            {metrics.map(([label, value, Icon, format]) => (
+            {metrics.map(([label, value, Icon, format], index) => (
               <article className="la-kpi" key={label}>
-                <div className="la-kpi-label">
-                  {label}
-                  <Icon size={19} />
+                <div className="la-kpi-top">
+                  <span className="la-kpi-icon">
+                    <Icon size={21} aria-hidden="true" />
+                  </span>
+                  <span className="la-kpi-index" aria-hidden="true">
+                    0{index + 1} / 04
+                  </span>
                 </div>
-                <strong
-                  className={`la-kpi-value ${numeric(value) ? "" : "la-api-missing"}`}
-                >
-                  {format(value)}
-                </strong>
+                <div className="la-kpi-metric">
+                  <span className="la-kpi-label">{label}</span>
+                  <strong
+                    className={`la-kpi-value ${numeric(value) ? "" : "la-api-missing"}`}
+                  >
+                    {format(value)}
+                  </strong>
+                </div>
               </article>
             ))}
           </section>
@@ -144,12 +170,28 @@ export default function AdminDashboard() {
                   <h2>Dòng Chảy Doanh Thu</h2>
                   <p>Doanh thu theo thời gian</p>
                 </div>
+                <span className="la-panel-index" aria-hidden="true">
+                  01
+                </span>
               </div>
-              <div className="la-api-chart-empty">Chưa có dữ liệu</div>
+              <div className="la-api-chart-empty">
+                <ChartNoAxesCombined size={30} aria-hidden="true" />
+                <strong>Chưa có dữ liệu biểu đồ</strong>
+                <span>
+                  Chưa có dữ liệu doanh thu theo thời gian để hiển thị.
+                </span>
+              </div>
             </section>
             <section className="la-panel">
-              <p className="la-eyebrow">ORDER INTELLIGENCE</p>
-              <h2>Đơn Hàng Theo Trạng Thái</h2>
+              <div className="la-panel-heading">
+                <div>
+                  <p className="la-eyebrow">ORDER INTELLIGENCE</p>
+                  <h2>Đơn Hàng Theo Trạng Thái</h2>
+                </div>
+                <span className="la-panel-index" aria-hidden="true">
+                  02
+                </span>
+              </div>
               {statuses.length ? (
                 <ul className="la-api-statuses">
                   {statuses.map(([key, value]) => (
@@ -174,8 +216,15 @@ export default function AdminDashboard() {
             </section>
           </div>
           <section className="la-panel la-api-supplement">
-            <p className="la-eyebrow">THÔNG TIN BỔ SUNG</p>
-            <h2>Chỉ Số Vận Hành</h2>
+            <div className="la-panel-heading">
+              <div>
+                <p className="la-eyebrow">THÔNG TIN BỔ SUNG</p>
+                <h2>Chỉ Số Vận Hành</h2>
+              </div>
+              <span className="la-panel-index" aria-hidden="true">
+                03
+              </span>
+            </div>
             <dl>
               <div>
                 <dt>Tổng tài khoản</dt>

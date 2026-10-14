@@ -10,6 +10,7 @@ import {
   Info,
   Network,
   Package,
+  RefreshCw,
   Plane,
   Truck,
   Warehouse,
@@ -18,6 +19,7 @@ import {
   getInventoryMonitoring,
   getOrderMonitoring,
 } from "../../../services/admin/monitoring.service.js";
+import { LowStockPanel, TransactionHistoryPanel } from "../inventory/InventoryReadSections.jsx";
 import "./AdminMonitoring.css";
 
 const displayNumber = (value) =>
@@ -204,12 +206,12 @@ export default function AdminMonitoring() {
 
   return (
     <div className="lm-page">
-      <p className="lm-eyebrow">
-        TRUNG TÂM KIỂM SOÁT
-        <span>• ĐƠN HÀNG & TỒN KHO</span>
-      </p>
-
-      <section className="lm-heading">
+      <div className="lm-hero">
+        <p className="lm-eyebrow">
+          TRUNG TÂM KIỂM SOÁT
+          <span>• ĐƠN HÀNG & TỒN KHO</span>
+        </p>
+        <section className="lm-heading">
         <div>
           <h1>Giám Sát Đơn Hàng & Tồn Kho Toàn Hệ Thống</h1>
           <p>
@@ -233,7 +235,8 @@ export default function AdminMonitoring() {
             Cảnh báo sự cố: Chưa tích hợp
           </span>
         </div>
-      </section>
+        </section>
+      </div>
 
       <p className="lm-demo-note">
         <b>Dữ liệu Backend</b>
@@ -286,19 +289,19 @@ export default function AdminMonitoring() {
         </article>
       </section>
 
-      <section className="lm-orders">
+      <section className="lm-orders" aria-labelledby="lm-orders-title">
         <header className="lm-section-heading">
-          <h2>
+          <h2 id="lm-orders-title">
             <Truck size={23} />
             Live Order Monitoring Deck
           </h2>
-          <span className="lm-pill">REAL ORDER API</span>
+          <span className="lm-pill">CHỈ XEM · ORDER API</span>
         </header>
         <p className="lm-explanation">
           Bộ lọc trạng thái và phân trang được xử lý tại Backend. Payment,
           warehouse, staff và SLA chưa được tích hợp.
         </p>
-        <div className="lm-tabs" role="group" aria-label="Trạng thái Order">
+        <div className="lm-tabs" role="group" aria-label="Lọc theo trạng thái Order">
           {ORDER_STATUS_OPTIONS.map((option) => (
             <button
               key={option.id || "all"}
@@ -318,7 +321,9 @@ export default function AdminMonitoring() {
         <div className="lm-order-box">
           {orderState.loading ? (
             <div className="lm-state" role="status">
-              Đang tải dữ liệu Order…
+              <RefreshCw className="lm-loading-icon" size={24} aria-hidden="true" />
+              <h3>Đang tải đơn hàng</h3>
+              <p>Đang cập nhật danh sách theo trạng thái đã chọn.</p>
               <div className="lm-skeleton" />
             </div>
           ) : orderState.error ? (
@@ -355,7 +360,7 @@ export default function AdminMonitoring() {
                   </tr>
                 </thead>
                 <tbody>
-                  {orders.map((order) => {
+                  {orders.map((order, index) => {
                     const firstItem = order.items[0];
                     const attributes = firstItem
                       ? [
@@ -368,7 +373,7 @@ export default function AdminMonitoring() {
                       : "";
 
                     return (
-                      <tr key={order.orderId}>
+                      <tr key={order.orderId} style={{ "--lm-row-index": Math.min(index, 7) }}>
                         <td>
                           <strong className="lm-order-id">
                             #{order.orderId}
@@ -503,13 +508,13 @@ export default function AdminMonitoring() {
         </div>
       </section>
 
-      <section className="lm-inventory">
+      <section className="lm-inventory" aria-labelledby="lm-inventory-title">
         <header className="lm-section-heading">
-          <h2>
+          <h2 id="lm-inventory-title">
             <Warehouse size={23} />
-            Global Multi-Hub Inventory Monitoring
+            Giám Sát Tồn Kho
           </h2>
-          <span className="lm-pill">REAL INVENTORY API</span>
+          <span className="lm-pill">CHỈ XEM · INVENTORY API</span>
         </header>
         <p className="lm-explanation">
           Phân bổ kho, vị trí, sức chứa và mức sử dụng chưa có contract được xác
@@ -522,14 +527,14 @@ export default function AdminMonitoring() {
         </div>
       </section>
 
-      <section className="lm-card lm-watchlist">
+      <section className="lm-card lm-watchlist" aria-labelledby="lm-snapshot-title">
         <header>
           <div className="lm-watchlist-title">
             <span>
               <ClipboardCheck size={26} />
             </span>
             <div>
-              <h2>Inventory Snapshot</h2>
+              <h2 id="lm-snapshot-title">Inventory Snapshot</h2>
               <p>
                 Quantity, availableStock và threshold được giữ theo field API
                 riêng biệt.
@@ -545,7 +550,9 @@ export default function AdminMonitoring() {
 
         {inventoryState.loading ? (
           <div className="lm-state" role="status">
-            Đang tải dữ liệu Inventory…
+            <RefreshCw className="lm-loading-icon" size={24} aria-hidden="true" />
+            <h3>Đang tải tồn kho</h3>
+            <p>Đang cập nhật bản ghi Inventory từ Backend.</p>
             <div className="lm-skeleton" />
           </div>
         ) : inventoryState.error ? (
@@ -581,8 +588,8 @@ export default function AdminMonitoring() {
                 </tr>
               </thead>
               <tbody>
-                {rows.map((row) => (
-                  <tr key={row.inventoryId}>
+                {rows.map((row, index) => (
+                  <tr key={row.inventoryId} style={{ "--lm-row-index": Math.min(index, 7) }}>
                     <td>
                       <div className="lm-material-name">
                         <Package size={24} />
@@ -711,12 +718,12 @@ export default function AdminMonitoring() {
 
         <p className="lm-explanation">
           <Info size={13} />
-          Low-stock chỉ được suy ra cho {rows.length} row trên trang hiện tại khi
-          cả quantity và threshold đều là số. Bộ lọc cục bộ không được áp dụng
-          trên tập Inventory toàn hệ thống. Endpoint low-stock và transactions
-          chưa được tích hợp do chưa xác minh envelope.
+          Trạng thái trong Snapshot chỉ tính trên {rows.length} row ở trang hiện tại.
+          Danh sách Low Stock và lịch sử bên dưới được Backend lọc, phân trang riêng.
         </p>
       </section>
+      <LowStockPanel />
+      <TransactionHistoryPanel />
     </div>
   );
 }

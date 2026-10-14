@@ -28,7 +28,7 @@ export async function getBrandById(id) {
   const response = await brandAPI.getBrandById(id);
   return entity(response.data?.brand ?? response.data?.data ?? response.data);
 }
-// Giữ endpoint hiện có; UI chưa kích hoạt khi nghiệp vụ ngừng sử dụng chưa được xác nhận.
+// DELETE vô hiệu hóa theo Swagger; không suy ra trạng thái từ response.
 export async function deactivateBrand(id) {
   const response = await brandAPI.deactivateBrand(id);
   return response.data;

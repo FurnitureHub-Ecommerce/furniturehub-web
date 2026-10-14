@@ -1,4 +1,4 @@
-﻿import { useEffect, useRef, useState } from "react";
+﻿import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import logo from "../../assets/logo.jpg";
 import {
@@ -42,6 +42,7 @@ export default function AdminLayout() {
   const [open, setOpen] = useState(false);
   const drawer = useRef(null);
   const trigger = useRef(null);
+  const content = useRef(null);
   const navigate = useNavigate();
   const { pathname } = useLocation();
 
@@ -118,10 +119,24 @@ export default function AdminLayout() {
       || (to === "/admin/variants" && activePath.startsWith("/admin/inventory/"));
   }
 
+  const currentPage = navigation.flatMap((group) => group.items)
+    .find(([, , to]) => isCurrent(to));
+  const currentPageLabel = currentPage?.[1] || "Không Gian Quản Trị";
+
+  useLayoutEffect(() => {
+    const element = content.current;
+    if (!element) return;
+    // Khởi động lại entrance của nội dung mà không remount trang hoặc reset dữ liệu.
+    element.classList.remove("la-content-route-enter");
+    void element.offsetWidth;
+    element.classList.add("la-content-route-enter");
+  }, [pathname]);
+
   return (
     <div className="lumora-admin">
-      {open && <button type="button" className="la-backdrop" tabIndex={-1}
-        aria-label="Đóng menu quản trị" onClick={closeMenu} />}
+      <button type="button" className={`la-backdrop ${open ? "la-backdrop-open" : ""}`}
+        tabIndex={-1} aria-hidden={!open} aria-label="Đóng menu quản trị"
+        onClick={closeMenu} />
       <aside ref={drawer} id="la-admin-navigation"
         className={`la-sidebar ${open ? "la-sidebar-open" : ""}`}
         role={open ? "dialog" : undefined} aria-modal={open ? true : undefined}
@@ -164,7 +179,10 @@ export default function AdminLayout() {
             <Menu size={22} />
           </button>
           <div className="la-enterprise">LUMORA<br />ENTERPRISE</div>
-          <div className="la-governance">GOVERNANCE<br />&amp; OPERATOR CORE</div>
+          <div className="la-governance">
+            <span>GOVERNANCE &amp; OPERATOR CORE</span>
+            <strong>{currentPageLabel}</strong>
+          </div>
           <div className="la-role-tabs" aria-label="Không gian vai trò">
             {["Customer", "Staff", "Storage", "Admin"].map((role) => (
               <button type="button" key={role} disabled
@@ -186,7 +204,11 @@ export default function AdminLayout() {
           <div className="la-profile">{userName}<small>{userRole}</small></div>
           <span className="la-avatar-slot" aria-hidden="true"><User size={18} /></span>
         </header>
-        <main className="la-content"><Outlet /></main>
+        <main ref={content} className="la-content" onAnimationEnd={event => {
+          if (event.target === event.currentTarget && event.animationName === "lm-page-enter") {
+            event.currentTarget.classList.remove("la-content-route-enter");
+          }
+        }}><Outlet /></main>
       </div>
     </div>
   );
