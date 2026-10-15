@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, Fragment } from "react";
 import {
   ShoppingBag,
   CheckCircle2,
@@ -9,7 +9,6 @@ import {
   AlertCircle,
   Clock,
   RefreshCw,
-  Calendar,
   Check,
 } from "lucide-react";
 import { orderAPI, getApiErrorMessage } from "../../services/api";
@@ -21,7 +20,7 @@ import "./OrderTrackingTimeline.css";
 const TRACKING_STEPS = [
   {
     key: "pending",
-    title: "Đặt hàng thành công",
+    title: "Đặt hàng",
     description: "Hệ thống LUMORA đã tiếp nhận đơn hàng",
     icon: ShoppingBag,
   },
@@ -39,13 +38,13 @@ const TRACKING_STEPS = [
   },
   {
     key: "shipping",
-    title: "Đang giao hàng",
+    title: "Đang giao",
     description: "Chuyên xe dịch vụ White-Glove đang vận chuyển",
     icon: Truck,
   },
   {
     key: "delivered",
-    title: "Giao hàng thành công",
+    title: "Hoàn thành",
     description: "Đã bàn giao không gian và nghiệm thu hoàn tất",
     icon: PackageCheck,
   },
@@ -54,10 +53,16 @@ const TRACKING_STEPS = [
 // Thứ tự chỉ số trạng thái để tính tiến trình
 const STATUS_INDEX_MAP = {
   pending: 0,
+  created: 0,
   confirmed: 1,
   processing: 2,
+  packaging: 2,
+  packed: 2,
   shipping: 3,
+  delivering: 3,
   delivered: 4,
+  completed: 4,
+  done: 4,
 };
 
 function formatStepTime(isoString) {
@@ -89,16 +94,11 @@ export default function OrderTrackingTimeline({
   className = "",
   onRefresh,
 }) {
-  const [tracking, setTracking] = useState(initialTracking || null);
+  const [fetchedTracking, setFetchedTracking] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // Đồng bộ props tracking nếu component cha cập nhật
-  useEffect(() => {
-    if (initialTracking) {
-      setTracking(initialTracking);
-    }
-  }, [initialTracking]);
+  const tracking = initialTracking || fetchedTracking;
 
   // Tự động fetch API tracking nếu có orderId và chưa có data
   const fetchTracking = useCallback(async () => {
@@ -108,7 +108,7 @@ export default function OrderTrackingTimeline({
     try {
       const res = await orderAPI.getOrderTracking(orderId);
       const data = res.data?.tracking || res.data || null;
-      setTracking(data);
+      setFetchedTracking(data);
       if (onRefresh) onRefresh(data);
     } catch (err) {
       const msg = getApiErrorMessage(
@@ -122,10 +122,30 @@ export default function OrderTrackingTimeline({
   }, [orderId, onRefresh]);
 
   useEffect(() => {
-    if (orderId && !initialTracking) {
-      fetchTracking();
+    let isCancelled = false;
+    async function loadInitial() {
+      if (!orderId || initialTracking) return;
+      try {
+        const res = await orderAPI.getOrderTracking(orderId);
+        if (isCancelled) return;
+        const data = res.data?.tracking || res.data || null;
+        setFetchedTracking(data);
+        if (onRefresh) onRefresh(data);
+      } catch (err) {
+        if (isCancelled) return;
+        setError(
+          getApiErrorMessage(err, "Không thể tải tiến trình theo dõi đơn hàng.")
+        );
+      }
     }
-  }, [orderId, initialTracking, fetchTracking]);
+
+    if (orderId && !initialTracking) {
+      loadInitial();
+    }
+    return () => {
+      isCancelled = true;
+    };
+  }, [orderId, initialTracking, onRefresh]);
 
   // Trích xuất thông tin trạng thái & thời gian thực tế
   const activeStatus = String(
@@ -217,7 +237,7 @@ export default function OrderTrackingTimeline({
             const isCompleted = idx < currentIndex;
             const isCurrent = idx === currentIndex;
             return (
-              <React.Fragment key={s.key}>
+              <Fragment key={s.key}>
                 <div
                   className={`lumora-tracking-compact__dot ${
                     isCompleted
@@ -237,7 +257,7 @@ export default function OrderTrackingTimeline({
                     }`}
                   />
                 )}
-              </React.Fragment>
+              </Fragment>
             );
           })}
         </div>
@@ -351,7 +371,6 @@ export default function OrderTrackingTimeline({
             {TRACKING_STEPS.map((s, idx) => {
               const isCompleted = idx < currentIndex;
               const isCurrent = idx === currentIndex;
-              const isUpcoming = idx > currentIndex;
               const StepIcon = s.icon;
               const timeStr = getStepTimestamp(s.key, idx);
 
@@ -413,7 +432,6 @@ export default function OrderTrackingTimeline({
           {TRACKING_STEPS.map((s, idx) => {
             const isCompleted = idx < currentIndex;
             const isCurrent = idx === currentIndex;
-            const isUpcoming = idx > currentIndex;
             const StepIcon = s.icon;
             const timeStr = getStepTimestamp(s.key, idx);
 

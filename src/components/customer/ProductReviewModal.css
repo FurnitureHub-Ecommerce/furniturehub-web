@@ -1,0 +1,360 @@
+/* ============================================================
+   LUMORA PRODUCT REVIEW MODAL
+   src/components/customer/ProductReviewModal.css
+   ============================================================ */
+
+.lumora-review-modal__overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1050;
+  background-color: rgba(28, 25, 23, 0.65);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.25rem;
+  animation: lumoraFadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.lumora-review-modal__container {
+  width: 100%;
+  max-width: 540px;
+  background-color: #FFFFFF;
+  border: 1px solid #E2DBD0;
+  border-radius: 1.25rem;
+  box-shadow: 0 25px 50px -12px rgba(28, 25, 23, 0.25);
+  overflow: hidden;
+  animation: lumoraSlideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes lumoraFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes lumoraSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Header */
+.lumora-review-modal__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.25rem 1.75rem;
+  border-bottom: 1px solid #F0EAE1;
+  background-color: #FAF8F5;
+}
+
+.lumora-review-modal__badge {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.6875rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  font-weight: 700;
+  color: #8A6A48;
+  margin-bottom: 0.25rem;
+}
+
+.lumora-review-modal__title {
+  font-family: var(--font-serif, "Cormorant Garamond", Georgia, serif);
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #252525;
+  margin: 0;
+  line-height: 1.2;
+}
+
+.lumora-review-modal__close-btn {
+  background: transparent;
+  border: none;
+  color: #8F887E;
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 9999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.lumora-review-modal__close-btn:hover {
+  background-color: #E9E1D5;
+  color: #252525;
+}
+
+/* Product Row Snapshot */
+.lumora-review-modal__product-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 1.75rem;
+  background-color: #FFFFFF;
+  border-bottom: 1px solid #F0EAE1;
+}
+
+.lumora-review-modal__product-thumb {
+  width: 56px;
+  height: 56px;
+  border-radius: 0.625rem;
+  object-fit: cover;
+  border: 1px solid #E2DBD0;
+  background-color: #FAF8F5;
+  flex-shrink: 0;
+}
+
+.lumora-review-modal__product-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.lumora-review-modal__product-name {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: #252525;
+  margin: 0 0 0.2rem 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.lumora-review-modal__product-category {
+  font-size: 0.75rem;
+  color: #8A6A48;
+  font-weight: 500;
+}
+
+/* Warning for Guest */
+.lumora-review-modal__auth-warning {
+  margin: 1rem 1.75rem 0 1.75rem;
+  padding: 0.75rem 1rem;
+  background-color: #FEF3C7;
+  border: 1px solid #FDE68A;
+  border-radius: 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: #92400E;
+}
+
+.lumora-review-modal__auth-btn {
+  background-color: #8A6A48;
+  color: #FFFFFF;
+  border: none;
+  border-radius: 0.5rem;
+  padding: 0.4rem 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  white-space: nowrap;
+  transition: background-color 0.2s ease;
+}
+
+.lumora-review-modal__auth-btn:hover {
+  background-color: #705437;
+}
+
+/* Form */
+.lumora-review-modal__form {
+  padding: 1.5rem 1.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.lumora-review-modal__star-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.625rem;
+  padding: 1rem;
+  background-color: #FAF8F5;
+  border-radius: 0.875rem;
+  border: 1px dashed #E2DBD0;
+}
+
+.lumora-review-modal__label {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #44403C;
+}
+
+.lumora-review-modal__stars {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.lumora-review-star-btn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0.25rem;
+  transition: transform 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  outline: none;
+}
+
+.lumora-review-star-btn:hover {
+  transform: scale(1.18);
+}
+
+.lumora-review-star-btn--active {
+  animation: starPulse 0.25s ease;
+}
+
+@keyframes starPulse {
+  0% { transform: scale(0.9); }
+  50% { transform: scale(1.25); }
+  100% { transform: scale(1); }
+}
+
+.lumora-review-modal__rating-caption {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: #8A6A48;
+  min-height: 1.25rem;
+  text-align: center;
+}
+
+.lumora-review-modal__field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.lumora-review-modal__textarea {
+  width: 100%;
+  padding: 0.875rem 1rem;
+  font-family: inherit;
+  font-size: 0.875rem;
+  color: #252525;
+  background-color: #FFFFFF;
+  border: 1px solid #E2DBD0;
+  border-radius: 0.75rem;
+  resize: vertical;
+  min-height: 95px;
+  line-height: 1.5;
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.lumora-review-modal__textarea:focus {
+  border-color: #8A6A48;
+  box-shadow: 0 0 0 3px rgba(138, 106, 72, 0.12);
+}
+
+.lumora-review-modal__textarea::placeholder {
+  color: #A8A29E;
+  font-size: 0.8125rem;
+}
+
+/* Alerts */
+.lumora-review-modal__alert {
+  padding: 0.75rem 1rem;
+  border-radius: 0.75rem;
+  font-size: 0.8125rem;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.625rem;
+  line-height: 1.4;
+}
+
+.lumora-review-modal__alert--error {
+  background-color: #FEF2F2;
+  border: 1px solid #FECACA;
+  color: #B91C1C;
+}
+
+.lumora-review-modal__alert--success {
+  background-color: #ECFDF5;
+  border: 1px solid #A7F3D0;
+  color: #047857;
+}
+
+/* Actions */
+.lumora-review-modal__actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+}
+
+.lumora-review-modal__btn-cancel {
+  padding: 0.75rem 1.25rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #6E6860;
+  background-color: transparent;
+  border: 1px solid #E2DBD0;
+  border-radius: 0.625rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.lumora-review-modal__btn-cancel:hover {
+  background-color: #FAF8F5;
+  color: #252525;
+}
+
+.lumora-review-modal__btn-submit {
+  padding: 0.75rem 1.5rem;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #FFFFFF;
+  background-color: #8A6A48;
+  border: 1px solid #8A6A48;
+  border-radius: 0.625rem;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  box-shadow: 0 4px 12px rgba(138, 106, 72, 0.25);
+  transition: all 0.2s ease;
+}
+
+.lumora-review-modal__btn-submit:hover:not(:disabled) {
+  background-color: #705437;
+  border-color: #705437;
+  box-shadow: 0 6px 16px rgba(138, 106, 72, 0.35);
+  transform: translateY(-1px);
+}
+
+.lumora-review-modal__btn-submit:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.lumora-review-modal__spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: #FFFFFF;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+  display: inline-block;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}

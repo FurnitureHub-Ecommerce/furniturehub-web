@@ -129,6 +129,31 @@ export const authAPI = {
 
 // =========== USER / ADMIN MANAGEMENT API ===========
 
+export const getUserProfile = async () => {
+  try {
+    const res = await api.get("/api/users/profile");
+    return res;
+  } catch (error) {
+    console.error("[api] getUserProfile error:", error);
+    throw error;
+  }
+};
+
+export const updateUserProfile = async (data = {}) => {
+  try {
+    // Backend chỉ chấp nhận fullName, phone (email read-only, cấm role/id/các field khác)
+    const cleanData = {};
+    if (data.fullName !== undefined) cleanData.fullName = String(data.fullName).trim();
+    if (data.phone !== undefined) cleanData.phone = String(data.phone).trim();
+
+    const res = await api.patch("/api/users/profile", cleanData);
+    return res;
+  } catch (error) {
+    console.error("[api] updateUserProfile error:", error);
+    throw error;
+  }
+};
+
 export const userAPI = {
   // Admin lấy danh sách toàn bộ người dùng trong hệ thống
   getUsers: (params = {}) => api.get("/api/users", { params }),
@@ -137,8 +162,10 @@ export const userAPI = {
   createUser: (userData) => api.post("/api/users", userData),
 
   getProfile: () => api.get("/api/users/profile"),
+  getUserProfile,
 
-  updateProfile: (profileData) => api.patch("/api/users/profile", profileData),
+  updateProfile: (profileData) => updateUserProfile(profileData),
+  updateUserProfile,
 };
 
 // =========== PRODUCT API ===========
@@ -233,6 +260,16 @@ export const storageAPI = {
 
 // =========== ORDER API ===========
 
+export const getOrderTracking = async (orderId) => {
+  try {
+    const res = await api.get(`/api/orders/${orderId}/tracking`);
+    return res;
+  } catch (error) {
+    console.error(`[api] getOrderTracking error for #${orderId}:`, error);
+    throw error;
+  }
+};
+
 export const orderAPI = {
   // Admin & Staff
   getOrders: (params = {}) => api.get("/api/orders", { params }),
@@ -244,8 +281,8 @@ export const orderAPI = {
   createOrder: (orderData) => api.post("/api/orders", orderData),
   getMyOrders: (params = {}) => api.get("/api/orders/my-orders", { params }),
   getMyOrderById: (id) => api.get(`/api/orders/${id}`),
-  getOrderTracking: (id) => api.get(`/api/orders/${id}/tracking`),
-  trackOrder: (id) => api.get(`/api/orders/${id}/tracking`),
+  getOrderTracking,
+  trackOrder: getOrderTracking,
   cancelOrder: (id, data = {}) => api.patch(`/api/orders/${id}/cancel`, data),
 };
 
@@ -302,9 +339,41 @@ export const paymentAPI = {
 
 // =========== REVIEW API (CUSTOMER & PUBLIC) ===========
 
+export const createProductReview = async (productId, data = {}) => {
+  try {
+    const payload =
+      typeof productId === "object" && productId !== null
+        ? productId
+        : { productId, ...data };
+
+    const body = {
+      productId: payload.productId,
+      rating: Number(payload.rating),
+      ...(payload.comment ? { comment: String(payload.comment).trim() } : {}),
+    };
+
+    const res = await api.post("/api/reviews", body);
+    return res;
+  } catch (error) {
+    console.error("[api] createProductReview error:", error);
+    throw error;
+  }
+};
+
+export const getProductReviews = async (productId, params = {}) => {
+  try {
+    const res = await api.get(`/api/reviews/product/${productId}`, { params });
+    return res;
+  } catch (error) {
+    console.error(`[api] getProductReviews error for #${productId}:`, error);
+    throw error;
+  }
+};
+
 export const reviewAPI = {
-  getProductReviews: (productId) => api.get(`/api/reviews/product/${productId}`),
-  createReview: (data) => api.post("/api/reviews", data),
+  getProductReviews,
+  createProductReview,
+  createReview: createProductReview,
   updateReview: (id, data) => api.patch(`/api/reviews/${id}`, data),
   deleteReview: (id) => api.delete(`/api/reviews/${id}`),
 };

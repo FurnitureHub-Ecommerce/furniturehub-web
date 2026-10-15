@@ -17,6 +17,7 @@ import {
   CheckoutPage,
   PaymentSuccessPage,
   PaymentFailedPage,
+  CustomerProfilePage,
   AddressManagementPage,
   CustomerOrdersPage,
   CollectionsPage,
@@ -214,6 +215,22 @@ function App() {
               element={
                 <CustomerLayout>
                   <PaymentFailedPage />
+                </CustomerLayout>
+              }
+            />
+            <Route
+              path="/profile"
+              element={
+                <CustomerLayout>
+                  <CustomerProfilePage />
+                </CustomerLayout>
+              }
+            />
+            <Route
+              path="/account"
+              element={
+                <CustomerLayout>
+                  <CustomerProfilePage />
                 </CustomerLayout>
               }
             />

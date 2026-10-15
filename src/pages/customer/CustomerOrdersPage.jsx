@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Link, useNavigate, useSearchParams, useParams } from "react-router-dom";
 import {
   Package,
@@ -7,22 +7,19 @@ import {
   RefreshCw,
   ArrowRight,
   MapPin,
-  CreditCard,
   Copy,
   Check,
   CheckCircle2,
-  XCircle,
   Truck,
   Eye,
-  ShoppingBag,
 } from "lucide-react";
 import { orderAPI, getApiErrorMessage } from "../../services/api";
 import { formatCurrency, PRODUCT_IMAGE_OVERRIDES } from "../../utils/formatters";
 import OrderStatusBadge from "../../components/order/OrderStatusbadge/OrderStatusBadge";
-import OrderStatusStepper from "../../components/order/OrderStatusStepper/OrderStatusStepper";
 import OrderDetailModal from "../../components/order/OrderDetailModal/OrderDetailModal";
 import CancelOrderModal from "../../components/order/CancelOrderModal/CancelOrderModal";
 import OrderTrackingTimeline from "../../components/customer/OrderTrackingTimeline";
+import OrderTrackingModal from "../../components/customer/OrderTrackingModal";
 import QuickOrderTrack from "../../components/customer/QuickOrderTrack";
 import "./CustomerOrders.css";
 
@@ -43,6 +40,8 @@ export default function CustomerOrdersPage() {
   // Modal states
   const [detailOrder, setDetailOrder] = useState(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
+  const [trackingOrder, setTrackingOrder] = useState(null);
+  const [isTrackingOpen, setIsTrackingOpen] = useState(false);
   const [cancellingOrder, setCancellingOrder] = useState(null);
   const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
 
@@ -51,49 +50,60 @@ export default function CustomerOrdersPage() {
   const [copiedId, setCopiedId] = useState(null);
 
   const targetOrderId = searchParams.get("orderId") || paramOrderId;
-
-  const fetchOrders = useCallback(async () => {
-    if (!token) return;
-    setIsLoading(true);
-    setError(null);
-    try {
-      const res = await orderAPI.getMyOrders();
-      const list = res.data?.orders || res.data || [];
-      const orderArray = Array.isArray(list) ? list : [];
-      setOrders(orderArray);
-
-      // Nếu có query param ?orderId=xxx hoặc URL /orders/:orderId
-      if (targetOrderId) {
-        const matched = orderArray.find(
-          (o) => (o._id || o.id) === targetOrderId,
-        );
-        if (matched) {
-          setDetailOrder(matched);
-          setIsDetailOpen(true);
-        } else {
-          // Trường hợp đơn hàng không có trong mảng (hoặc pagination), mở modal và fetch trực tiếp
-          setDetailOrder({ _id: targetOrderId });
-          setIsDetailOpen(true);
-        }
-      }
-    } catch (err) {
-      const msg = getApiErrorMessage(
-        err,
-        "Không thể tải lịch sử đơn hàng. Vui lòng kiểm tra lại phiên đăng nhập.",
-      );
-      setError(msg);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [token, targetOrderId]);
+  const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
     if (!token) {
       navigate("/login?redirect=/orders");
       return;
     }
-    fetchOrders();
-  }, [token, fetchOrders, navigate]);
+
+    let isMounted = true;
+    async function loadOrders() {
+      setError(null);
+      try {
+        const res = await orderAPI.getMyOrders();
+        if (!isMounted) return;
+        const list = res.data?.orders || res.data || [];
+        const orderArray = Array.isArray(list) ? list : [];
+        setOrders(orderArray);
+
+        // Nếu có query param ?orderId=xxx hoặc URL /orders/:orderId
+        if (targetOrderId) {
+          const matched = orderArray.find(
+            (o) => (o._id || o.id) === targetOrderId,
+          );
+          if (matched) {
+            setDetailOrder(matched);
+            setIsDetailOpen(true);
+          } else {
+            // Trường hợp đơn hàng không có trong mảng (hoặc pagination), mở modal và fetch trực tiếp
+            setDetailOrder({ _id: targetOrderId });
+            setIsDetailOpen(true);
+          }
+        }
+      } catch (err) {
+        if (!isMounted) return;
+        const msg = getApiErrorMessage(
+          err,
+          "Không thể tải lịch sử đơn hàng. Vui lòng kiểm tra lại phiên đăng nhập.",
+        );
+        setError(msg);
+      } finally {
+        if (isMounted) setIsLoading(false);
+      }
+    }
+
+    loadOrders();
+    return () => {
+      isMounted = false;
+    };
+  }, [token, targetOrderId, reloadKey, navigate]);
+
+  const handleRefresh = () => {
+    setIsLoading(true);
+    setReloadKey((prev) => prev + 1);
+  };
 
   const showToast = (message, duration = 3500) => {
     setToastMessage(message);
@@ -124,6 +134,17 @@ export default function CustomerOrdersPage() {
     } else if (paramOrderId) {
       navigate("/orders", { replace: true });
     }
+  };
+
+  // Mở modal theo dõi vận đơn White-Glove
+  const handleOpenTracking = (order) => {
+    setTrackingOrder(order);
+    setIsTrackingOpen(true);
+  };
+
+  const handleCloseTracking = () => {
+    setIsTrackingOpen(false);
+    setTrackingOrder(null);
   };
 
   // Mở modal xác nhận hủy đơn
@@ -276,7 +297,7 @@ export default function CustomerOrdersPage() {
           <span>{error}</span>
           <button
             type="button"
-            onClick={fetchOrders}
+            onClick={handleRefresh}
             className="orders-retry-btn"
           >
             <RefreshCw size={14} /> Thử lại
@@ -333,8 +354,6 @@ export default function CustomerOrdersPage() {
             const items = ord.items || [];
             const canCancel = ord.status === "pending";
             const total = ord.totalAmount ?? ord.subtotal ?? 0;
-            const paymentMethod =
-              ord.paymentMethod || ord.payment?.paymentMethod || "COD";
 
             return (
               <div key={ordId} className="order-item-card">
@@ -481,7 +500,7 @@ export default function CustomerOrdersPage() {
                         </button>
                       )}
 
-                      {/* Task 6: Theo dõi timeline nhanh & chi tiết */}
+                      {/* Task 6: Theo dõi timeline nhanh & chi tiết bằng OrderTrackingModal riêng biệt */}
                       <button
                         type="button"
                         className="order-btn-view"
@@ -491,8 +510,8 @@ export default function CustomerOrdersPage() {
                           color: "#8A6A48",
                           marginRight: "0.5rem",
                         }}
-                        onClick={() => handleOpenDetail(ord)}
-                        title="Theo dõi tiến trình chi tiết"
+                        onClick={() => handleOpenTracking(ord)}
+                        title="Theo dõi tiến trình vận chuyển White-Glove"
                       >
                         <Truck size={14} /> Theo Dõi
                       </button>
@@ -514,12 +533,27 @@ export default function CustomerOrdersPage() {
         </div>
       )}
 
-      {/* Task 16 + 18 + 17: Modal Chi Tiết Đơn Hàng */}
+      {/* Task 16 + 18 + 17: Modal Chi Tiết Đơn Hàng (Sản phẩm, Hóa đơn, Thanh toán VietQR) */}
       <OrderDetailModal
         isOpen={isDetailOpen}
         onClose={handleCloseDetail}
         order={detailOrder}
         onCancelClick={(ord) => {
+          handleOpenCancelModal(ord);
+        }}
+      />
+
+      {/* Task 6: Modal Theo Dõi Vận Đơn White-Glove (Tiến trình 5 bước, địa chỉ giao nhận) */}
+      <OrderTrackingModal
+        isOpen={isTrackingOpen}
+        onClose={handleCloseTracking}
+        order={trackingOrder}
+        onViewFullDetail={(ord) => {
+          handleCloseTracking();
+          handleOpenDetail(ord);
+        }}
+        onCancelClick={(ord) => {
+          handleCloseTracking();
           handleOpenCancelModal(ord);
         }}
       />

@@ -1,12 +1,14 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { 
-  Heart, ShoppingBag, Star, Check, ShieldCheck, Truck, 
-  ChevronRight, ZoomIn, Info, AlertTriangle, Award, Wifi, RefreshCw, ArrowLeft
+  Heart, ShoppingBag, Star, ShieldCheck, Truck, 
+  ChevronRight, ZoomIn, AlertTriangle, Award, Wifi, ArrowLeft,
+  Sparkles, Edit3, CheckCircle2
 } from 'lucide-react';
 import { productAPI, reviewAPI } from '../../services/api';
 import { useShop } from '../../context/ShopContext';
 import { ProductDetailSkeleton } from '../../components/common/ProductSkeleton';
+import ProductReviewModal from '../../components/customer/ProductReviewModal';
 import { 
   formatCurrency, 
   formatCategoryName, 
@@ -23,6 +25,9 @@ export function ProductDetailPage() {
   const [variants, setVariants] = useState([]);
   const [selectedVariant, setSelectedVariant] = useState(null);
   const [reviews, setReviews] = useState([]);
+  const [averageRating, setAverageRating] = useState(5.0);
+  const [totalReviews, setTotalReviews] = useState(0);
+  const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
   const [apiError, setApiError] = useState(null);
 
   // Gallery & Image State
@@ -72,9 +77,13 @@ export function ProductDetailPage() {
 
           // Fetch reviews
           let loadedReviews = [];
+          let loadedAvg = null;
+          let loadedCount = 0;
           try {
             const revRes = await reviewAPI.getProductReviews(prodId);
             loadedReviews = revRes.data?.reviews || [];
+            loadedAvg = revRes.data?.averageRating;
+            loadedCount = revRes.data?.totalReviews ?? loadedReviews.length;
           } catch (rErr) {
             console.warn('Could not load reviews:', rErr.message);
           }
@@ -87,6 +96,21 @@ export function ProductDetailPage() {
             : [realProd.image || 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=1200&q=80']);
           const metrics = getProductMetrics(realProd.name, realProd.rating, realProd.reviewCount);
 
+          const finalRating =
+            loadedAvg !== undefined && loadedAvg !== null && loadedCount > 0
+              ? Number(loadedAvg)
+              : loadedReviews.length > 0
+              ? Number(
+                  (
+                    loadedReviews.reduce((acc, r) => acc + (r.rating || 5), 0) /
+                    loadedReviews.length
+                  ).toFixed(1)
+                )
+              : metrics.rating;
+
+          const finalCount =
+            loadedCount > 0 ? loadedCount : (loadedReviews.length || metrics.reviewCount);
+
           const formatted = {
             id: prodId,
             _id: prodId,
@@ -98,8 +122,8 @@ export function ProductDetailPage() {
             brandName: brandObj?.name || 'LUMORA Studio',
             basePrice: realProd.minPrice ?? realProd.price ?? 0,
             oldPrice: realProd.oldPrice || null,
-            rating: metrics.rating,
-            reviewCount: metrics.reviewCount,
+            rating: finalRating,
+            reviewCount: finalCount,
             isNew: realProd.isNew !== undefined ? realProd.isNew : true,
             inStock: realProd.availableStock !== undefined ? realProd.availableStock > 0 : true,
             stockCount: realProd.availableStock ?? 15,
@@ -124,6 +148,8 @@ export function ProductDetailPage() {
           }
           setSelectedImage(images[0]);
           setReviews(loadedReviews);
+          setAverageRating(finalRating);
+          setTotalReviews(finalCount);
         } else {
           setApiError('Không tìm thấy thông tin sản phẩm này trên hệ thống.');
         }
@@ -139,6 +165,47 @@ export function ProductDetailPage() {
 
     fetchProduct();
   }, [slug]);
+
+  const reloadReviews = useCallback(async () => {
+    const prodId = product?.id || product?._id;
+    if (!prodId) return;
+    try {
+      const res = await reviewAPI.getProductReviews(prodId);
+      const revs = res.data?.reviews || [];
+      const avg = res.data?.averageRating;
+      const total = res.data?.totalReviews ?? revs.length;
+      const finalRating =
+        avg !== undefined && avg !== null && total > 0
+          ? Number(avg)
+          : revs.length > 0
+          ? Number(
+              (revs.reduce((acc, r) => acc + (r.rating || 5), 0) / revs.length).toFixed(1)
+            )
+          : 5.0;
+
+      setReviews(revs);
+      setAverageRating(finalRating);
+      setTotalReviews(total);
+      setProduct((prev) => (prev ? { ...prev, rating: finalRating, reviewCount: total, reviews: revs } : null));
+      setActiveTab('reviews');
+    } catch (err) {
+      console.warn('Could not reload reviews:', err);
+    }
+  }, [product?.id, product?._id]);
+
+  const ratingBreakdown = useMemo(() => {
+    const counts = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
+    reviews.forEach((r) => {
+      const star = Math.max(1, Math.min(5, Math.round(r.rating || 5)));
+      counts[star] = (counts[star] || 0) + 1;
+    });
+    const total = reviews.length || 1;
+    return [5, 4, 3, 2, 1].map((star) => ({
+      star,
+      count: counts[star] || 0,
+      percent: reviews.length > 0 ? Math.round(((counts[star] || 0) / total) * 100) : 0,
+    }));
+  }, [reviews]);
 
   if (isLoading) {
     return <ProductDetailSkeleton />;
@@ -267,11 +334,23 @@ export function ProductDetailPage() {
                   <span className="font-semibold uppercase tracking-wider text-amber-800">
                     {product.brandName}
                   </span>
-                  <div className="flex items-center gap-1.5 text-amber-600 font-semibold">
-                    <Star size={14} fill="currentColor" />
-                    <span>{product.rating}</span>
-                    <span className="text-stone-400 font-normal">({product.reviewCount} đánh giá)</span>
-                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setActiveTab('reviews');
+                      const revSection = document.getElementById('product-tabs-section');
+                      if (revSection) {
+                        revSection.scrollIntoView({ behavior: 'smooth' });
+                      }
+                    }}
+                    className="flex items-center gap-1.5 text-amber-600 hover:text-amber-800 font-semibold cursor-pointer transition-colors"
+                  >
+                    <Star size={14} className="fill-[#C89D5C] text-[#C89D5C]" />
+                    <span>{Number(averageRating || product.rating || 5).toFixed(1)}</span>
+                    <span className="text-stone-400 font-normal">
+                      ({totalReviews || product.reviewCount || reviews.length} đánh giá)
+                    </span>
+                  </button>
                 </div>
 
                 <h1 className="font-serif text-2xl sm:text-3xl font-bold text-stone-900 leading-tight mb-3">
@@ -417,7 +496,7 @@ export function ProductDetailPage() {
         </div>
 
         {/* Tabbed Info Section (Description, Specs, Reviews) */}
-        <div className="bg-white rounded-3xl border border-stone-200/80 p-6 lg:p-10 shadow-sm mb-12">
+        <div id="product-tabs-section" className="bg-white rounded-3xl border border-stone-200/80 p-6 lg:p-10 shadow-sm mb-12">
           <div className="flex items-center gap-8 border-b border-stone-100 pb-4 mb-6">
             <button
               type="button"
@@ -452,7 +531,7 @@ export function ProductDetailPage() {
                 activeTab === 'reviews' ? 'text-amber-900' : 'text-stone-400 hover:text-stone-700'
               }`}
             >
-              Đánh Giá Khách Hàng ({product.reviewCount})
+              Đánh Giá Khách Hàng ({totalReviews || reviews.length})
               {activeTab === 'reviews' && (
                 <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-amber-800" />
               )}
@@ -477,25 +556,156 @@ export function ProductDetailPage() {
           )}
 
           {activeTab === 'reviews' && (
-            <div className="space-y-4">
-              {reviews.length === 0 ? (
-                <div className="text-center py-8 text-xs text-stone-500">
-                  Chưa có đánh giá nào cho sản phẩm này. Hãy là người đầu tiên trải nghiệm!
-                </div>
-              ) : (
-                reviews.map((rev) => (
-                  <div key={rev._id} className="p-4 bg-stone-50 rounded-xl border border-stone-100">
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="font-bold text-xs text-stone-800">{rev.userId?.fullName || 'Khách hàng'}</span>
-                      <div className="flex items-center gap-1 text-amber-600">
-                        <Star size={12} fill="currentColor" />
-                        <span className="text-xs font-bold">{rev.rating}/5</span>
-                      </div>
+            <div className="space-y-8">
+              {/* Rating Overview Box */}
+              <div className="p-6 sm:p-8 bg-stone-50/80 rounded-2xl border border-stone-200/80 flex flex-col md:flex-row md:items-center justify-between gap-6">
+                {/* Left: Overall Score */}
+                <div className="flex items-center gap-4 sm:gap-6 border-b md:border-b-0 md:border-r border-stone-200/80 pb-6 md:pb-0 md:pr-8">
+                  <div className="text-center min-w-[120px]">
+                    <div className="font-serif text-5xl font-bold text-amber-900 leading-none mb-1.5">
+                      {Number(averageRating || 5).toFixed(1)}
                     </div>
-                    <p className="text-xs text-stone-600">{rev.comment}</p>
+                    <div className="flex items-center justify-center gap-1 text-amber-600 my-1.5">
+                      {[1, 2, 3, 4, 5].map((s) => (
+                        <Star
+                          key={s}
+                          size={16}
+                          className={
+                            s <= Math.round(averageRating || 5)
+                              ? "fill-[#C89D5C] text-[#C89D5C]"
+                              : "text-stone-300"
+                          }
+                        />
+                      ))}
+                    </div>
+                    <span className="text-xs text-stone-500 font-medium">
+                      {totalReviews || reviews.length} lượt đánh giá
+                    </span>
                   </div>
-                ))
-              )}
+                </div>
+
+                {/* Middle: Star breakdown progress bars */}
+                <div className="flex-1 max-w-sm space-y-2">
+                  {ratingBreakdown.map((item) => (
+                    <div key={item.star} className="flex items-center gap-2.5 text-xs text-stone-600">
+                      <span className="w-10 font-semibold text-stone-700 flex items-center gap-1">
+                        {item.star} <Star size={11} className="fill-[#C89D5C] text-[#C89D5C] inline" />
+                      </span>
+                      <div className="flex-1 h-2 bg-stone-200/80 rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-amber-800 rounded-full transition-all duration-500"
+                          style={{ width: `${item.percent}%` }}
+                        />
+                      </div>
+                      <span className="w-8 text-right text-stone-400 font-mono text-[11px]">
+                        {item.count}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Right: Write Review Call To Action */}
+                <div className="flex flex-col items-center md:items-end justify-center gap-2 pt-2 md:pt-0">
+                  <span className="text-xs text-stone-500 hidden sm:block text-right">
+                    Bạn đã trải nghiệm tác phẩm này?
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setIsReviewModalOpen(true)}
+                    className="px-5 py-3 bg-[#8A6A48] hover:bg-[#705437] text-white text-xs font-bold uppercase tracking-wider rounded-xl shadow-md transition-all flex items-center gap-2 hover:shadow-lg active:scale-95 cursor-pointer"
+                  >
+                    <Edit3 size={15} />
+                    <span>Viết Đánh Giá</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Reviews List */}
+              <div className="space-y-4">
+                {reviews.length === 0 ? (
+                  <div className="text-center py-12 px-4 bg-white rounded-2xl border border-dashed border-stone-200">
+                    <Sparkles size={36} className="mx-auto text-amber-800/40 mb-3" />
+                    <h4 className="font-serif text-base font-bold text-stone-800 mb-1">
+                      Chưa có đánh giá nào cho tác phẩm này
+                    </h4>
+                    <p className="text-xs text-stone-500 max-w-md mx-auto mb-4">
+                      Hãy trở thành người đầu tiên trải nghiệm và chia sẻ cảm xúc về thiết kế, chất liệu tới cộng đồng yêu nội thất LUMORA.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => setIsReviewModalOpen(true)}
+                      className="px-4 py-2 bg-stone-900 hover:bg-amber-900 text-white text-xs font-bold uppercase tracking-wider rounded-xl transition-all inline-flex items-center gap-1.5 cursor-pointer"
+                    >
+                      <Edit3 size={13} /> Gửi đánh giá đầu tiên
+                    </button>
+                  </div>
+                ) : (
+                  reviews.map((rev, idx) => {
+                    const reviewerName =
+                      rev.user?.fullName ||
+                      rev.userId?.fullName ||
+                      (typeof rev.user === 'string'
+                        ? `Khách hàng #${rev.user.slice(-4).toUpperCase()}`
+                        : 'Khách hàng LUMORA');
+                    const initialChar = (reviewerName || 'K')[0].toUpperCase();
+                    const starVal = Number(rev.rating) || 5;
+                    const formattedDate = rev.createdAt
+                      ? new Date(rev.createdAt).toLocaleDateString('vi-VN', {
+                          day: '2-digit',
+                          month: '2-digit',
+                          year: 'numeric',
+                        })
+                      : 'Đã xác thực';
+
+                    return (
+                      <div
+                        key={rev._id || idx}
+                        className="p-5 bg-stone-50/70 hover:bg-stone-50 rounded-2xl border border-stone-200/70 transition-all space-y-3"
+                      >
+                        <div className="flex items-start justify-between flex-wrap gap-2">
+                          <div className="flex items-center gap-3">
+                            <div className="w-9 h-9 rounded-full bg-[#8A6A48] text-white flex items-center justify-center font-bold text-xs shadow-sm">
+                              {initialChar}
+                            </div>
+                            <div>
+                              <div className="flex items-center gap-2">
+                                <span className="font-bold text-xs sm:text-sm text-stone-900">
+                                  {reviewerName}
+                                </span>
+                                <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                                  <CheckCircle2 size={10} /> Đã mua hàng
+                                </span>
+                              </div>
+                              <span className="text-[11px] text-stone-400">{formattedDate}</span>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-1">
+                            {[1, 2, 3, 4, 5].map((s) => (
+                              <Star
+                                key={s}
+                                size={13}
+                                className={
+                                  s <= starVal
+                                    ? 'fill-[#C89D5C] text-[#C89D5C]'
+                                    : 'text-stone-300'
+                                }
+                              />
+                            ))}
+                            <span className="text-xs font-bold text-amber-800 ml-1">
+                              {starVal}/5
+                            </span>
+                          </div>
+                        </div>
+
+                        <p className="text-xs sm:text-sm text-stone-700 leading-relaxed pl-12">
+                          {rev.comment}
+                        </p>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
             </div>
           )}
         </div>
@@ -522,8 +732,17 @@ export function ProductDetailPage() {
           </div>
         </div>
       )}
+
+      {/* Task 7: Product Review Modal */}
+      <ProductReviewModal
+        isOpen={isReviewModalOpen}
+        onClose={() => setIsReviewModalOpen(false)}
+        product={product}
+        onSuccess={reloadReviews}
+      />
     </div>
   );
 }
 
 export default ProductDetailPage;
+

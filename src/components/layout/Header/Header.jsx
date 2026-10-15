@@ -227,6 +227,15 @@ export function Header() {
 
                     <div className="header__user-dropdown-links">
                       <Link
+                        to="/profile"
+                        onClick={() => setUserDropdownOpen(false)}
+                        className="header__user-dropdown-item"
+                        role="menuitem"
+                      >
+                        <User size={14} />
+                        <span>Hồ sơ cá nhân</span>
+                      </Link>
+                      <Link
                         to="/orders"
                         onClick={() => setUserDropdownOpen(false)}
                         className="header__user-dropdown-item"
