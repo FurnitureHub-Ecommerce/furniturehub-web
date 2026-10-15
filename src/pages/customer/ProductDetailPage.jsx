@@ -13,7 +13,6 @@ import {
   formatCurrency, 
   formatCategoryName, 
   PRODUCT_IMAGE_OVERRIDES, 
-  getProductMetrics 
 } from '../../utils/formatters';
 
 export function ProductDetailPage() {
@@ -94,7 +93,6 @@ export function ProductDetailPage() {
           const images = overrideImages || (Array.isArray(realProd.images) && realProd.images.length > 0 
             ? realProd.images 
             : [realProd.image || 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=1200&q=80']);
-          const metrics = getProductMetrics(realProd.name, realProd.rating, realProd.reviewCount);
 
           const finalRating =
             loadedAvg !== undefined && loadedAvg !== null && loadedCount > 0
@@ -106,10 +104,9 @@ export function ProductDetailPage() {
                     loadedReviews.length
                   ).toFixed(1)
                 )
-              : metrics.rating;
+              : 0;
 
-          const finalCount =
-            loadedCount > 0 ? loadedCount : (loadedReviews.length || metrics.reviewCount);
+          const finalCount = loadedCount > 0 ? loadedCount : loadedReviews.length;
 
           const formatted = {
             id: prodId,
@@ -181,7 +178,7 @@ export function ProductDetailPage() {
           ? Number(
               (revs.reduce((acc, r) => acc + (r.rating || 5), 0) / revs.length).toFixed(1)
             )
-          : 5.0;
+          : 0;
 
       setReviews(revs);
       setAverageRating(finalRating);
@@ -345,11 +342,26 @@ export function ProductDetailPage() {
                     }}
                     className="flex items-center gap-1.5 text-amber-600 hover:text-amber-800 font-semibold cursor-pointer transition-colors"
                   >
-                    <Star size={14} className="fill-[#C89D5C] text-[#C89D5C]" />
-                    <span>{Number(averageRating || product.rating || 5).toFixed(1)}</span>
-                    <span className="text-stone-400 font-normal">
-                      ({totalReviews || product.reviewCount || reviews.length} đánh giá)
-                    </span>
+                    <Star
+                      size={14}
+                      className={
+                        (totalReviews || product.reviewCount || reviews.length) > 0
+                          ? "fill-[#C89D5C] text-[#C89D5C]"
+                          : "text-stone-300"
+                      }
+                    />
+                    {(totalReviews || product.reviewCount || reviews.length) > 0 ? (
+                      <>
+                        <span>{Number(averageRating || product.rating || 0).toFixed(1)}</span>
+                        <span className="text-stone-400 font-normal">
+                          ({totalReviews || product.reviewCount || reviews.length} đánh giá)
+                        </span>
+                      </>
+                    ) : (
+                      <span className="text-stone-500 font-normal text-xs">
+                        Chưa có đánh giá
+                      </span>
+                    )}
                   </button>
                 </div>
 
@@ -563,7 +575,7 @@ export function ProductDetailPage() {
                 <div className="flex items-center gap-4 sm:gap-6 border-b md:border-b-0 md:border-r border-stone-200/80 pb-6 md:pb-0 md:pr-8">
                   <div className="text-center min-w-[120px]">
                     <div className="font-serif text-5xl font-bold text-amber-900 leading-none mb-1.5">
-                      {Number(averageRating || 5).toFixed(1)}
+                      {(totalReviews || reviews.length) > 0 ? Number(averageRating || 0).toFixed(1) : "0.0"}
                     </div>
                     <div className="flex items-center justify-center gap-1 text-amber-600 my-1.5">
                       {[1, 2, 3, 4, 5].map((s) => (
@@ -571,7 +583,7 @@ export function ProductDetailPage() {
                           key={s}
                           size={16}
                           className={
-                            s <= Math.round(averageRating || 5)
+                            (totalReviews || reviews.length) > 0 && s <= Math.round(averageRating || 0)
                               ? "fill-[#C89D5C] text-[#C89D5C]"
                               : "text-stone-300"
                           }
@@ -579,7 +591,9 @@ export function ProductDetailPage() {
                       ))}
                     </div>
                     <span className="text-xs text-stone-500 font-medium">
-                      {totalReviews || reviews.length} lượt đánh giá
+                      {(totalReviews || reviews.length) > 0
+                        ? `${totalReviews || reviews.length} lượt đánh giá`
+                        : "Chưa có lượt đánh giá nào"}
                     </span>
                   </div>
                 </div>
