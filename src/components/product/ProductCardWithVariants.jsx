@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Heart, ShoppingBag, Eye, Star } from 'lucide-react';
 import { useShop } from '../../context/ShopContext';
@@ -125,10 +125,18 @@ export function ProductCardWithVariants({ product, isListView = false }) {
             <span className="font-medium tracking-wide uppercase text-[11px] text-amber-800">
               {formatCategoryName(product.categoryName)}
             </span>
-            <div className="flex items-center gap-1 text-amber-600 font-semibold text-xs">
-              <Star size={13} fill="currentColor" />
-              <span>{metrics.rating}</span>
-              <span className="text-stone-400 font-normal">({metrics.reviewCount})</span>
+            <div className="flex items-center gap-1 text-xs">
+              {metrics.reviewCount > 0 ? (
+                <>
+                  <Star size={13} className="fill-[#C89D5C] text-[#C89D5C]" />
+                  <span className="text-amber-700 font-semibold">{metrics.rating}</span>
+                  <span className="text-stone-400 font-normal">({metrics.reviewCount})</span>
+                </>
+              ) : (
+                <span className="text-stone-400 text-[11px] font-normal">
+                  Mới • Chưa có đánh giá
+                </span>
+              )}
             </div>
           </div>
 

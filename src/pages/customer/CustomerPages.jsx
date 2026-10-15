@@ -720,8 +720,11 @@ export function WishlistPage() {
 export { default as CheckoutPage } from "./CheckoutPage";
 export { default as PaymentSuccessPage } from "./PaymentSuccessPage";
 export { default as PaymentFailedPage } from "./PaymentFailedPage";
+export { default as CustomerProfilePage } from "./CustomerProfilePage";
 export { default as AddressManagementPage } from "./AddressManagementPage";
 export { default as CustomerOrdersPage } from "./CustomerOrdersPage";
+export { default as OrderTrackingTimeline } from "./OrderTrackingTimeline";
+export { default as QuickOrderTrack } from "./QuickOrderTrack";
 
 export function CollectionsPage() {
   return <CategoryPage />;

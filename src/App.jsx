@@ -17,6 +17,7 @@ import {
   CheckoutPage,
   PaymentSuccessPage,
   PaymentFailedPage,
+  CustomerProfilePage,
   AddressManagementPage,
   CustomerOrdersPage,
   CollectionsPage,
@@ -218,6 +219,22 @@ function App() {
               }
             />
             <Route
+              path="/profile"
+              element={
+                <CustomerLayout>
+                  <CustomerProfilePage />
+                </CustomerLayout>
+              }
+            />
+            <Route
+              path="/account"
+              element={
+                <CustomerLayout>
+                  <CustomerProfilePage />
+                </CustomerLayout>
+              }
+            />
+            <Route
               path="/addresses"
               element={
                 <CustomerLayout>
@@ -227,6 +244,14 @@ function App() {
             />
             <Route
               path="/orders"
+              element={
+                <CustomerLayout>
+                  <CustomerOrdersPage />
+                </CustomerLayout>
+              }
+            />
+            <Route
+              path="/orders/:orderId"
               element={
                 <CustomerLayout>
                   <CustomerOrdersPage />

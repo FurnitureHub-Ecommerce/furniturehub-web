@@ -1,0 +1,390 @@
+/* ============================================================
+   LUMORA - MODERN LUXURY ORDER TRACKING TIMELINE
+   src/components/customer/OrderTrackingTimeline.css
+   ============================================================ */
+
+.lumora-tracking-timeline {
+  width: 100%;
+  position: relative;
+  font-family: var(--font-sans, "Plus Jakarta Sans", sans-serif);
+}
+
+/* ================= HORIZONTAL STEPPER ================= */
+.lumora-tracking-horizontal {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  position: relative;
+  padding: 18px 8px 10px;
+}
+
+/* Background connector track */
+.lumora-tracking-horizontal__track {
+  position: absolute;
+  top: 36px;
+  left: 36px;
+  right: 36px;
+  height: 3px;
+  background-color: #e5ded3;
+  z-index: 1;
+  border-radius: 9999px;
+  overflow: hidden;
+}
+
+.lumora-tracking-horizontal__progress {
+  height: 100%;
+  background: linear-gradient(90deg, #8a6a48 0%, #c89d5c 60%, #b45309 100%);
+  transition: width 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  border-radius: 9999px;
+}
+
+/* Step item */
+.lumora-tracking-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  z-index: 2;
+  flex: 1;
+  text-align: center;
+  padding: 0 6px;
+}
+
+/* Step Node (Icon circle) */
+.lumora-tracking-step__node {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #ffffff;
+  border: 2px solid #ded5c8;
+  color: #9e9589;
+  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 2px 8px rgba(37, 37, 37, 0.05);
+  margin-bottom: 12px;
+  position: relative;
+}
+
+/* Step Status: Completed */
+.lumora-tracking-step--completed .lumora-tracking-step__node {
+  background: linear-gradient(135deg, #8a6a48 0%, #705437 100%);
+  border-color: #8a6a48;
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(138, 106, 72, 0.28);
+}
+
+/* Step Status: Current Active */
+.lumora-tracking-step--current .lumora-tracking-step__node {
+  background: #ffffff;
+  border-color: #c89d5c;
+  color: #c89d5c;
+  box-shadow: 0 0 0 5px rgba(200, 157, 92, 0.2), 0 4px 16px rgba(200, 157, 92, 0.3);
+  animation: lumora-node-pulse 2.2s infinite ease-in-out;
+}
+
+@keyframes lumora-node-pulse {
+  0%, 100% {
+    box-shadow: 0 0 0 4px rgba(200, 157, 92, 0.2), 0 4px 14px rgba(200, 157, 92, 0.25);
+  }
+  50% {
+    box-shadow: 0 0 0 8px rgba(200, 157, 92, 0.12), 0 6px 20px rgba(200, 157, 92, 0.4);
+  }
+}
+
+.lumora-tracking-step--current .lumora-tracking-step__node::after {
+  content: "";
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  background-color: #c89d5c;
+  border-radius: 50%;
+  bottom: -3px;
+  right: -3px;
+  border: 1.5px solid #ffffff;
+}
+
+/* Step Status: Upcoming */
+.lumora-tracking-step--upcoming .lumora-tracking-step__node {
+  background-color: #f7f4ee;
+  border-color: #e2dbd0;
+  color: #b5ada2;
+}
+
+/* Step Labels & Content */
+.lumora-tracking-step__title {
+  font-family: var(--font-serif, "Cormorant Garamond", Georgia, serif);
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #252525;
+  line-height: 1.25;
+  margin-bottom: 4px;
+  transition: color 0.2s ease;
+}
+
+.lumora-tracking-step--current .lumora-tracking-step__title {
+  color: #705437;
+  font-weight: 800;
+}
+
+.lumora-tracking-step--upcoming .lumora-tracking-step__title {
+  color: #8f887e;
+  font-weight: 600;
+}
+
+.lumora-tracking-step__desc {
+  font-size: 0.75rem;
+  color: #6e6860;
+  line-height: 1.35;
+  max-width: 140px;
+  margin: 0 auto 6px;
+}
+
+.lumora-tracking-step--upcoming .lumora-tracking-step__desc {
+  color: #a8a096;
+}
+
+.lumora-tracking-step__time {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #8a6a48;
+  background-color: #f7f3eb;
+  padding: 3px 8px;
+  border-radius: 9999px;
+  border: 1px solid #ebd8c0;
+}
+
+.lumora-tracking-step__badge-current {
+  display: inline-block;
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #ffffff;
+  background: linear-gradient(135deg, #c89d5c 0%, #a8793b 100%);
+  padding: 2px 7px;
+  border-radius: 4px;
+  margin-bottom: 5px;
+}
+
+/* ================= VERTICAL TIMELINE ================= */
+.lumora-tracking-vertical {
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  padding: 10px 0 10px 20px;
+}
+
+.lumora-tracking-vertical::before {
+  content: "";
+  position: absolute;
+  top: 24px;
+  bottom: 24px;
+  left: 38px;
+  width: 2px;
+  background-color: #e5ded3;
+  z-index: 1;
+}
+
+.lumora-tracking-vstep {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  position: relative;
+  z-index: 2;
+  padding-bottom: 24px;
+}
+
+.lumora-tracking-vstep:last-child {
+  padding-bottom: 0;
+}
+
+.lumora-tracking-vstep__node {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #ffffff;
+  border: 2px solid #ded5c8;
+  color: #9e9589;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+  transition: all 0.3s ease;
+}
+
+.lumora-tracking-vstep--completed .lumora-tracking-vstep__node {
+  background: linear-gradient(135deg, #8a6a48 0%, #705437 100%);
+  border-color: #8a6a48;
+  color: #ffffff;
+}
+
+.lumora-tracking-vstep--current .lumora-tracking-vstep__node {
+  background-color: #ffffff;
+  border-color: #c89d5c;
+  color: #c89d5c;
+  box-shadow: 0 0 0 4px rgba(200, 157, 92, 0.2);
+  animation: lumora-node-pulse 2.2s infinite ease-in-out;
+}
+
+.lumora-tracking-vstep--upcoming .lumora-tracking-vstep__node {
+  background-color: #f7f4ee;
+  border-color: #e2dbd0;
+  color: #b5ada2;
+}
+
+.lumora-tracking-vstep__content {
+  flex: 1;
+  padding-top: 4px;
+}
+
+.lumora-tracking-vstep__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 3px;
+}
+
+.lumora-tracking-vstep__title {
+  font-family: var(--font-serif, "Cormorant Garamond", Georgia, serif);
+  font-size: 1.08rem;
+  font-weight: 700;
+  color: #252525;
+}
+
+.lumora-tracking-vstep--current .lumora-tracking-vstep__title {
+  color: #705437;
+}
+
+.lumora-tracking-vstep--upcoming .lumora-tracking-vstep__title {
+  color: #8f887e;
+}
+
+.lumora-tracking-vstep__desc {
+  font-size: 0.8rem;
+  color: #6e6860;
+  line-height: 1.4;
+  margin-bottom: 4px;
+}
+
+.lumora-tracking-vstep__time {
+  font-size: 0.74rem;
+  color: #8a6a48;
+  font-weight: 600;
+}
+
+/* ================= COMPACT VARIANT ================= */
+.lumora-tracking-compact {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 14px;
+  background-color: #faf8f5;
+  border: 1px solid #ede7df;
+  border-radius: 12px;
+}
+
+.lumora-tracking-compact__bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.lumora-tracking-compact__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #ded5c8;
+  flex-shrink: 0;
+  transition: all 0.3s ease;
+}
+
+.lumora-tracking-compact__dot--completed {
+  background-color: #8a6a48;
+}
+
+.lumora-tracking-compact__dot--current {
+  background-color: #c89d5c;
+  transform: scale(1.3);
+  box-shadow: 0 0 0 3px rgba(200, 157, 92, 0.3);
+}
+
+.lumora-tracking-compact__line {
+  flex: 1;
+  height: 2px;
+  background-color: #e5ded3;
+}
+
+.lumora-tracking-compact__line--active {
+  background: linear-gradient(90deg, #8a6a48, #c89d5c);
+}
+
+.lumora-tracking-compact__info {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.75rem;
+}
+
+.lumora-tracking-compact__status {
+  font-weight: 700;
+  color: #252525;
+}
+
+.lumora-tracking-compact__time {
+  color: #8a6a48;
+  font-size: 0.72rem;
+}
+
+/* ================= CANCELLED / REJECTED STATE ================= */
+.lumora-tracking--cancelled .lumora-tracking-step--cancelled .lumora-tracking-step__node,
+.lumora-tracking--cancelled .lumora-tracking-vstep--cancelled .lumora-tracking-vstep__node {
+  background: #fef2f2;
+  border-color: #ef4444;
+  color: #dc2626;
+  box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.15);
+}
+
+.lumora-tracking--cancelled .lumora-tracking-step--cancelled .lumora-tracking-step__title,
+.lumora-tracking--cancelled .lumora-tracking-vstep--cancelled .lumora-tracking-vstep__title {
+  color: #b91c1c;
+}
+
+.lumora-tracking-cancelled-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 16px;
+  background: #fff5f5;
+  border: 1px solid #fecaca;
+  border-radius: 12px;
+  margin-top: 14px;
+}
+
+.lumora-tracking-cancelled-banner__text {
+  flex: 1;
+  font-size: 0.8rem;
+  color: #7f1d1d;
+  line-height: 1.45;
+}
+
+/* Responsive Fallback */
+.lumora-tracking-horizontal-responsive-fallback {
+  display: none !important;
+}
+
+@media (max-width: 768px) {
+  .lumora-tracking-horizontal {
+    display: none !important;
+  }
+  .lumora-tracking-horizontal-responsive-fallback {
+    display: flex !important;
+  }
+}
