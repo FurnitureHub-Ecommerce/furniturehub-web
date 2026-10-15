@@ -1,5 +1,7 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+/* eslint-disable react-refresh/only-export-components */
+import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { cartAPI, wishlistAPI, productAPI } from '../services/api';
+import { useAuth } from './AuthContext';
 
 const ShopContext = createContext();
 
@@ -7,7 +9,7 @@ const WISHLIST_STORAGE_KEY = 'furniturehub_wishlist';
 const CART_STORAGE_KEY = 'furniturehub_cart';
 
 export function ShopProvider({ children }) {
-  const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+  const { token } = useAuth();
 
   // Initial guest state from localStorage (starts empty if no saved data, NO MOCK DATA)
   const [cart, setCart] = useState(() => {
@@ -76,11 +78,11 @@ export function ShopProvider({ children }) {
   };
 
   // Fetch real Cart from Backend if logged in
-  const fetchCart = useCallback(async () => {
+  const fetchCart = useCallback(async (showSpinner = false) => {
     const currentToken = localStorage.getItem('token');
     if (!currentToken) return;
 
-    setIsCartLoading(true);
+    if (showSpinner) setIsCartLoading(true);
     setCartError(null);
     try {
       const res = await cartAPI.getCart();
@@ -106,16 +108,16 @@ export function ShopProvider({ children }) {
       }
       setCartError(null);
     } finally {
-      setIsCartLoading(false);
+      if (showSpinner) setIsCartLoading(false);
     }
   }, []);
 
   // Fetch real Wishlist from Backend if logged in
-  const fetchWishlist = useCallback(async () => {
+  const fetchWishlist = useCallback(async (showSpinner = false) => {
     const currentToken = localStorage.getItem('token');
     if (!currentToken) return;
 
-    setIsWishlistLoading(true);
+    if (showSpinner) setIsWishlistLoading(true);
     setWishlistError(null);
     try {
       const res = await wishlistAPI.getWishlist();
@@ -164,18 +166,42 @@ export function ShopProvider({ children }) {
       }
       setWishlistError(null);
     } finally {
-      setIsWishlistLoading(false);
+      if (showSpinner) setIsWishlistLoading(false);
     }
   }, []);
 
-  // Sync on mount or token changes
+  // Sync on mount or token changes reactively
   useEffect(() => {
-    const currentToken = localStorage.getItem('token');
-    if (currentToken) {
-      fetchCart();
-      fetchWishlist();
-    }
-  }, [fetchCart, fetchWishlist]);
+    let isCancelled = false;
+
+    const performSync = async () => {
+      await Promise.resolve();
+      if (isCancelled) return;
+
+      if (token) {
+        fetchCart(false);
+        fetchWishlist(false);
+      } else {
+        // Khi không có token (guest hoặc sau khi logout), tải lại dữ liệu lưu trữ
+        try {
+          const savedCart = localStorage.getItem(CART_STORAGE_KEY);
+          setCart(savedCart ? JSON.parse(savedCart) : []);
+          const savedWishlist = localStorage.getItem(WISHLIST_STORAGE_KEY);
+          setWishlist(savedWishlist ? JSON.parse(savedWishlist) : []);
+        } catch {
+          setCart([]);
+          setWishlist([]);
+        }
+        setWishlistProducts([]);
+      }
+    };
+
+    performSync();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [token, fetchCart, fetchWishlist]);
 
   // Persist guest cart & wishlist to localStorage
   useEffect(() => {

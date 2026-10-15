@@ -1,22 +1,15 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, useParams, Link } from "react-router-dom";
 import {
-  ArrowLeft,
   ShoppingBag,
   Heart,
-  Check,
-  ShieldCheck,
-  Truck,
   Trash2,
   Plus,
   Minus,
   ArrowRight,
-  AlertTriangle,
-  RefreshCw,
-  Wifi,
 } from "lucide-react";
 import { useShop } from "../../context/ShopContext";
-import { categoryAPI, productAPI, orderAPI } from "../../services/api";
+import { categoryAPI, productAPI } from "../../services/api";
 import Rating from "../../components/common/Rating/Rating";
 import { 
   formatCurrency, 
@@ -580,22 +573,17 @@ export function CartPage() {
 // ==========================================
 export function WishlistPage() {
   const navigate = useNavigate();
-  const { wishlist, wishlistProducts, toggleWishlist, addToCart, isWishlistLoading, wishlistError, fetchWishlist } = useShop();
+  const { wishlistProducts, toggleWishlist, addToCart, isWishlistLoading, wishlistError, fetchWishlist } = useShop();
   
-  const [selectedIds, setSelectedIds] = useState(() => new Set());
+  const [unselectedIds, setUnselectedIds] = useState(() => new Set());
 
   useEffect(() => {
     fetchWishlist();
   }, [fetchWishlist]);
 
-  // Sync selected IDs
-  useEffect(() => {
-    setSelectedIds(new Set(wishlistProducts.map((p) => String(p.id || p._id))));
-  }, [wishlistProducts]);
-
   const toggleSelected = (productId) => {
     const target = String(productId);
-    setSelectedIds((current) => {
+    setUnselectedIds((current) => {
       const next = new Set(current);
       if (next.has(target)) next.delete(target);
       else next.add(target);
@@ -603,7 +591,7 @@ export function WishlistPage() {
     });
   };
 
-  const selectedProducts = wishlistProducts.filter((p) => selectedIds.has(String(p.id || p._id)));
+  const selectedProducts = wishlistProducts.filter((p) => !unselectedIds.has(String(p.id || p._id)));
   const selectedTotal = selectedProducts.reduce((sum, p) => sum + (p.price || 0), 0);
 
   const handleCheckout = () => {
@@ -648,11 +636,14 @@ export function WishlistPage() {
               <div className="wishlist-products__selection-actions">
                 <button
                   type="button"
-                  onClick={() => setSelectedIds(new Set(wishlistProducts.map((p) => String(p.id || p._id))))}
+                  onClick={() => setUnselectedIds(new Set())}
                 >
                   Chọn tất cả
                 </button>
-                <button type="button" onClick={() => setSelectedIds(new Set())}>
+                <button
+                  type="button"
+                  onClick={() => setUnselectedIds(new Set(wishlistProducts.map((p) => String(p.id || p._id))))}
+                >
                   Bỏ chọn
                 </button>
               </div>
@@ -660,7 +651,7 @@ export function WishlistPage() {
 
             {wishlistProducts.map((product) => {
               const prodId = String(product.id || product._id);
-              const isChecked = selectedIds.has(prodId);
+              const isChecked = !unselectedIds.has(prodId);
 
               return (
                 <article className="wishlist-item" key={prodId}>

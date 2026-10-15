@@ -1,8 +1,7 @@
-import React, { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import {
   ShoppingBag,
-  CreditCard,
   Truck,
   ShieldCheck,
   CheckCircle2,
@@ -14,7 +13,6 @@ import {
   Banknote,
   Sparkles,
   Info,
-  Clock,
   Copy,
   Check,
 } from "lucide-react";
@@ -38,14 +36,6 @@ export default function CheckoutPage() {
 
   // Authentication check
   const token = localStorage.getItem("token");
-  const currentUser = (() => {
-    try {
-      const u = localStorage.getItem("user");
-      return u ? JSON.parse(u) : null;
-    } catch {
-      return null;
-    }
-  })();
 
   // State
   const [addresses, setAddresses] = useState([]);
@@ -90,10 +80,17 @@ export default function CheckoutPage() {
   }, [token]);
 
   useEffect(() => {
-    if (token) {
+    let isCancelled = false;
+    const initCheckout = async () => {
+      await Promise.resolve();
+      if (isCancelled || !token) return;
       loadAddresses();
       fetchCart();
-    }
+    };
+    initCheckout();
+    return () => {
+      isCancelled = true;
+    };
   }, [token, loadAddresses, fetchCart]);
 
   // 2. Validate Cart & Address via checkoutAPI.validate({ addressId })

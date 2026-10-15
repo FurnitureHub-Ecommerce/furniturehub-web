@@ -43,11 +43,6 @@ export function ProductShowcase({
     return p.tab === activeTab;
   });
 
-  // Reset về 0 khi đổi tab
-  useEffect(() => {
-    setCurrentIndex(0);
-  }, [activeTab, filteredProducts.length]);
-
   // Tự động xoay vòng sản phẩm mỗi 4.5 giây
   useEffect(() => {
     if (filteredProducts.length <= 4 || isLoading) return;
@@ -62,7 +57,8 @@ export function ProductShowcase({
     return () => clearInterval(interval);
   }, [filteredProducts.length, isLoading]);
 
-  const displayedProducts = filteredProducts.slice(currentIndex, currentIndex + 4);
+  const safeIndex = currentIndex >= filteredProducts.length ? 0 : currentIndex;
+  const displayedProducts = filteredProducts.slice(safeIndex, safeIndex + 4);
 
   const handleAddToCart = (product) => {
     addToCart(product);
@@ -94,7 +90,10 @@ export function ProductShowcase({
               className={`product-showcase__tab ${
                 activeTab === tab.id ? 'product-showcase__tab--active' : ''
               }`}
-              onClick={() => setActiveTab(tab.id)}
+              onClick={() => {
+                setActiveTab(tab.id);
+                setCurrentIndex(0);
+              }}
               type="button"
             >
               {tab.label}

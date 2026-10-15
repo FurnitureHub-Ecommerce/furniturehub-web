@@ -1,8 +1,8 @@
-import React, { useState, useMemo, useEffect, useCallback } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useParams, useSearchParams, Link } from 'react-router-dom';
 import {
   Filter, SlidersHorizontal, Grid3X3, List, X,
-  RotateCcw, Search, AlertTriangle, RefreshCw,
+  RotateCcw, AlertTriangle, RefreshCw,
   Heart, ShoppingBag, Eye, Star
 } from 'lucide-react';
 import { productAPI, categoryAPI, brandAPI } from '../../services/api';
@@ -29,7 +29,14 @@ export function ProductListPage() {
   const [brandsData, setBrandsData] = useState([]);
 
   // Filter States
-  const [selectedCategories, setSelectedCategories] = useState([]);
+  const targetCategory = categoryIdFromUrl || searchParams.get('category') || null;
+  const [prevCategoryParam, setPrevCategoryParam] = useState(targetCategory);
+  const [selectedCategories, setSelectedCategories] = useState(() => targetCategory ? [targetCategory] : []);
+
+  if (targetCategory !== prevCategoryParam) {
+    setPrevCategoryParam(targetCategory);
+    setSelectedCategories(targetCategory ? [targetCategory] : []);
+  }
   const [selectedBrands, setSelectedBrands] = useState([]);
   const [priceRange, setPriceRange] = useState({ min: 0, max: 50000000 });
   const [onlyInStock, setOnlyInStock] = useState(false);
@@ -81,85 +88,87 @@ export function ProductListPage() {
     };
   };
 
+  const [reloadKey, setReloadKey] = useState(0);
+
   // Fetch Data 100% from Backend API
-  const loadData = useCallback(async () => {
-    setIsLoading(true);
-    setApiError(null);
-    try {
-      const [prodRes, catRes, brandRes] = await Promise.allSettled([
-        productAPI.getProducts({ limit: 50 }),
-        categoryAPI.getCategories(),
-        brandAPI.getBrands(),
-      ]);
-
-      let realProds = [];
-      let realCats = [];
-      let realBrands = [];
-      let fetchErrors = [];
-
-      // 1. Process Products
-      if (prodRes.status === 'fulfilled' && prodRes.value?.data) {
-        const data = prodRes.value.data;
-        const rawProds = Array.isArray(data) ? data : data.products || data.data || [];
-        realProds = rawProds.map(normalizeProduct);
-      } else if (prodRes.status === 'rejected') {
-        fetchErrors.push('Không thể tải danh sách sản phẩm từ máy chủ.');
-      }
-
-      // 2. Process Categories
-      if (catRes.status === 'fulfilled' && catRes.value?.data) {
-        const data = catRes.value.data;
-        const rawCats = Array.isArray(data) ? data : data.categories || data.data || [];
-        realCats = rawCats.map((c) => ({
-          id: c._id || c.id,
-          name: c.name,
-          count: realProds.filter((p) => p.categoryId === (c._id || c.id)).length,
-        }));
-      }
-
-      // 3. Process Brands
-      if (brandRes.status === 'fulfilled' && brandRes.value?.data) {
-        const data = brandRes.value.data;
-        const rawBrands = Array.isArray(data) ? data : data.brands || data.data || [];
-        realBrands = rawBrands.map((b) => ({
-          id: b._id || b.id,
-          name: b.name,
-        }));
-      }
-
-      if (fetchErrors.length > 0 && realProds.length === 0) {
-        setApiError(fetchErrors.join(' '));
-      }
-
-      setProductsData(realProds);
-      setCategoriesData(realCats);
-      setBrandsData(realBrands);
-    } catch (err) {
-      console.error('ProductListPage API load error:', err);
-      setApiError('Lỗi kết nối máy chủ Backend. Vui lòng thử lại.');
-      setProductsData([]);
-      setCategoriesData([]);
-      setBrandsData([]);
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
   useEffect(() => {
+    let isMounted = true;
+    async function loadData() {
+      setApiError(null);
+      try {
+        const [prodRes, catRes, brandRes] = await Promise.allSettled([
+          productAPI.getProducts({ limit: 50 }),
+          categoryAPI.getCategories(),
+          brandAPI.getBrands(),
+        ]);
+        if (!isMounted) return;
+
+        let realProds = [];
+        let realCats = [];
+        let realBrands = [];
+        let fetchErrors = [];
+
+        // 1. Process Products
+        if (prodRes.status === 'fulfilled' && prodRes.value?.data) {
+          const data = prodRes.value.data;
+          const rawProds = Array.isArray(data) ? data : data.products || data.data || [];
+          realProds = rawProds.map(normalizeProduct);
+        } else if (prodRes.status === 'rejected') {
+          fetchErrors.push('Không thể tải danh sách sản phẩm từ máy chủ.');
+        }
+
+        // 2. Process Categories
+        if (catRes.status === 'fulfilled' && catRes.value?.data) {
+          const data = catRes.value.data;
+          const rawCats = Array.isArray(data) ? data : data.categories || data.data || [];
+          realCats = rawCats.map((c) => ({
+            id: c._id || c.id,
+            name: c.name,
+            count: realProds.filter((p) => p.categoryId === (c._id || c.id)).length,
+          }));
+        }
+
+        // 3. Process Brands
+        if (brandRes.status === 'fulfilled' && brandRes.value?.data) {
+          const data = brandRes.value.data;
+          const rawBrands = Array.isArray(data) ? data : data.brands || data.data || [];
+          realBrands = rawBrands.map((b) => ({
+            id: b._id || b.id,
+            name: b.name,
+          }));
+        }
+
+        if (fetchErrors.length > 0 && realProds.length === 0) {
+          setApiError(fetchErrors.join(' '));
+        }
+
+        setProductsData(realProds);
+        setCategoriesData(realCats);
+        setBrandsData(realBrands);
+      } catch (err) {
+        if (!isMounted) return;
+        console.error('ProductListPage API load error:', err);
+        setApiError('Lỗi kết nối máy chủ Backend. Vui lòng thử lại.');
+        setProductsData([]);
+        setCategoriesData([]);
+        setBrandsData([]);
+      } finally {
+        if (isMounted) setIsLoading(false);
+      }
+    }
+
     loadData();
-  }, [loadData]);
+    return () => {
+      isMounted = false;
+    };
+  }, [reloadKey]);
 
-  // Sync Category from URL Params
-  useEffect(() => {
-    if (categoryIdFromUrl) {
-      setSelectedCategories([categoryIdFromUrl]);
-    } else {
-      const catParam = searchParams.get('category');
-      if (catParam) {
-        setSelectedCategories([catParam]);
-      }
-    }
-  }, [categoryIdFromUrl, searchParams]);
+  const handleRefresh = () => {
+    setIsLoading(true);
+    setReloadKey((prev) => prev + 1);
+  };
+
+
 
   // Active Category Name for Breadcrumb & Banner Header
   const currentCategoryName = useMemo(() => {
@@ -289,7 +298,7 @@ export function ProductListPage() {
               <span className="leading-normal">{apiError}</span>
             </div>
             <button
-              onClick={loadData}
+              onClick={handleRefresh}
               className="inline-flex items-center gap-2 px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold rounded-lg transition-colors"
             >
               <RefreshCw size={14} />
