@@ -311,3 +311,19 @@
   opacity: 0.5;
   cursor: not-allowed;
 }
+
+/* Embedded mode in Profile Tabs */
+.address-page--embedded {
+  padding-top: 0.5rem;
+  padding-bottom: 2rem;
+  max-width: 100%;
+}
+
+.address-page--embedded .address-page__header {
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+}
+
+.address-page--embedded .address-page__title {
+  font-size: 1.8rem;
+}

@@ -56,29 +56,17 @@ export const PRODUCT_IMAGE_OVERRIDES = {
   ],
 };
 
-// Natural ratings and review distribution for luxury catalogue
-export const PRODUCT_METRICS_MAP = {
-  'Sofa Băng Da Bò Milano Luxury': { rating: 5.0, reviewCount: 48 },
-  'Giường Ngủ Queen Size Gỗ Sồi Oslor': { rating: 4.9, reviewCount: 36 },
-  'Ghế Công Thái Học Ergonomic Master V2': { rating: 4.8, reviewCount: 52 },
-  'Bàn Trà Đôi Mặt Đá Marble Luna': { rating: 4.9, reviewCount: 29 },
-  'Bàn Ăn Mở Rộng Thông Minh Twist': { rating: 4.7, reviewCount: 18 },
-  'Kệ Tivi Treo Tường Hiện Đại Horizon': { rating: 4.8, reviewCount: 31 },
-  'Đèn Cây Đứng Phòng Khách Lucciola': { rating: 4.9, reviewCount: 42 },
-  'Kệ Sách Đứng 5 Tầng Khung Sắt Vesta': { rating: 4.6, reviewCount: 19 },
-  'Tủ Quần Áo 4 Cánh Kính Cường Lực Aura': { rating: 5.0, reviewCount: 15 },
-  'Ghế Ăn Bọc Nệm Chân Thép Koster': { rating: 4.7, reviewCount: 26 },
-  'Bàn Làm Việc Nâng Hạ Điện Tử ErgoDesk': { rating: 4.8, reviewCount: 38 },
-  'Sofa Góc L Nordic Fabric': { rating: 4.9, reviewCount: 45 },
-};
+// Genuine ratings mapping (kept empty so only real reviews from database are displayed)
+export const PRODUCT_METRICS_MAP = {};
 
-export function getProductMetrics(productName, defaultRating = 4.8, defaultReviews = 25) {
-  if (PRODUCT_METRICS_MAP[productName]) {
-    return PRODUCT_METRICS_MAP[productName];
-  }
-  // Deterministic fallback based on name length
-  const hash = (productName || '').length;
-  const rating = Number((4.6 + (hash % 5) * 0.1).toFixed(1));
-  const reviewCount = 15 + (hash * 7) % 40;
+export function getProductMetrics(productName, defaultRating, defaultReviews) {
+  const rating =
+    defaultRating !== undefined && defaultRating !== null
+      ? Number(defaultRating)
+      : 0;
+  const reviewCount =
+    defaultReviews !== undefined && defaultReviews !== null
+      ? Number(defaultReviews)
+      : 0;
   return { rating, reviewCount };
 }

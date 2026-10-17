@@ -1,0 +1,12 @@
+.la-deactivate-dialog { box-sizing: border-box; width: min(460px, calc(100vw - 32px)); max-height: calc(100dvh - 32px); margin: auto; padding: 24px; overflow-y: auto; border: 1px solid #c9b89d; border-radius: 8px; background: #fffdf9; color: #292720; box-shadow: 0 22px 70px #30251b44; }
+.la-deactivate-dialog::backdrop { background: #29241b99; }
+.la-deactivate-dialog form { display: grid; gap: 12px; }
+.la-deactivate-dialog h2 { margin: 0; font: 500 26px/1.2 var(--font-serif); }
+.la-deactivate-dialog p { margin: 0; line-height: 1.5; overflow-wrap: anywhere; }
+.la-deactivate-dialog .la-deactivate-name { font-weight: 700; }
+.la-deactivate-dialog .la-deactivate-error { color: #98473b; }
+.la-deactivate-dialog footer { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 10px; margin-top: 8px; }
+.la-deactivate-dialog button { min-height: 40px; padding: 9px 14px; border: 1px solid #c9b89d; border-radius: 6px; background: #fffdf9; color: inherit; cursor: pointer; }
+.la-deactivate-dialog button[type="submit"] { border-color: #98473b; background: #98473b; color: white; }
+.la-deactivate-dialog button:disabled { cursor: wait; opacity: .7; }
+.la-deactivate-dialog button:focus-visible { outline: 3px solid #b99e80; outline-offset: 2px; }

@@ -1,0 +1,409 @@
+/* ============================================================
+   LUMORA CUSTOMER PROFILE & ADDRESS TABS
+   src/pages/customer/CustomerProfile.css
+   ============================================================ */
+
+.lumora-profile-page {
+  padding-top: 2.5rem;
+  padding-bottom: 5rem;
+  max-width: 1080px;
+  margin: 0 auto;
+}
+
+/* Page Header */
+.lumora-profile-header {
+  margin-bottom: 2.5rem;
+  text-align: left;
+}
+
+.lumora-profile-header__badge {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--lumora-accent-wood, #8A6A48);
+  margin-bottom: 0.5rem;
+}
+
+.lumora-profile-header__title {
+  font-family: var(--font-serif, "Cormorant Garamond", Georgia, serif);
+  font-size: 2.5rem;
+  font-weight: 600;
+  color: var(--lumora-text-main, #252525);
+  margin-bottom: 0.5rem;
+  line-height: 1.2;
+}
+
+.lumora-profile-header__subtitle {
+  font-size: 0.9375rem;
+  color: var(--lumora-text-muted, #6E6860);
+  max-width: 640px;
+  line-height: 1.5;
+}
+
+/* Tabs Bar */
+.lumora-profile-tabs {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  border-bottom: 1px solid var(--lumora-border, #E2DBD0);
+  margin-bottom: 2.5rem;
+}
+
+.lumora-profile-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.875rem 0.5rem;
+  background: transparent;
+  border: none;
+  font-family: var(--font-sans, sans-serif);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--lumora-text-muted, #6E6860);
+  cursor: pointer;
+  position: relative;
+  transition: all 0.2s ease;
+}
+
+.lumora-profile-tab:hover {
+  color: var(--lumora-text-main, #252525);
+}
+
+.lumora-profile-tab--active {
+  color: var(--lumora-accent-wood, #8A6A48);
+}
+
+.lumora-profile-tab--active::after {
+  content: "";
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background-color: var(--lumora-accent-wood, #8A6A48);
+}
+
+/* Card Container */
+.lumora-profile-card {
+  background-color: #FFFFFF;
+  border: 1px solid var(--lumora-border, #E2DBD0);
+  border-radius: 1.25rem;
+  box-shadow: 0 4px 20px rgba(37, 37, 37, 0.04);
+  padding: 2rem 2.25rem;
+}
+
+.lumora-profile-card--addresses {
+  padding: 1.5rem 2rem;
+}
+
+/* Hero Section */
+.lumora-profile-hero {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  padding-bottom: 1.75rem;
+  border-bottom: 1px solid var(--lumora-border-subtle, #F0EAE1);
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+}
+
+.lumora-profile-avatar-wrap {
+  position: relative;
+}
+
+.lumora-profile-avatar {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #8A6A48 0%, #5B4028 100%);
+  color: #FFFFFF;
+  font-family: var(--font-serif, "Cormorant Garamond", serif);
+  font-size: 2rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 14px rgba(138, 106, 72, 0.3);
+  border: 3px solid #FAF8F5;
+}
+
+.lumora-profile-hero-info {
+  flex: 1;
+  min-width: 200px;
+}
+
+.lumora-profile-hero-name {
+  font-family: var(--font-serif, "Cormorant Garamond", serif);
+  font-size: 1.625rem;
+  font-weight: 700;
+  color: var(--lumora-text-main, #252525);
+  margin: 0;
+}
+
+.lumora-profile-role-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 0.2rem 0.55rem;
+  border-radius: 9999px;
+  background-color: var(--lumora-badge-bg, #E2D5C3);
+  color: #5B4028;
+}
+
+.lumora-profile-hero-meta {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  margin-top: 0.4rem;
+  font-size: 0.8125rem;
+  color: var(--lumora-text-muted, #6E6860);
+  flex-wrap: wrap;
+}
+
+.lumora-profile-btn-edit {
+  padding: 0.625rem 1.25rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--lumora-accent-wood, #8A6A48);
+  background-color: #FAF8F5;
+  border: 1px solid var(--lumora-border, #E2DBD0);
+  border-radius: 0.625rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.lumora-profile-btn-edit:hover {
+  background-color: var(--lumora-bg-secondary, #E9E1D5);
+  color: var(--lumora-text-main, #252525);
+}
+
+/* Alerts */
+.lumora-profile-alert {
+  padding: 0.875rem 1.25rem;
+  border-radius: 0.75rem;
+  font-size: 0.875rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1.75rem;
+  line-height: 1.4;
+}
+
+.lumora-profile-alert--success {
+  background-color: #ECFDF5;
+  border: 1px solid #A7F3D0;
+  color: #065F46;
+}
+
+.lumora-profile-alert--error {
+  background-color: #FEF2F2;
+  border: 1px solid #FECACA;
+  color: #991B1B;
+}
+
+/* Form Layout */
+.lumora-profile-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.lumora-profile-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.5rem 1.75rem;
+}
+
+@media (max-width: 640px) {
+  .lumora-profile-form-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.lumora-profile-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.lumora-profile-form-group--full {
+  grid-column: 1 / -1;
+}
+
+.lumora-profile-form-label {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #383431;
+}
+
+.lumora-profile-readonly-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.6875rem;
+  color: #8F887E;
+  background-color: #FAF8F5;
+  padding: 0.15rem 0.5rem;
+  border-radius: 4px;
+}
+
+/* Input Wrapper & Icon positioning (No Icon Overlap) */
+.lumora-profile-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.lumora-profile-input-icon {
+  position: absolute;
+  left: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--lumora-accent-wood, #8A6A48);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.lumora-profile-input {
+  width: 100%;
+  padding-left: 3rem !important; /* Đảm bảo padding chuẩn không bao giờ bị đè icon */
+  padding-right: 1.25rem;
+  padding-top: 0.85rem;
+  padding-bottom: 0.85rem;
+  border-radius: 0.75rem;
+  border: 1px solid var(--lumora-border, #E2DBD0);
+  font-size: 0.9375rem;
+  color: var(--lumora-text-main, #252525);
+  background-color: #FFFFFF;
+  transition: all 0.2s ease;
+  line-height: 1.4;
+}
+
+.lumora-profile-input:focus {
+  outline: none;
+  border-color: var(--lumora-accent-wood, #8A6A48);
+  box-shadow: 0 0 0 3px rgba(138, 106, 72, 0.15);
+}
+
+.lumora-profile-input:disabled {
+  background-color: #FAF8F5;
+  color: #78716C;
+  cursor: not-allowed;
+  border-color: #EFE9E0;
+}
+
+.lumora-profile-input--readonly {
+  background-color: #F8F6F2;
+  color: #78716C;
+}
+
+.lumora-profile-input-hint {
+  font-size: 0.75rem;
+  color: var(--lumora-text-light, #8F887E);
+  margin-top: 0.1rem;
+}
+
+/* Actions */
+.lumora-profile-form-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 1rem;
+  margin-top: 1rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--lumora-border-subtle, #F0EAE1);
+}
+
+.lumora-profile-btn-cancel {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.75rem 1.5rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--lumora-text-muted, #6E6860);
+  background-color: transparent;
+  border: 1px solid var(--lumora-border, #E2DBD0);
+  border-radius: 0.625rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.lumora-profile-btn-cancel:hover:not(:disabled) {
+  background-color: #FAF8F5;
+  color: var(--lumora-text-main, #252525);
+}
+
+.lumora-profile-btn-save {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.75rem;
+  font-size: 0.875rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #FFFFFF;
+  background-color: var(--lumora-accent-wood, #8A6A48);
+  border: 1px solid var(--lumora-accent-wood, #8A6A48);
+  border-radius: 0.625rem;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(138, 106, 72, 0.25);
+  transition: all 0.2s ease;
+}
+
+.lumora-profile-btn-save:hover:not(:disabled) {
+  background-color: var(--lumora-accent-hover, #705437);
+  border-color: var(--lumora-accent-hover, #705437);
+  box-shadow: 0 6px 16px rgba(138, 106, 72, 0.35);
+  transform: translateY(-1px);
+}
+
+.lumora-profile-btn-save:disabled,
+.lumora-profile-btn-cancel:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Spinner */
+.lumora-profile-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 3rem 0;
+  color: var(--lumora-text-muted, #6E6860);
+  font-size: 0.875rem;
+}
+
+.lumora-profile-spinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid rgba(138, 106, 72, 0.25);
+  border-top-color: var(--lumora-accent-wood, #8A6A48);
+  border-radius: 50%;
+  animation: profileSpin 0.7s linear infinite;
+}
+
+.lumora-profile-spinner--sm {
+  width: 14px;
+  height: 14px;
+  border-color: rgba(255, 255, 255, 0.3);
+  border-top-color: #FFFFFF;
+}
+
+@keyframes profileSpin {
+  to { transform: rotate(360deg); }
+}

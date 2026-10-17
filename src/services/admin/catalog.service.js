@@ -45,7 +45,22 @@ export async function saveProduct({ id, ...productData }) {
   return response.data?.product ?? response.data?.data ?? response.data;
 }
 
+export async function getProductForEdit(id) {
+  const response = await productAPI.getProductById(id);
+  const body = response.data;
+  const product = body?.product ?? body?.data?.product ?? body?.data ?? body;
+  if (!product || typeof product !== "object" || Array.isArray(product)
+    || entityId(product) !== id) {
+    throw new Error("Phản hồi chi tiết Product không đúng định dạng.");
+  }
+  return product;
+}
+
 export async function deactivateProduct(id) {
   const response = await productAPI.deactivateProduct(id);
   return response.data;
+}
+
+export async function reactivateProduct(id) {
+  await productAPI.updateProduct(id, { isActive: true });
 }

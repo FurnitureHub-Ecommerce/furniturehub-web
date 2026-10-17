@@ -1,5 +1,7 @@
 ﻿import { productAPI } from "../api.js";
 
+import { storageAPI } from "../api.js";
+
 export function recordsFrom(data, key) {
   const candidates = [data, data?.[key], data?.data?.[key], data?.items, data?.data];
   const rows = candidates.find(Array.isArray);
@@ -67,9 +69,50 @@ export async function getVariants({ search = "", material = "", status = "" } = 
   });
   return {
     rows,
+    products,
     loaded: variants.length,
     materials: [...new Set(variants.map(variant => variant.material).filter(value => typeof value === "string" && value.trim()))].sort((a, b) => a.localeCompare(b, "vi")),
     // Chưa xác minh pagination của Product/Variant API, không coi tập đã tải là toàn hệ thống.
     totals: { variants: null, products: null, active: null },
   };
+}
+
+function requireId(id) {
+  if (typeof id !== "string" || !/^[0-9a-fA-F]{24}$/.test(id)) throw new Error("ID không hợp lệ.");
+}
+
+export async function getVariantForEdit(id) {
+  requireId(id);
+  const response = await storageAPI.getVariantById(id);
+  // Giữ các envelope đã được Inventory Detail hỗ trợ; không coi là contract Swagger.
+  const body = response.data;
+  const variant = body?.variant ?? body?.data ?? body;
+  if (!variant || typeof variant !== "object" || Array.isArray(variant)
+    || (variant._id ?? variant.id) !== id || typeof variant.sku !== "string" || !variant.sku.trim()
+    || realNumber(variant.price) === null
+    || ["color", "size", "material"].some(field => variant[field] != null && typeof variant[field] !== "string")) {
+    throw new Error("Chi tiết Variant không đủ hoặc không đúng định dạng để chỉnh sửa. Vui lòng tải lại hoặc liên hệ quản trị.");
+  }
+  return { sku: variant.sku, price: realNumber(variant.price), color: variant.color ?? "", size: variant.size ?? "", material: variant.material ?? "" };
+}
+
+export async function saveVariant({ id, productId, sku, price, color, size, material }) {
+  requireId(id ?? productId);
+  if (typeof sku !== "string" || !sku.trim()) throw new Error("Vui lòng nhập SKU.");
+  if (typeof price !== "number" || !Number.isFinite(price) || price < 0) throw new Error("Giá phải là số không âm.");
+  const payload = { sku, price };
+  for (const [field, value] of Object.entries({ color, size, material })) {
+    if (value !== undefined) {
+      if (typeof value !== "string") throw new Error("Thuộc tính Variant phải là văn bản.");
+      payload[field] = value;
+    }
+  }
+  // Không đọc success envelope chưa được Swagger mô tả; danh sách sẽ được tải lại.
+  if (id) await storageAPI.updateVariant(id, payload);
+  else await productAPI.createVariant(productId, payload);
+}
+
+export async function deactivateVariant(id) {
+  requireId(id);
+  await storageAPI.deactivateVariant(id);
 }

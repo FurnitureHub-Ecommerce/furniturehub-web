@@ -1,17 +1,17 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { useParams, useSearchParams, Link } from 'react-router-dom';
-import { 
-  Filter, SlidersHorizontal, Grid3X3, List, X, 
+import {
+  Filter, SlidersHorizontal, Grid3X3, List, X,
   RotateCcw, Search, AlertTriangle, RefreshCw,
-  Heart, ShoppingBag, Eye, Star, ChevronRight, Home
+  Heart, ShoppingBag, Eye, Star
 } from 'lucide-react';
 import { productAPI, categoryAPI, brandAPI } from '../../services/api';
 import { useShop } from '../../context/ShopContext';
-import { 
-  formatCurrency, 
-  formatCategoryName, 
-  PRODUCT_IMAGE_OVERRIDES, 
-  getProductMetrics 
+import {
+  formatCurrency,
+  formatCategoryName,
+  PRODUCT_IMAGE_OVERRIDES,
+  getProductMetrics
 } from '../../utils/formatters';
 
 const DEFAULT_FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=800&q=80';
@@ -20,7 +20,7 @@ export function ProductListPage() {
   const { id: categoryIdFromUrl } = useParams();
   const [searchParams, setSearchParams] = useSearchParams();
   const { wishlist, toggleWishlist, addToCart, setQuickViewProduct } = useShop();
-  
+
   // Loading & API States
   const [isLoading, setIsLoading] = useState(true);
   const [apiError, setApiError] = useState(null);
@@ -48,8 +48,8 @@ export function ProductListPage() {
 
     // Check media overrides
     const overrideImages = PRODUCT_IMAGE_OVERRIDES[p.name];
-    let images = overrideImages || (Array.isArray(p.images) && p.images.length > 0 
-      ? [...p.images] 
+    let images = overrideImages || (Array.isArray(p.images) && p.images.length > 0
+      ? [...p.images]
       : [p.image || DEFAULT_FALLBACK_IMAGE]);
 
     const metrics = getProductMetrics(p.name, p.rating, p.reviewCount);
@@ -146,9 +146,8 @@ export function ProductListPage() {
   }, []);
 
   useEffect(() => {
-    window.scrollTo({ top: 0, behavior: 'instant' });
     loadData();
-  }, [loadData, categoryIdFromUrl]);
+  }, [loadData]);
 
   // Sync Category from URL Params
   useEffect(() => {
@@ -236,41 +235,47 @@ export function ProductListPage() {
   }, [productsData, searchQuery, selectedCategories, selectedBrands, priceRange, onlyInStock, sortBy]);
 
   return (
-    <div className="w-full min-h-screen bg-[#FAF8F5] pt-6 pb-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-[#FAF8F5] py-8 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-[1440px] mx-auto">
         {/* Breadcrumb Navigation */}
-        <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-          <nav 
-            aria-label="Đường dẫn trang"
-            className="flex items-center gap-2 text-xs sm:text-sm text-stone-600 font-medium"
-          >
-            <Link 
-              to="/" 
-              className="inline-flex items-center gap-1.5 text-stone-500 hover:text-amber-800 transition-colors shrink-0"
-            >
-              <Home size={14} className="text-stone-400 shrink-0" />
-              <span>Trang Chủ</span>
-            </Link>
-            <ChevronRight size={13} className="text-stone-400 shrink-0" />
-            <span className="text-stone-900 font-semibold tracking-tight">
-              {currentCategoryName}
-            </span>
+        <div className="mb-6 flex items-center justify-between">
+          <nav className="flex items-center gap-2 text-xs text-stone-500">
+            <Link to="/" className="hover:text-amber-800 transition-colors">Trang Chủ</Link>
+            <span>/</span>
+            <span className="text-stone-900 font-medium">{currentCategoryName}</span>
           </nav>
-
-          <div className="text-xs text-stone-500 font-medium bg-white/60 backdrop-blur-xs px-3 py-1 rounded-full border border-stone-200/60 shadow-xs">
-            Hiển thị <span className="font-bold text-stone-900">{filteredProducts.length}</span> sản phẩm
-          </div>
         </div>
 
-        {/* Khối Banner (Trên cùng): Tràn toàn bộ chiều ngang */}
-        <div className="w-full bg-[#2A1810] text-white rounded-2xl p-6 sm:p-8 lg:p-10 mb-8 shadow-sm overflow-hidden">
-          <div className="max-w-3xl">
-            <span className="text-xs font-bold uppercase tracking-widest text-[#D4AF37] mb-2 block">
+        {/* Khối Banner (Trên cùng): Bọc trong w-full bg-[#2A1810] text-white rounded-2xl p-8 mb-8 shadow-sm overflow-hidden */}
+        <div
+          className="w-full bg-[#2A1810] text-white rounded-2xl p-8 mb-8 shadow-sm overflow-hidden"
+          style={{
+            backgroundColor: '#2A1810',
+            color: '#FFFFFF',
+            borderRadius: '16px',
+            padding: '32px',
+            marginBottom: '32px',
+            overflow: 'hidden',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
+          }}
+        >
+          <div className="max-w-2xl">
+            <span
+              className="text-xs font-bold uppercase tracking-widest text-[#D4AF37] mb-2 block"
+              style={{ color: '#D4AF37', letterSpacing: '0.1em', marginBottom: '8px', display: 'block' }}
+            >
               BỘ SƯU TẬP ĐỘC QUYỀN LUMORA
             </span>
-            <h1 className="font-serif text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-3 tracking-tight leading-snug">
+            <h1
+              className="font-serif text-3xl sm:text-4xl lg:text-5xl font-bold !text-white text-white mb-3 tracking-tight leading-snug"
+              style={{ color: '#FFFFFF', margin: '0 0 12px 0', lineHeight: 1.25 }}
+            >
               {currentCategoryName}
             </h1>
-            <p className="text-stone-300 text-sm sm:text-base leading-relaxed max-w-2xl">
+            <p
+              className="text-stone-300 text-sm sm:text-base leading-relaxed"
+              style={{ color: '#E5E5E5', margin: 0, lineHeight: 1.6 }}
+            >
               Khám phá không gian sống sang trọng với nghệ thuật thiết kế tối giản, chất liệu gỗ đạt chuẩn bảo tồn bền vững và hoàn thiện thủ công tinh xảo.
             </p>
           </div>
@@ -285,7 +290,7 @@ export function ProductListPage() {
             </div>
             <button
               onClick={loadData}
-              className="inline-flex items-center gap-2 px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold rounded-lg transition-colors cursor-pointer"
+              className="inline-flex items-center gap-2 px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold rounded-lg transition-colors"
             >
               <RefreshCw size={14} />
               <span>Thử lại</span>
@@ -293,30 +298,41 @@ export function ProductListPage() {
           </div>
         )}
 
-        {/* Thanh Toolbar & Search */}
-        <div className="w-full flex flex-col md:flex-row items-center justify-between gap-4 mb-8 bg-white p-4 sm:p-5 rounded-2xl border border-stone-200/80 shadow-xs">
-          {/* Ô Tìm kiếm: Căn giữa icon kính lúp 100% theo chiều dọc bằng absolute inset-y-0 flex items-center */}
+        {/* Thanh Toolbar & Search (Nằm tách rời hoàn toàn dưới Banner, cách ra một khoảng mb-8) */}
+        <div
+          className="flex flex-col md:flex-row items-center justify-between gap-4 mb-8 bg-white p-4 rounded-xl border border-gray-100 shadow-sm"
+          style={{
+            backgroundColor: '#FFFFFF',
+            padding: '16px',
+            borderRadius: '12px',
+            border: '1px solid #F3F4F6',
+            marginBottom: '32px'
+          }}
+        >
+          {/* Ô Tìm kiếm: padding trái pl-10 để icon không đè lên chữ */}
           <div className="relative w-full md:w-96">
-            <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5">
-              <Search className="w-5 h-5 text-stone-400" />
+            {/* Khung bọc icon có chiều cao h-10 bằng đúng chiều cao input */}
+            <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-5 w-5 text-gray-400 block"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="m21 21-4.34-4.34"></path>
+                <circle cx="11" cy="11" r="8"></circle>
+              </svg>
             </div>
+
             <input
               type="text"
               placeholder="Tìm theo tên sản phẩm, chất liệu..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="block w-full h-11 rounded-xl border border-stone-200 bg-white pl-11 pr-10 text-sm text-stone-800 placeholder-stone-400 outline-none focus:border-amber-800 focus:ring-1 focus:ring-amber-800 transition-all"
+              class="block w-full h-10 rounded-lg border border-gray-200 bg-white pl-10 pr-10 text-sm text-stone-800 placeholder-gray-400 outline-none focus:border-amber-800"
             />
-            {searchQuery && (
-              <button
-                type="button"
-                onClick={() => setSearchQuery('')}
-                className="absolute inset-y-0 right-0 flex items-center pr-3 text-stone-400 hover:text-stone-700 transition-colors cursor-pointer"
-                aria-label="Xóa từ khóa tìm kiếm"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            )}
           </div>
 
           {/* Cụm Sắp xếp & Chế độ xem */}
@@ -325,19 +341,19 @@ export function ProductListPage() {
             <button
               type="button"
               onClick={() => setIsMobileFilterOpen(!isMobileFilterOpen)}
-              className="lg:hidden inline-flex items-center gap-2 px-3.5 py-2.5 bg-stone-100 hover:bg-stone-200 text-stone-800 text-xs font-medium rounded-xl transition-colors cursor-pointer"
+              className="lg:hidden inline-flex items-center gap-2 px-3.5 py-2 bg-stone-100 hover:bg-stone-200 text-stone-800 text-xs font-medium rounded-lg transition-colors"
             >
               <SlidersHorizontal className="w-4 h-4" />
               <span>Bộ lọc ({selectedCategories.length + selectedBrands.length})</span>
             </button>
 
             {/* Chỉ còn hàng toggle */}
-            <label className="flex items-center gap-2 text-xs text-stone-700 cursor-pointer select-none bg-stone-50 px-3.5 py-2.5 rounded-xl border border-stone-200 hover:bg-stone-100 transition-colors">
+            <label className="flex items-center gap-2 text-xs text-stone-700 cursor-pointer select-none bg-stone-50 px-3 py-2 rounded-lg border border-gray-200 hover:bg-stone-100 transition-colors">
               <input
                 type="checkbox"
                 checked={onlyInStock}
                 onChange={(e) => setOnlyInStock(e.target.checked)}
-                className="w-4 h-4 rounded border-stone-300 text-amber-800 focus:ring-amber-800 cursor-pointer"
+                className="w-4 h-4 rounded border-gray-300 text-amber-800 focus:ring-amber-800 cursor-pointer"
               />
               <span>Chỉ còn hàng</span>
             </label>
@@ -348,7 +364,8 @@ export function ProductListPage() {
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
-                className="py-2.5 px-3 bg-stone-50 border border-stone-200 rounded-xl text-xs text-stone-800 focus:outline-none focus:border-amber-800 cursor-pointer"
+                className="py-2 px-3 bg-stone-50 border border-gray-200 rounded-lg text-xs text-stone-800 focus:outline-none focus:border-amber-800 cursor-pointer"
+                style={{ padding: '6px 12px', borderRadius: '6px', border: '1px solid #E5E7EB', backgroundColor: '#F9FAFB' }}
               >
                 <option value="newest">Mới nhất</option>
                 <option value="price-asc">Giá: Thấp đến Cao</option>
@@ -358,15 +375,14 @@ export function ProductListPage() {
             </div>
 
             {/* Chế độ xem Grid / List */}
-            <div className="border border-stone-200 rounded-xl p-1 flex items-center shrink-0 gap-1 bg-stone-50">
+            <div className="border border-gray-200 rounded-lg p-1 flex items-center shrink-0 gap-1 bg-stone-50">
               <button
                 type="button"
                 onClick={() => setViewMode('grid')}
-                className={`p-2 rounded-lg transition-colors cursor-pointer ${
-                  viewMode === 'grid'
-                    ? 'bg-amber-800 text-white shadow-xs'
-                    : 'text-stone-500 hover:text-stone-800 hover:bg-white'
-                }`}
+                className={`p-1.5 rounded-md transition-colors ${viewMode === 'grid'
+                  ? 'bg-amber-800 text-white shadow-xs'
+                  : 'text-stone-500 hover:text-stone-800 hover:bg-white'
+                  }`}
                 title="Chế độ xem lưới (Grid)"
                 aria-label="Chế độ xem lưới"
               >
@@ -375,11 +391,10 @@ export function ProductListPage() {
               <button
                 type="button"
                 onClick={() => setViewMode('list')}
-                className={`p-2 rounded-lg transition-colors cursor-pointer ${
-                  viewMode === 'list'
-                    ? 'bg-amber-800 text-white shadow-xs'
-                    : 'text-stone-500 hover:text-stone-800 hover:bg-white'
-                }`}
+                className={`p-1.5 rounded-md transition-colors ${viewMode === 'list'
+                  ? 'bg-amber-800 text-white shadow-xs'
+                  : 'text-stone-500 hover:text-stone-800 hover:bg-white'
+                  }`}
                 title="Chế độ xem danh sách (List)"
                 aria-label="Chế độ xem danh sách"
               >
@@ -433,7 +448,7 @@ export function ProductListPage() {
         {/* Bố cục Thân trang (Sidebar + Product Grid): Bọc 2 cột trong flex flex-col lg:flex-row gap-8 items-start */}
         <div className="flex flex-col lg:flex-row gap-8 items-start">
           {/* Sidebar Bộ lọc (Bên trái): w-full lg:w-64 shrink-0 bg-white p-5 rounded-xl border border-gray-100 */}
-          <aside 
+          <aside
             className={`w-full lg:w-64 shrink-0 bg-white p-5 rounded-xl border border-gray-100 shadow-sm space-y-6 ${isMobileFilterOpen ? 'block' : 'hidden lg:block'}`}
             style={{
               backgroundColor: '#FFFFFF',
@@ -485,7 +500,7 @@ export function ProductListPage() {
                         </span>
                       </div>
                       {cat.count > 0 && (
-                        <span 
+                        <span
                           className="text-xs text-stone-500 bg-stone-100 px-2 py-0.5 rounded-full shrink-0"
                           style={{ fontSize: '11px', padding: '2px 8px', borderRadius: '9999px', backgroundColor: '#F3F4F6', color: '#6B7280', flexShrink: 0 }}
                         >
@@ -562,10 +577,10 @@ export function ProductListPage() {
           </aside>
 
           {/* Lưới Sản phẩm (Bên phải): flex-1 w-full */}
-          <div className="flex-1 w-full min-w-0">
+          <div className="flex-1 w-full" style={{ flex: 1, width: '100%', minWidth: 0 }}>
             {isLoading ? (
               /* Loading Skeleton thuần Tailwind */
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
                 {Array.from({ length: 6 }).map((_, i) => (
                   <div key={i} className="bg-white rounded-xl border border-gray-100 p-4 animate-pulse space-y-4">
                     <div className="aspect-[4/3] w-full bg-gray-200 rounded-lg"></div>
@@ -600,7 +615,7 @@ export function ProductListPage() {
                 {filteredProducts.map((product) => {
                   const isWishlisted = wishlist.includes(String(product.id || product._id));
                   return (
-                    <article 
+                    <article
                       key={product.id}
                       className="group bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-200 flex flex-col sm:flex-row"
                       style={{
@@ -632,11 +647,10 @@ export function ProductListPage() {
                             e.preventDefault();
                             toggleWishlist(String(product.id || product._id));
                           }}
-                          className={`absolute top-3 right-3 p-2 rounded-full shadow-sm transition-colors ${
-                            isWishlisted 
-                              ? 'bg-amber-800 text-white' 
-                              : 'bg-white/90 text-stone-700 hover:bg-white hover:text-amber-800'
-                          }`}
+                          className={`absolute top-3 right-3 p-2 rounded-full shadow-sm transition-colors ${isWishlisted
+                            ? 'bg-amber-800 text-white'
+                            : 'bg-white/90 text-stone-700 hover:bg-white hover:text-amber-800'
+                            }`}
                           style={{
                             position: 'absolute',
                             top: '12px',
@@ -732,11 +746,11 @@ export function ProductListPage() {
               </div>
             ) : (
               /* Danh sách sản phẩm dạng Grid thuần Tailwind */
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
                 {filteredProducts.map((product) => {
                   const isWishlisted = wishlist.includes(String(product.id || product._id));
                   return (
-                    <article 
+                    <article
                       key={product.id}
                       className="group bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-200 flex flex-col h-full"
                       style={{
@@ -751,7 +765,7 @@ export function ProductListPage() {
                       }}
                     >
                       {/* Image Box */}
-                      <div 
+                      <div
                         className="aspect-[4/3] w-full overflow-hidden bg-gray-50 relative shrink-0 block"
                         style={{ width: '100%', aspectRatio: '4/3', position: 'relative', overflow: 'hidden', backgroundColor: '#F9FAFB' }}
                       >
@@ -790,11 +804,10 @@ export function ProductListPage() {
                             e.preventDefault();
                             toggleWishlist(String(product.id || product._id));
                           }}
-                          className={`absolute top-3 right-3 p-2 rounded-full shadow-sm transition-colors ${
-                            isWishlisted 
-                              ? 'bg-amber-800 text-white' 
-                              : 'bg-white/90 text-stone-700 hover:bg-white hover:text-amber-800'
-                          }`}
+                          className={`absolute top-3 right-3 p-2 rounded-full shadow-sm transition-colors ${isWishlisted
+                            ? 'bg-amber-800 text-white'
+                            : 'bg-white/90 text-stone-700 hover:bg-white hover:text-amber-800'
+                            }`}
                           style={{
                             position: 'absolute',
                             top: '12px',
@@ -830,7 +843,7 @@ export function ProductListPage() {
                           </div>
 
                           {/* Product Title */}
-                          <h3 
+                          <h3
                             className="font-serif text-base font-bold text-stone-900 group-hover:text-amber-800 transition-colors line-clamp-2 min-h-[3rem] leading-snug mb-2"
                             style={{
                               fontFamily: '"Cormorant Garamond", serif',
@@ -919,6 +932,7 @@ export function ProductListPage() {
             )}
           </div>
         </div>
+      </div>
     </div>
   );
 }
