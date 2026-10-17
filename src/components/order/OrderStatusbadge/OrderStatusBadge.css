@@ -90,3 +90,11 @@
   color: #64748B;
   border: 1px solid #E2E8F0;
 }
+
+/* Cancelled / Rejected — soft red */
+.badge--red {
+  background-color: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #fecaca;
+}
+
