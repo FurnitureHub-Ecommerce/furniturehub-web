@@ -1,0 +1,25 @@
+.lir-panel { min-width: 0; margin-top: 22px; border: 1px solid #ded5c8; border-radius: 8px; background: #fffdf9; color: #292720; box-shadow: 0 12px 30px rgba(62,48,33,.05); }
+.lir-panel > header { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 10px; padding: 18px; border-bottom: 1px solid #ded5c8; }
+.lir-panel h2 { margin: 0; font: 500 27px/1.2 var(--font-serif); }
+.lir-panel > header span { color: #71695f; font-size: 12px; letter-spacing: .06em; }
+.lir-filters { display: flex; flex-wrap: wrap; align-items: end; gap: 12px; padding: 16px 18px; background: #f4f0e9; }
+.lir-filters label { display: grid; flex: 1 1 150px; min-width: 0; gap: 5px; color: #71695f; font-size: 13px; }
+.lir-filters input, .lir-filters select, .lir-pagination select { box-sizing: border-box; width: 100%; min-width: 0; min-height: 40px; padding: 8px; border: 1px solid #ded5c8; border-radius: 5px; background: #fffdf9; color: #292720; font: inherit; }
+.lir-panel button { min-height: 40px; padding: 8px 12px; border: 1px solid #ded5c8; border-radius: 5px; background: #fffdf9; color: #292720; font: inherit; cursor: pointer; }
+.lir-panel button:disabled { opacity: .6; cursor: not-allowed; }
+.lir-panel button:focus-visible, .lir-panel a:focus-visible, .lir-panel input:focus-visible, .lir-panel select:focus-visible, .lir-scroll:focus-visible { outline: 3px solid rgba(138,99,65,.22); outline-offset: 2px; }
+.lir-state { min-height: 150px; display: grid; place-content: center; justify-items: center; gap: 10px; padding: 24px; color: #71695f; text-align: center; }
+.lir-state p { margin: 0; overflow-wrap: anywhere; }
+.lir-scroll { max-width: 100%; overflow-x: auto; }
+.lir-panel table { width: 100%; min-width: 760px; border-collapse: collapse; text-align: left; }
+.lir-panel th { padding: 12px 14px; border-bottom: 1px solid #ded5c8; background: #f4f0e9; color: #5a5248; font-size: 13px; }
+.lir-panel td { padding: 14px; border-bottom: 1px solid #e8e1d7; font-size: 13px; vertical-align: top; overflow-wrap: anywhere; }
+.lir-panel td small { display: block; margin-top: 5px; color: #71695f; font-size: 12px; }
+.lir-panel td a { display: inline-block; margin-top: 5px; color: #765336; }
+.lir-pagination { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 18px; border-top: 1px solid #ded5c8; background: #f7f3ed; color: #71695f; font-size: 13px; }
+.lir-pagination label { display: flex; align-items: center; gap: 8px; }
+.lir-pagination select { width: auto; }
+.lir-pagination nav { display: flex; gap: 8px; }
+.lir-compact { box-shadow: none; }
+@media (max-width: 767px) { .lir-panel h2 { font-size: 23px; } .lir-filters { padding: 14px; } .lir-filters label { flex-basis: 100%; } .lir-filters button { width: 100%; } }
+@media (prefers-reduced-motion: reduce) { .lir-panel button { transition: none; } }

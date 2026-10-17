@@ -58,16 +58,13 @@ const AdminDashboard = lazy(
   () => import("./pages/admin/dashboard/AdminDashboard"),
 );
 const AdminUsers = lazy(() => import("./pages/admin/users/AdminUsers"));
-const AdminAnalytics = lazy(() => import("./pages/admin/analytics/AdminAnalytics"));
 const AdminCatalog = lazy(() => import("./pages/admin/catalog/AdminCatalog"));
 const AdminVariants = lazy(() => import("./pages/admin/variants/AdminVariants"));
 const AdminCategories = lazy(() => import("./pages/admin/categories/AdminCategories"));
 const AdminBrands = lazy(() => import("./pages/admin/brands/AdminBrands"));
 const AdminMonitoring = lazy(() => import("./pages/admin/monitoring/AdminMonitoring"));
-const AdminOrderDetail = lazy(() => import("./pages/admin/orders/AdminOrderDetail"));
 const AdminInventoryDetail = lazy(() => import("./pages/admin/inventory/AdminInventoryDetail"),
 );
-const AdminRoles = lazy(() => import("./pages/admin/roles/AdminRoles"));
 
 function App() {
   return (
@@ -271,22 +268,19 @@ function App() {
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
 
-            {/* ================= ADMIN ROUTES (Chỉ ADMIN hoặc MANAGER) ================= */}
+            {/* ================= ADMIN ROUTES (Chỉ ADMIN) ================= */}
             <Route
-              element={<ProtectedRoute allowedRoles={["ADMIN", "MANAGER"]} />}
+              element={<ProtectedRoute allowedRoles={["ADMIN"]} />}
             >
               <Route path="/admin" element={<AdminLayout />}>
                 <Route index element={<AdminDashboard />} />
                 <Route path="dashboard" element={<AdminDashboard />} />
-                <Route path="analytics" element={<AdminAnalytics />} />
                 <Route path="users" element={<AdminUsers />} />
-                <Route path="roles" element={<AdminRoles />} />
                 <Route path="catalog" element={<AdminCatalog />} />
                 <Route path="variants" element={<AdminVariants />} />
                 <Route path="categories" element={<AdminCategories />} />
                 <Route path="brands" element={<AdminBrands />} />
                 <Route path="monitoring" element={<AdminMonitoring />} />
-                <Route path="orders/:orderId" element={<AdminOrderDetail />} />
                 <Route
                   path="inventory/:variantId"
                   element={<AdminInventoryDetail />}
