@@ -4,14 +4,12 @@ import {
   AlertTriangle,
   Award,
   Banknote,
+  ChevronDown,
+  ChevronUp,
   ClipboardCheck,
-  Clock,
-  Download,
   Info,
-  Network,
   Package,
   RefreshCw,
-  Plane,
   Truck,
   Warehouse,
 } from "lucide-react";
@@ -60,21 +58,6 @@ function getOrderStatusLabel(status) {
   );
 }
 
-function Pending({ children, reason, dark = false }) {
-  return (
-    <span className="lm-pending" tabIndex={0} aria-label={reason}>
-      <button
-        type="button"
-        disabled
-        className={"lm-button " + (dark ? "lm-dark" : "")}
-      >
-        {children}
-      </button>
-      <span role="tooltip">{reason}</span>
-    </span>
-  );
-}
-
 function getStockStatus(row) {
   if (row.isLowStock === null) return "Chưa có dữ liệu";
   return row.isLowStock ? "Chạm ngưỡng thấp" : "Trên ngưỡng";
@@ -101,6 +84,7 @@ export default function AdminMonitoring() {
     error: "",
   });
   const [orderRetry, setOrderRetry] = useState(0);
+  const [expandedOrderId, setExpandedOrderId] = useState(null);
   const [inventoryState, setInventoryState] = useState({
     data: null,
     loading: true,
@@ -185,16 +169,19 @@ export default function AdminMonitoring() {
   }
 
   function changeOrderStatus(status) {
+    setExpandedOrderId(null);
     setOrderState((current) => ({ ...current, loading: true, error: "" }));
     setOrderQuery((current) => ({ ...current, page: 1, status }));
   }
 
   function changeOrderPage(page) {
+    setExpandedOrderId(null);
     setOrderState((current) => ({ ...current, loading: true, error: "" }));
     setOrderQuery((current) => ({ ...current, page }));
   }
 
   function changeOrderLimit(limit) {
+    setExpandedOrderId(null);
     setOrderState((current) => ({ ...current, loading: true, error: "" }));
     setOrderQuery((current) => ({ ...current, page: 1, limit }));
   }
@@ -214,35 +201,10 @@ export default function AdminMonitoring() {
         <section className="lm-heading">
         <div>
           <h1>Giám Sát Đơn Hàng & Tồn Kho Toàn Hệ Thống</h1>
-          <p>
-            Theo dõi Order và Inventory từ Backend trong chế độ chỉ đọc, với
-            trạng thái request độc lập cho từng domain.
-          </p>
-        </div>
-        <div className="lm-toolbar">
-          <label title="Bộ lọc này thuộc dữ liệu đơn hàng và chưa được tích hợp">
-            <Clock size={15} />
-            Kỳ đơn hàng:
-            <select disabled aria-label="Kỳ đơn hàng chưa tích hợp">
-              <option>Chưa tích hợp</option>
-            </select>
-          </label>
-          <Pending reason="Chưa có nguồn và định nghĩa báo cáo SLA">
-            <Download size={15} />
-            Tải báo cáo kiểm soát SLA
-          </Pending>
-          <span className="lm-incident">
-            Cảnh báo sự cố: Chưa tích hợp
-          </span>
+          <p>Theo dõi đơn hàng và tồn kho trong chế độ chỉ đọc.</p>
         </div>
         </section>
       </div>
-
-      <p className="lm-demo-note">
-        <b>Dữ liệu Backend</b>
-        Order và Inventory được tải từ hai API độc lập. Realtime, Payment, SLA
-        và đồng bộ kho liên Hub chưa được tích hợp.
-      </p>
 
       <section className="lm-kpis" aria-label="Tổng quan giám sát">
         <article className="lm-card">
@@ -257,7 +219,7 @@ export default function AdminMonitoring() {
                 ? "Chưa có dữ liệu"
                 : orderPagination?.totalItems}
           </strong>
-          <p>Tổng số Order do Backend cung cấp theo bộ lọc trạng thái hiện tại.</p>
+          <p>Tổng số đơn theo trạng thái đang chọn.</p>
         </article>
         <article className="lm-card">
           <div className="lm-kpi-label">
@@ -269,23 +231,7 @@ export default function AdminMonitoring() {
               ? "Chưa có dữ liệu"
               : orders.length}
           </strong>
-          <p>Trang {orderPagination?.page ?? 1}, không dùng làm tổng hệ thống.</p>
-        </article>
-        <article className="lm-card">
-          <div className="lm-kpi-label">
-            TUÂN THỦ VẬN CHUYỂN
-            <Plane size={22} />
-          </div>
-          <strong className="lm-unknown">Chưa tích hợp</strong>
-          <p>Chưa có thời hạn cam kết và dữ liệu SLA.</p>
-        </article>
-        <article className="lm-card lm-capacity">
-          <div className="lm-kpi-label">
-            TẢI KHO TRUNG CHUYỂN
-            <Network size={22} />
-          </div>
-          <strong className="lm-unknown">Chưa tích hợp</strong>
-          <p>Chưa có contract sức chứa hoặc mức sử dụng kho.</p>
+          <p>Số đơn trên trang {orderPagination?.page ?? 1}.</p>
         </article>
       </section>
 
@@ -293,14 +239,10 @@ export default function AdminMonitoring() {
         <header className="lm-section-heading">
           <h2 id="lm-orders-title">
             <Truck size={23} />
-            Live Order Monitoring Deck
+            Danh Sách Đơn Hàng
           </h2>
-          <span className="lm-pill">CHỈ XEM · ORDER API</span>
+          <span className="lm-pill">CHỈ XEM</span>
         </header>
-        <p className="lm-explanation">
-          Bộ lọc trạng thái và phân trang được xử lý tại Backend. Payment,
-          warehouse, staff và SLA chưa được tích hợp.
-        </p>
         <div className="lm-tabs" role="group" aria-label="Lọc theo trạng thái Order">
           {ORDER_STATUS_OPTIONS.map((option) => (
             <button
@@ -339,7 +281,7 @@ export default function AdminMonitoring() {
             <div className="lm-state" role="status">
               <Package size={30} />
               <h3>Không có Order phù hợp</h3>
-              <p>Backend trả về danh sách rỗng cho trang và trạng thái đã chọn.</p>
+              <p>Không có đơn hàng phù hợp với bộ lọc.</p>
             </div>
           ) : (
             <div
@@ -355,22 +297,12 @@ export default function AdminMonitoring() {
                     <th scope="col">ITEM SNAPSHOT</th>
                     <th scope="col">TỔNG GIÁ TRỊ</th>
                     <th scope="col">TRẠNG THÁI</th>
-                    <th scope="col">THANH TOÁN / ĐIỀU PHỐI</th>
-                    <th scope="col">CHI TIẾT</th>
                   </tr>
                 </thead>
                 <tbody>
                   {orders.map((order, index) => {
-                    const firstItem = order.items[0];
-                    const attributes = firstItem
-                      ? [
-                          firstItem.color,
-                          firstItem.size,
-                          firstItem.material,
-                        ]
-                          .filter(Boolean)
-                          .join(" · ")
-                      : "";
+                    const isExpanded = expandedOrderId === order.orderId;
+                    const detailsId = `lm-order-items-${order.orderId}`;
 
                     return (
                       <tr key={order.orderId} style={{ "--lm-row-index": Math.min(index, 7) }}>
@@ -401,7 +333,7 @@ export default function AdminMonitoring() {
                           </div>
                         </td>
                         <td>
-                          <div className="lm-item">
+                          <div className="lm-item-snapshot">
                             <span
                               className="lm-image-placeholder"
                               role="img"
@@ -409,18 +341,66 @@ export default function AdminMonitoring() {
                             >
                               <Package size={22} />
                             </span>
-                            <div>
-                              {firstItem?.productName ||
-                                "Chưa có item snapshot"}
-                              <small>
-                                {order.items.length} item
-                                {firstItem?.sku ? " · SKU: " + firstItem.sku : ""}
-                              </small>
-                              {firstItem ? (
-                                <small>
-                                  {attributes || "Chưa có thuộc tính"} · Giá lịch
-                                  sử: {money(firstItem.unitPrice)}
-                                </small>
+                            <div className="lm-item-content">
+                              {order.items.length ? (
+                                <ul className="lm-item-list" id={detailsId}>
+                                  {order.items.map((item) => {
+                                    const attributes = [
+                                      item.material,
+                                      item.size,
+                                      item.color,
+                                    ].filter(Boolean);
+
+                                    return (
+                                      <li key={item.itemId}>
+                                        <div className="lm-item-summary">
+                                          <strong>
+                                            {item.productName || "Chưa có tên sản phẩm"}
+                                          </strong>
+                                          <span>× {displayNumber(item.quantity)}</span>
+                                        </div>
+                                        <small>
+                                          {item.sku ? `SKU: ${item.sku}` : "Chưa có SKU"}
+                                        </small>
+                                        {isExpanded ? (
+                                          <div className="lm-item-history">
+                                            {attributes.length ? (
+                                              <small>{attributes.join(" · ")}</small>
+                                            ) : null}
+                                            <small>
+                                              Đơn giá lịch sử: {money(item.unitPrice)}
+                                            </small>
+                                            <small>
+                                              Thành tiền lịch sử: {money(item.itemSubtotal)}
+                                            </small>
+                                          </div>
+                                        ) : null}
+                                      </li>
+                                    );
+                                  })}
+                                </ul>
+                              ) : (
+                                <span>Chưa có item snapshot</span>
+                              )}
+                              {order.items.length ? (
+                                <button
+                                  type="button"
+                                  className="lm-item-toggle"
+                                  aria-expanded={isExpanded}
+                                  aria-controls={detailsId}
+                                  onClick={() =>
+                                    setExpandedOrderId((current) =>
+                                      current === order.orderId ? null : order.orderId,
+                                    )
+                                  }
+                                >
+                                  {isExpanded ? (
+                                    <ChevronUp size={15} aria-hidden="true" />
+                                  ) : (
+                                    <ChevronDown size={15} aria-hidden="true" />
+                                  )}
+                                  {isExpanded ? "Thu gọn chi tiết" : "Xem chi tiết"}
+                                </button>
                               ) : null}
                             </div>
                           </div>
@@ -434,18 +414,6 @@ export default function AdminMonitoring() {
                             className={"lm-status lm-status-" + order.status}
                           >
                             {getOrderStatusLabel(order.status)}
-                          </span>
-                        </td>
-                        <td>
-                          <span className="lm-note">Payment: Chưa tích hợp</span>
-                          <small>Warehouse / Staff / SLA: Chưa tích hợp</small>
-                        </td>
-                        <td>
-                          <span
-                            className="lm-muted"
-                            title="GET /api/orders/:id không cho phép Admin"
-                          >
-                            Chi tiết chưa khả dụng cho Admin
                           </span>
                         </td>
                       </tr>
@@ -514,17 +482,8 @@ export default function AdminMonitoring() {
             <Warehouse size={23} />
             Giám Sát Tồn Kho
           </h2>
-          <span className="lm-pill">CHỈ XEM · INVENTORY API</span>
+          <span className="lm-pill">CHỈ XEM</span>
         </header>
-        <p className="lm-explanation">
-          Phân bổ kho, vị trí, sức chứa và mức sử dụng chưa có contract được xác
-          minh.
-        </p>
-        <div className="lm-card lm-state" role="status">
-          <Warehouse size={30} />
-          <h3>Phân bổ đa kho chưa tích hợp</h3>
-          <p>Không suy diễn warehouse hoặc location từ Inventory ID.</p>
-        </div>
       </section>
 
       <section className="lm-card lm-watchlist" aria-labelledby="lm-snapshot-title">
@@ -535,16 +494,13 @@ export default function AdminMonitoring() {
             </span>
             <div>
               <h2 id="lm-snapshot-title">Inventory Snapshot</h2>
-              <p>
-                Quantity, availableStock và threshold được giữ theo field API
-                riêng biệt.
-              </p>
+              <p>Số lượng tồn, ngưỡng an toàn và trạng thái của từng SKU.</p>
             </div>
           </div>
           <span className="lm-pill">
             {inventoryPagination
               ? `${inventoryPagination.totalItems} INVENTORY`
-              : "SERVER PAGINATION"}
+              : "DANH SÁCH TỒN KHO"}
           </span>
         </header>
 
@@ -552,7 +508,7 @@ export default function AdminMonitoring() {
           <div className="lm-state" role="status">
             <RefreshCw className="lm-loading-icon" size={24} aria-hidden="true" />
             <h3>Đang tải tồn kho</h3>
-            <p>Đang cập nhật bản ghi Inventory từ Backend.</p>
+            <p>Vui lòng chờ trong giây lát.</p>
             <div className="lm-skeleton" />
           </div>
         ) : inventoryState.error ? (
@@ -568,7 +524,7 @@ export default function AdminMonitoring() {
           <div className="lm-state" role="status">
             <Package size={30} />
             <h3>Chưa có bản ghi Inventory</h3>
-            <p>API trả về một danh sách hợp lệ nhưng không có dữ liệu.</p>
+            <p>Chưa có dữ liệu tồn kho để hiển thị.</p>
           </div>
         ) : (
           <div
@@ -581,7 +537,6 @@ export default function AdminMonitoring() {
                 <tr>
                   <th scope="col">SKU / VARIANT</th>
                   <th scope="col">SỐ LƯỢNG TỒN KHO</th>
-                  <th scope="col">AVAILABLE STOCK</th>
                   <th scope="col">NGƯỠNG</th>
                   <th scope="col">TRẠNG THÁI</th>
                   <th scope="col">CHI TIẾT</th>
@@ -604,21 +559,11 @@ export default function AdminMonitoring() {
                     </td>
                     <td>
                       <strong>{displayNumber(row.quantity)}</strong>
-                      <small>Inventory.quantity</small>
-                    </td>
-                    <td>
-                      <div className="lm-stock-values">
-                        <strong>
-                          Inventory: {displayNumber(row.inventoryAvailableStock)}
-                        </strong>
-                      </div>
-                      <small>
-                        Variant: {displayNumber(row.variantAvailableStock)}
-                      </small>
+                      <small>Số lượng hiện có</small>
                     </td>
                     <td>
                       <strong>{displayNumber(row.lowStockThreshold)}</strong>
-                      <small>Inventory.lowStockThreshold</small>
+                      <small>Ngưỡng an toàn</small>
                     </td>
                     <td>
                       <span
@@ -636,7 +581,8 @@ export default function AdminMonitoring() {
                           className="lm-order-id"
                           to={
                             "/admin/inventory/" +
-                            encodeURIComponent(row.variantId)
+                            encodeURIComponent(row.variantId) +
+                            (row.productId ? `?productId=${encodeURIComponent(row.productId)}` : "")
                           }
                         >
                           Xem chi tiết
@@ -718,8 +664,8 @@ export default function AdminMonitoring() {
 
         <p className="lm-explanation">
           <Info size={13} />
-          Trạng thái trong Snapshot chỉ tính trên {rows.length} row ở trang hiện tại.
-          Danh sách Low Stock và lịch sử bên dưới được Backend lọc, phân trang riêng.
+          Trạng thái trong bảng áp dụng cho {rows.length} bản ghi trên trang hiện tại.
+          Danh sách sắp hết hàng và lịch sử bên dưới có bộ lọc riêng.
         </p>
       </section>
       <LowStockPanel />

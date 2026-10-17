@@ -2,8 +2,8 @@
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import logo from "../../assets/logo.jpg";
 import {
-  LayoutDashboard, ChartNoAxesCombined, Users, ShieldCheck, Sofa,
-  SlidersHorizontal, Folder, DraftingCompass, Menu, X, Search, Bell, User, LogOut,
+  LayoutDashboard, ChartNoAxesCombined, Users, Sofa,
+  SlidersHorizontal, Folder, DraftingCompass, Menu, X, User, LogOut,
 } from "lucide-react";
 import "./AdminLayout.css";
 
@@ -12,14 +12,12 @@ const navigation = [
     label: "DASHBOARD & GOVERNANCE",
     items: [
       [LayoutDashboard, "Executive Dashboard", "/admin/dashboard"],
-      [ChartNoAxesCombined, "Thống Kê & Phân Tích", "/admin/analytics"],
     ],
   },
   {
-    label: "NGƯỜI DÙNG & PHÂN QUYỀN (RBAC)",
+    label: "NGƯỜI DÙNG",
     items: [
       [Users, "Quản Lý Người Dùng", "/admin/users"],
-      [ShieldCheck, "Ma Trận Phân Quyền & Vai Trò", "/admin/roles"],
     ],
   },
   {
@@ -110,12 +108,11 @@ export default function AdminLayout() {
     || sessionText(storedUser?.name) || "Tài khoản";
   const userRole = sessionText(storedUser?.role) || "Chưa có thông tin vai trò";
 
-  // Trang chi tiết dùng mục cha hiện có, không tạo thêm route hoặc mục menu.
+  // Trang chi tiết Inventory dùng mục cha hiện có.
   const activePath = pathname.replace(/\/+$/, "") || "/";
   function isCurrent(to) {
     return activePath === to
       || (to === "/admin/dashboard" && activePath === "/admin")
-      || (to === "/admin/monitoring" && activePath.startsWith("/admin/orders/"))
       || (to === "/admin/variants" && activePath.startsWith("/admin/inventory/"));
   }
 
@@ -164,8 +161,6 @@ export default function AdminLayout() {
           ))}
         </nav>
         <div className="la-system">
-          <div>SYSTEM HEALTH <span>Chưa tích hợp</span></div>
-          <div>Database Sync <span>Chưa tích hợp</span></div>
           <button type="button" onClick={handleLogout}>
             <LogOut size={16} /> Đăng Xuất
           </button>
@@ -183,24 +178,6 @@ export default function AdminLayout() {
             <span>GOVERNANCE &amp; OPERATOR CORE</span>
             <strong>{currentPageLabel}</strong>
           </div>
-          <div className="la-role-tabs" aria-label="Không gian vai trò">
-            {["Customer", "Staff", "Storage", "Admin"].map((role) => (
-              <button type="button" key={role} disabled
-                className={role === "Admin" ? "la-role-active" : ""}
-                title="Chưa triển khai chuyển vai trò">{role}</button>
-            ))}
-          </div>
-          <label className="la-search" title="Tìm kiếm chưa tích hợp">
-            <Search size={17} />
-            <input disabled aria-label="Tìm kiếm chưa tích hợp"
-              placeholder="Search catalog, SKUs, logs..." />
-            <kbd>⌘K</kbd>
-          </label>
-          <span className="la-live">LIVE PING:<br />Chưa tích hợp</span>
-          <button type="button" disabled className="la-bell"
-            title="Thông báo chưa tích hợp" aria-label="Thông báo chưa tích hợp">
-            <Bell size={18} />
-          </button>
           <div className="la-profile">{userName}<small>{userRole}</small></div>
           <span className="la-avatar-slot" aria-hidden="true"><User size={18} /></span>
         </header>

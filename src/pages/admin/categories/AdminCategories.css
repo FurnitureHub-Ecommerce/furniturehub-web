@@ -23,7 +23,7 @@
 .lcat-filters label:first-child { flex: 1; }
 .lcat-table-box { background: white; }
 .lcat-table-scroll { max-width: 100%; overflow-x: auto; }
-.lcat-page table { width: 100%; min-width: 920px; border-collapse: collapse; }
+.lcat-page table { width: 100%; min-width: 620px; border-collapse: collapse; }
 .lcat-page thead th { background: var(--la-soft); color: var(--la-muted); font-size: 13px; padding: 18px 14px; text-align: left; }
 .lcat-page tbody th, .lcat-page td { padding: 24px 14px; text-align: left; border-bottom: 1px solid #f5f2ed; font-size: 13px; }
 .lcat-category-name { display: flex; align-items: center; gap: 12px; font-family: var(--font-serif); font-size: 22px; font-weight: 500; }
@@ -50,7 +50,7 @@
 .lcat-dialog h2 { font-size: 23px; margin-top: 6px; }
 .lcat-dialog-body { padding: 20px; display: grid; gap: 20px; }
 .lcat-dialog-body > .lcat-demo { margin: 0; }
-.lcat-form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+.lcat-form-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 18px; }
 .lcat-dialog label { display: grid; gap: 7px; font-size: 11px; min-width: 0; }
 .lcat-dialog input, .lcat-dialog select, .lcat-dialog textarea { width: 100%; min-width: 0; }
 .lcat-dialog textarea { resize: vertical; }
@@ -164,3 +164,55 @@
 .lcat-page tr.lcat-row-inactive .lcat-api-identity small { color: #998780; }
 .lcat-page tr.lcat-row-inactive .lcat-inactive { border-color: #C99588; background: #E8CFC7; color: #6F3F38; }
 .lcat-page tr.lcat-row-inactive .lcat-row-actions button { color: #3b392f; }
+
+/* UI-15.5: Category workspace clarity and interaction polish. */
+.lcat-hero { padding: clamp(24px, 2.5vw, 32px); }
+.lcat-page .lcat-intro h1 { font-size: clamp(32px, 2.7vw, 36px); }
+.lcat-page .lcat-intro p { font-size: 14px; line-height: 1.6; }
+.lcat-page .lcat-hero .lcat-primary { min-height: 42px; padding: 9px 14px; border-radius: 8px; font-size: 13px; }
+.lcat-page .lcat-filters { gap: 14px; }
+.lcat-page .lcat-filters label { font-size: 13px; }
+.lcat-page .lcat-filters label:nth-of-type(1) { flex: 1 1 300px; }
+.lcat-page .lcat-filters label:nth-of-type(2) { flex: 0 1 220px; }
+.lcat-page .lcat-filters input, .lcat-page .lcat-filters select, .lcat-page .lcat-filters > button { min-height: 44px; border-radius: 8px; font-size: 13px; }
+.lcat-page table { min-width: 760px; }
+.lcat-page thead th { padding: 13px 16px; font-size: 12px; font-weight: 650; }
+.lcat-page tbody th, .lcat-page td { padding: 13px 16px; vertical-align: middle; }
+.lcat-page tbody th { width: 33%; }
+.lcat-page td.lcat-description { width: 43%; max-width: none; color: #635b52; font-size: 13px; line-height: 1.5; }
+.lcat-page .lcat-description span { display: -webkit-box; overflow: hidden; overflow-wrap: anywhere; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+.lcat-page .lcat-api-identity { min-width: 0; gap: 10px; font-family: var(--font-sans); }
+.lcat-page .lcat-api-identity > div { min-width: 0; }
+.lcat-page .lcat-api-identity strong { display: block; font-size: 15px; font-weight: 650; line-height: 1.4; overflow-wrap: anywhere; }
+.lcat-page .lcat-api-identity .lcat-category-id { max-width: 230px; overflow: hidden; color: #655c52; font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
+.lcat-page .lcat-api-icon { width: 42px; height: 42px; }
+.lcat-page .lcat-badge { padding: 6px 10px; font-size: 12px; }
+.lcat-page .lcat-row-actions { gap: 8px; white-space: nowrap; }
+.lcat-page .lcat-row-actions button { min-width: 36px; min-height: 36px; padding: 8px; border: 1px solid var(--lcat-line); border-radius: 8px; background: var(--lcat-paper); }
+.lcat-page .lcat-row-actions .lcat-deactivate { border-color: #d9b7ae; background: #f8eeea; color: #874c42; }
+.lcat-page .lcat-dialog label { font-size: 14px; }
+.lcat-page .lcat-dialog input { min-height: 44px; border-radius: 8px; }
+@media (hover: hover) and (pointer: fine) { .lcat-page .lcat-hero .lcat-primary:not(:disabled):hover { border-color: #f4d0a7; background: #f4d0a7; color: #302c29; } .lcat-page .lcat-row-actions .lcat-deactivate:not(:disabled):hover { border-color: #bb877b; background: #f1ddd6; color: #743d35; } }
+@media (max-width: 767px) { .lcat-page .lcat-filters label:nth-of-type(1), .lcat-page .lcat-filters label:nth-of-type(2) { flex: auto; width: 100%; } }
+
+/* UI-15.5.1: Category view details and edit form. */
+.lcat-page .lcat-dialog[open] { position: fixed; inset: 0; z-index: 1000; margin: auto; overflow-y: auto; }
+.lcat-page :is(.lcat-view-dialog, .lcat-edit-dialog) { box-sizing: border-box; width: min(660px, calc(100vw - 32px)); max-height: calc(100dvh - 32px); }
+.lcat-page :is(.lcat-view-dialog, .lcat-edit-dialog) > header { align-items: flex-start; padding: 24px 28px 18px; }
+.lcat-page :is(.lcat-view-dialog, .lcat-edit-dialog) > header > div { min-width: 0; }
+.lcat-page :is(.lcat-view-dialog, .lcat-edit-dialog) h2 { margin-top: 7px; font-size: clamp(28px, 3vw, 32px); line-height: 1.15; overflow-wrap: anywhere; }
+.lcat-page :is(.lcat-view-dialog, .lcat-edit-dialog) .lcat-eyebrow { color: #806346; font-size: 11px; }
+.lcat-page :is(.lcat-view-dialog, .lcat-edit-dialog) .lcat-dialog-close { flex: 0 0 42px; width: 42px; height: 42px; min-height: 42px; padding: 0; border-radius: 8px; }
+.lcat-page .lcat-edit-dialog .lcat-dialog-body { gap: 20px; padding: 20px 28px 24px; }
+.lcat-page .lcat-edit-dialog label { gap: 8px; color: #50483f; font-size: 14px; font-weight: 650; }
+.lcat-page .lcat-edit-dialog input, .lcat-page .lcat-edit-dialog textarea { border-radius: 8px; }
+.lcat-page .lcat-edit-dialog input { min-height: 44px; }
+.lcat-page .lcat-edit-dialog textarea { min-height: 104px; line-height: 1.5; }
+.lcat-page :is(.lcat-view-dialog, .lcat-edit-dialog) footer { gap: 10px; padding: 16px 28px 24px; }
+.lcat-page :is(.lcat-view-dialog, .lcat-edit-dialog) footer button { min-height: 42px; padding: 9px 16px; border-radius: 8px; }
+.lcat-page .lcat-view-body { display: grid; gap: 14px; min-height: 0; overflow-y: auto; padding: 20px 28px 24px; background: var(--lcat-paper); }
+.lcat-page .lcat-detail-block { min-width: 0; padding: 16px 18px; border: 1px solid var(--lcat-line); border-radius: 9px; background: #f7f3ed; }
+.lcat-page .lcat-detail-block h3 { margin: 0 0 8px; color: #796451; font: 700 12px/1.35 var(--font-sans); letter-spacing: .04em; }
+.lcat-page .lcat-detail-block p { margin: 0; color: var(--lcat-ink); font: 500 15px/1.6 var(--font-sans); overflow-wrap: anywhere; white-space: pre-wrap; }
+.lcat-page .lcat-view-dialog footer { flex-shrink: 0; }
+@media (max-width: 767px) { .lcat-page :is(.lcat-view-dialog, .lcat-edit-dialog) > header { padding: 20px 18px 16px; } .lcat-page .lcat-edit-dialog .lcat-dialog-body, .lcat-page .lcat-view-body { padding: 18px; } .lcat-page :is(.lcat-view-dialog, .lcat-edit-dialog) footer { padding: 14px 18px 18px; } .lcat-page :is(.lcat-view-dialog, .lcat-edit-dialog) h2 { font-size: 28px; } }
