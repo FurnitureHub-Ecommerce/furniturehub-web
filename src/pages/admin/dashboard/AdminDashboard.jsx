@@ -14,15 +14,21 @@ import "./AdminDashboard.css";
 const labels = {
   pending: "Chờ xử lý",
   confirmed: "Đã xác nhận",
+  shipping: "Đang giao",
+  delivered: "Hoàn thành",
   rejected: "Đã từ chối",
   cancelled: "Đã hủy",
 };
+
 const statusColors = {
   pending: "#B98436",
   confirmed: "#487C59",
+  shipping: "#3B7A9E",
+  delivered: "#2E5A88",
   rejected: "#B9634B",
   cancelled: "#8D4848",
 };
+
 const numeric = (value) => typeof value === "number" && Number.isFinite(value);
 const count = (value) =>
   numeric(value)
@@ -32,13 +38,14 @@ const money = (value) =>
   numeric(value)
     ? new Intl.NumberFormat("vi-VN", {
         style: "currency",
-        currency: "EUR",
+        currency: "VND",
       }).format(value)
     : "Chưa có dữ liệu";
 
 export default function AdminDashboard() {
   const [state, setState] = useState({ data: null, loading: true, error: "" });
   const [revision, setRevision] = useState(0);
+
   useEffect(() => {
     let cancelled = false;
     getDashboardStatistics()
@@ -59,12 +66,13 @@ export default function AdminDashboard() {
       cancelled = true;
     };
   }, [revision]);
+
   function reload() {
     setState({ data: null, loading: true, error: "" });
     setRevision((value) => value + 1);
   }
+
   const data = state.data;
-  // Chỉ dùng các field đã được implementation hiện tại đọc; thiếu dữ liệu không đồng nghĩa bằng 0.
   const metrics = [
     ["TỔNG DOANH THU", data?.totalRevenue, Landmark, money],
     ["TỔNG ĐƠN HÀNG", data?.totalOrders, ShoppingBag, count],
@@ -72,6 +80,7 @@ export default function AdminDashboard() {
     ["TỔNG KHÁCH HÀNG", data?.totalCustomers, Users, count],
     ["TỔNG TÀI KHOẢN", data?.totalUsers, UserRound, count],
   ];
+
   const statuses =
     data?.ordersByStatus &&
     typeof data.ordersByStatus === "object" &&
@@ -81,52 +90,44 @@ export default function AdminDashboard() {
         )
       : [];
   const total = data?.totalOrders;
+
   return (
     <div className="la-dashboard">
+      {/* Banner Tổng Quan Điều Hành */}
       <div className="la-dashboard-hero">
-        <div className="la-context">
-          <span>TỔNG QUAN ĐIỀU HÀNH</span>
+        <div className="la-dashboard-hero-content">
+          <div className="la-dashboard-titles">
+            <span className="la-hero-badge">TỔNG QUAN ĐIỀU HÀNH</span>
+            <h1>Tổng Quan <em>Điều Hành</em></h1>
+            <p>Theo dõi doanh thu, đơn hàng, sản phẩm và khách hàng trong hệ thống LUMORA Atelier.</p>
+          </div>
+          <button
+            className="la-refresh-btn"
+            onClick={reload}
+            disabled={state.loading}
+          >
+            <RefreshCw size={15} className={state.loading ? "la-spin" : ""} aria-hidden="true" />
+            <span>{state.loading ? "Đang tải…" : "Làm Mới Dữ Liệu"}</span>
+          </button>
         </div>
-        <section className="la-page-heading">
-          <div>
-            <h1>
-              Tổng Quan <em>Điều Hành</em>
-            </h1>
-            <p>
-              Theo dõi doanh thu, đơn hàng, sản phẩm và khách hàng trong hệ
-              thống LUMORA.
-            </p>
-          </div>
-          <div className="la-report-controls">
-            <button
-              className="la-button la-button-dark"
-              onClick={reload}
-              disabled={state.loading}
-            >
-              <RefreshCw size={16} aria-hidden="true" />
-              {state.loading ? "Đang tải…" : "Làm Mới Dữ Liệu"}
-            </button>
-          </div>
-        </section>
       </div>
+
       {state.loading ? (
         <div className="la-data-state" role="status">
-          <Landmark size={27} aria-hidden="true" />
+          <Landmark size={24} aria-hidden="true" />
           <div>
-            <strong>Đang tải thống kê</strong>
-            <p>Dữ liệu điều hành đang được cập nhật…</p>
+            <strong>Đang tải thống kê hệ thống</strong>
+            <p>Dữ liệu điều hành đang được đồng bộ…</p>
           </div>
         </div>
       ) : state.error ? (
         <div className="la-data-state la-data-error" role="alert">
-          <CircleAlert size={27} aria-hidden="true" />
+          <CircleAlert size={24} aria-hidden="true" />
           <div>
             <strong>Không thể tải thống kê</strong>
             <p>{state.error}</p>
           </div>
-          <button className="la-button" onClick={reload}>
-            Thử lại
-          </button>
+          <button className="la-button" onClick={reload}>Thử lại</button>
         </div>
       ) : (
         <>
@@ -135,64 +136,67 @@ export default function AdminDashboard() {
               <span className="la-eyebrow">BỨC TRANH TOÀN CẢNH</span>
               <h2>Chỉ Số Cốt Lõi</h2>
             </div>
-            <p>Số liệu hiện có từ hệ thống LUMORA</p>
+            
           </div>
+
+          {/* Các thẻ KPI thống kê (đã bỏ 01/05) */}
           <section className="la-kpis" aria-label="Chỉ số tổng quan">
-            {metrics.map(([label, value, Icon, format], index) => (
+            {metrics.map(([label, value, Icon, format]) => (
               <article className="la-kpi" key={label}>
                 <div className="la-kpi-top">
                   <span className="la-kpi-icon">
-                    <Icon size={21} aria-hidden="true" />
-                  </span>
-                  <span className="la-kpi-index" aria-hidden="true">
-                    0{index + 1} / 05
+                    <Icon size={18} aria-hidden="true" />
                   </span>
                 </div>
                 <div className="la-kpi-metric">
                   <span className="la-kpi-label">{label}</span>
-                  <strong
-                    className={`la-kpi-value ${numeric(value) ? "" : "la-api-missing"}`}
-                  >
+                  <strong className={`la-kpi-value ${numeric(value) ? "" : "la-api-missing"}`}>
                     {format(value)}
                   </strong>
                 </div>
               </article>
             ))}
           </section>
+
+          {/* Khu vực Trạng thái đơn hàng dạng Grid Cards */}
           <div className="la-analytics">
             <section className="la-panel">
               <div className="la-panel-heading">
                 <div>
-                  <p className="la-eyebrow">TÌNH HÌNH ĐƠN HÀNG</p>
+                  <span className="la-eyebrow">TÌNH HÌNH VẬN HÀNH</span>
                   <h2>Đơn Hàng Theo Trạng Thái</h2>
                 </div>
-                <span className="la-panel-index" aria-hidden="true">
-                  01
-                </span>
               </div>
               {statuses.length ? (
-                <ul className="la-api-statuses">
+                <div className="la-status-grid">
                   {statuses.map(([key, value]) => {
-                    const percentage = numeric(total) && total > 0 ? value / total * 100 : 0;
+                    const percentage = numeric(total) && total > 0 ? (value / total) * 100 : 0;
                     return (
-                      <li key={key} style={{ "--status-color": statusColors[key] ?? "#806E68" }}>
-                        <div>
-                          <span>{labels[key] ?? "Trạng thái khác"}</span>
-                          <strong>{count(value)}{numeric(total) && <small>{new Intl.NumberFormat("vi-VN", { maximumFractionDigits: 1 }).format(percentage)}%</small>}</strong>
+                      <div className="la-status-card" key={key} style={{ "--status-color": statusColors[key] ?? "#8a6a48" }}>
+                        <div className="la-status-card-header">
+                          <span className="la-status-dot" />
+                          <span className="la-status-name">{labels[key] ?? key}</span>
+                        </div>
+                        <div className="la-status-card-metric">
+                          <strong>{count(value)}</strong>
+                          <span className="la-status-percent">
+                            {numeric(total) && `${new Intl.NumberFormat("vi-VN", { maximumFractionDigits: 1 }).format(percentage)}%`}
+                          </span>
                         </div>
                         {numeric(total) && (
-                          <progress
-                            value={total > 0 ? Math.min(value, total) : 0}
-                            max={total > 0 ? total : 1}
-                            aria-label={`${labels[key] ?? "Trạng thái khác"}: ${count(value)} trên ${count(total)} đơn`}
-                          />
+                          <div className="la-progress-track">
+                            <div 
+                              className="la-progress-fill" 
+                              style={{ width: `${Math.min(percentage, 100)}%`, background: statusColors[key] ?? "#8a6a48" }}
+                            />
+                          </div>
                         )}
-                      </li>
+                      </div>
                     );
                   })}
-                </ul>
+                </div>
               ) : (
-                <p className="la-api-empty">Chưa có dữ liệu</p>
+                <p className="la-api-empty">Chưa có dữ liệu trạng thái đơn hàng</p>
               )}
             </section>
           </div>
