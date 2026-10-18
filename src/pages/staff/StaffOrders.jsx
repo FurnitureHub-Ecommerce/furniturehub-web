@@ -178,6 +178,27 @@ const StaffOrders = () => {
     }
   };
 
+  const [updatingStatus, setUpdatingStatus] = useState(false);
+
+  // Hàm chuyển trạng thái chung (Ví dụ: shipping hoặc delivered)
+  const handleUpdateStatus = async (newStatus, successMessage) => {
+    if (!selectedOrder || updatingStatus) return;
+    try {
+      setUpdatingStatus(true);
+      await orderAPI.updateOrderStatus(selectedOrder._id, newStatus);
+      
+      // Cập nhật lại state local của đơn hàng đang chọn
+      setSelectedOrder(prev => prev ? { ...prev, status: newStatus } : null);
+      fetchOrders(); // Làm mới lại danh sách tổng
+      
+      showToast("Thành công!", successMessage);
+    } catch (err) {
+      console.error("Update status failed:", err);
+      alert(err?.response?.data?.message || "Cập nhật trạng thái thất bại.");
+    } finally {
+      setUpdatingStatus(false);
+    }
+  };
   const formatVND = (amount) =>
     new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(amount);
 
@@ -435,49 +456,84 @@ const StaffOrders = () => {
               )}
             </div>
 
-            {/* Modal Footer (Nút Duyệt / Từ chối) */}
-            {selectedOrder && (
-              <div style={{ padding: '16px 24px', borderTop: '1px solid #F3F4F6', background: '#F9FAFB', display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
-                {selectedOrder.status === "pending" && (
-                  <button
-                    onClick={handleConfirmOrder}
-                    disabled={confirming || rejecting}
-                    style={{
-                      display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '10px 20px',
-                      background: '#059669', color: '#fff', border: 'none', borderRadius: '8px',
-                      fontSize: '13px', fontWeight: 600, cursor: 'pointer'
-                    }}
-                  >
-                    <Check size={16} />
-                    {confirming ? "Đang xử lý..." : "Chấp Nhận & Chuẩn Bị Hàng"}
-                  </button>
-                )}
+            {/* Modal Footer (Nút Duyệt, Đang giao, Hoàn thành, Từ chối) */}
+{selectedOrder && (
+  <div style={{ padding: '16px 24px', borderTop: '1px solid #F3F4F6', background: '#F9FAFB', display: 'flex', gap: '12px', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
+    
+    {/* 1. Nếu đơn ở trạng thái pending -> Hiện nút Chấp nhận */}
+    {selectedOrder.status === "pending" && (
+      <button
+        onClick={handleConfirmOrder}
+        disabled={confirming || rejecting || updatingStatus}
+        style={{
+          display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '10px 20px',
+          background: '#059669', color: '#fff', border: 'none', borderRadius: '8px',
+          fontSize: '13px', fontWeight: 600, cursor: 'pointer'
+        }}
+      >
+        <Check size={16} />
+        {confirming ? "Đang xử lý..." : "Chấp Nhận & Chuẩn Bị Hàng"}
+      </button>
+    )}
 
-                {["pending", "confirmed"].includes(selectedOrder.status) && (
-                  <button
-                    onClick={() => setIsRejectModalOpen(true)}
-                    disabled={confirming || rejecting}
-                    style={{
-                      display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '10px 20px',
-                      background: 'transparent', color: '#DC2626', border: '1px solid #FCA5A5', borderRadius: '8px',
-                      fontSize: '13px', fontWeight: 600, cursor: 'pointer'
-                    }}
-                  >
-                    Từ Chối / Hủy Đơn
-                  </button>
-                )}
+    {/* 2. Nếu đơn ở trạng thái confirmed (Đang chuẩn bị hàng) -> Staff bấm chuyển sang Đang giao */}
+    {selectedOrder.status === "confirmed" && (
+      <button
+        onClick={() => handleUpdateStatus("shipping", `Đơn hàng #${selectedOrder._id.slice(-8).toUpperCase()} đã được chuyển sang trạng thái đang giao hàng.`)}
+        disabled={updatingStatus}
+        style={{
+          display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '10px 20px',
+          background: '#4F46E5', color: '#fff', border: 'none', borderRadius: '8px',
+          fontSize: '13px', fontWeight: 600, cursor: 'pointer'
+        }}
+      >
+        <TrendingUp size={16} />
+        {updatingStatus ? "Đang xử lý..." : "Chuyển Sang Đang Giao"}
+      </button>
+    )}
 
-                <button
-                  onClick={() => setIsModalOpen(false)}
-                  style={{
-                    padding: '10px 20px', background: '#E5E7EB', color: '#374151', border: 'none',
-                    borderRadius: '8px', fontSize: '13px', fontWeight: 600, cursor: 'pointer'
-                  }}
-                >
-                  Đóng
-                </button>
-              </div>
-            )}
+    {/* 3. Nếu đơn ở trạng thái shipping (Đang giao) -> Staff bấm xác nhận Hoàn thành */}
+    {selectedOrder.status === "shipping" && (
+      <button
+        onClick={() => handleUpdateStatus("delivered", `Đơn hàng #${selectedOrder._id.slice(-8).toUpperCase()} đã giao thành công và hoàn tất.`)}
+        disabled={updatingStatus}
+        style={{
+          display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '10px 20px',
+          background: '#047857', color: '#fff', border: 'none', borderRadius: '8px',
+          fontSize: '13px', fontWeight: 600, cursor: 'pointer'
+        }}
+      >
+        <Check size={16} />
+        {updatingStatus ? "Đang xử lý..." : "Xác Nhận Đã Hoàn Thành"}
+      </button>
+    )}
+
+    {/* Nút từ chối/hủy đơn */}
+    {["pending", "confirmed"].includes(selectedOrder.status) && (
+      <button
+        onClick={() => setIsRejectModalOpen(true)}
+        disabled={confirming || rejecting || updatingStatus}
+        style={{
+          display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '10px 20px',
+          background: 'transparent', color: '#DC2626', border: '1px solid #FCA5A5', borderRadius: '8px',
+          fontSize: '13px', fontWeight: 600, cursor: 'pointer'
+        }}
+      >
+        Từ Chối / Hủy Đơn
+      </button>
+    )}
+
+    <button
+      onClick={() => setIsModalOpen(false)}
+      style={{
+        padding: '10px 20px', background: '#E5E7EB', color: '#374151', border: 'none',
+        borderRadius: '8px', fontSize: '13px', fontWeight: 600, cursor: 'pointer'
+      }}
+    >
+      Đóng
+    </button>
+  </div>
+)}
           </div>
         </div>
       )}
