@@ -1,60 +1,61 @@
 .editorial-spotlight {
-  background-color: var(--lumora-bg-secondary);
-  border-block: 1px solid var(--lumora-border);
+  background-color: var(--lumora-bg-secondary, #fbfaf8);
+  border-block: 1px solid var(--lumora-border, #eae5e0);
+  padding: 80px 20px;
 }
 
 .editorial-spotlight__header {
-  margin-bottom: var(--space-xl);
-  max-width: 680px;
-  font-family: 'Playfair Display', serif;
+  margin-bottom: 40px;
+  max-width: 800px;
 }
 
 .editorial-spotlight__title {
   font-family: 'Playfair Display', serif;
-  font-size: clamp(2.2rem, 3vw, 3.2rem);
+  font-size: clamp(2.2rem, 3.5vw, 3.2rem);
   font-weight: 600;
-  color: var(--lumora-text-main);
+  color: var(--lumora-text-main, #1a1a1a);
   letter-spacing: -0.02em;
-  line-height: 1.08;
-  margin-block: 6px 10px;
+  line-height: 1.15;
+  margin-block: 8px 12px;
 }
 
 .editorial-spotlight__subtitle {
-  font-size: 1rem;
-  color: var(--lumora-text-muted);
+  font-size: 1.02rem;
+  color: var(--lumora-text-muted, #666666);
   font-weight: 400;
-  line-height: 1.7;
+  line-height: 1.6;
 }
 
-/* Split View */
+/* Split View: Cho phần ảnh bên trái rộng hẳn ra (chiếm nhiều không gian hơn) */
 .editorial-spotlight__split {
   display: grid;
   grid-template-columns: 1fr;
-  gap: var(--space-xl);
+  gap: 24px;
+  align-items: stretch;
+  margin-left: -80px;
 }
 
 @media (min-width: 992px) {
   .editorial-spotlight__split {
-    grid-template-columns: 1.3fr 1fr;
-    align-items: center;
+    grid-template-columns: 1.2fr 1.1fr; /* Tăng tỷ lệ cột ảnh trái lên 1.4 phần, bên phải 1 phần */
   }
 }
 
-/* Room Image Box */
+/* KHUNG ẢNH BÊN TRÁI: Rộng rãi, cao thoáng, không bị bóp méo */
 .editorial-spotlight__image-box {
   position: relative;
-  width: 100%;
-  aspect-ratio: 4 / 3;
-  border-radius: var(--radius-md);
+  width: 850px;
+  border-radius: 18px;
   overflow: hidden;
-  box-shadow: var(--shadow-medium);
-  height: 479px;
-  margin-top: -15px;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.08);
+  background-color: #f0ece6;
+  min-height: 520px; /* Đảm bảo chiều cao lý tưởng */
 }
 
-@media (min-width: 768px) {
+@media (min-width: 992px) {
   .editorial-spotlight__image-box {
-    aspect-ratio: 16 / 11;
+    height: 100%;
+    min-height: 580px;
   }
 }
 
@@ -67,7 +68,7 @@
 .editorial-spotlight__overlay {
   position: absolute;
   inset: 0;
-  background: rgba(37, 37, 37, 0.15);
+  background: rgba(15, 15, 15, 0.08);
 }
 
 /* Hotspot Pin Buttons */
@@ -76,13 +77,16 @@
   transform: translate(-50%, -50%);
   z-index: 10;
   cursor: pointer;
+  background: transparent;
+  border: none;
+  padding: 0;
 }
 
 .hotspot-pin__ripple {
   position: absolute;
-  inset: -8px;
+  inset: -10px;
   border-radius: 50%;
-  background-color: rgba(255, 255, 255, 0.5);
+  background-color: rgba(255, 255, 255, 0.6);
   animation: pulseRipple 2s infinite ease-out;
 }
 
@@ -92,68 +96,69 @@
     opacity: 0.8;
   }
   100% {
-    transform: scale(2);
+    transform: scale(2.2);
     opacity: 0;
   }
 }
 
 .hotspot-pin__core {
   position: relative;
-  width: 32px;
-  height: 32px;
+  width: 34px;
+  height: 34px;
   border-radius: 50%;
-  background-color: var(--lumora-card-white);
-  color: var(--lumora-text-main);
-  box-shadow: var(--shadow-medium);
+  background-color: #ffffff;
+  color: #1a1a1a;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all var(--transition-fast);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .hotspot-pin:hover .hotspot-pin__core,
 .hotspot-pin--active .hotspot-pin__core {
-  background-color: var(--lumora-accent-wood);
-  color: #FFFFFF;
+  background-color: #1a1a1a;
+  color: #ffffff;
   transform: scale(1.15);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
 }
 
-/* Sidebar */
+/* Sidebar bên phải */
 .editorial-spotlight__sidebar {
   display: flex;
   flex-direction: column;
-  gap: 20px;
-  font-family: 'Playfair Display', serif;
+  justify-content: space-between;
+  gap: 14px;
 }
 
 .editorial-spotlight__spot-tag {
   font-size: 0.72rem;
   font-weight: 700;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--lumora-accent-wood);
- 
+  color: #8c7355;
 }
-
-/* Featured Card */
+/* Thẻ sản phẩm nổi bật ở trên */
 .hotspot-featured-card {
-  background-color: var(--lumora-card-white);
-  border-radius: var(--radius-md);
+  background-color: #ffffff;
+  border-radius: 14px;
   padding: 16px;
-  border: 1px solid var(--lumora-border);
-  box-shadow: var(--shadow-subtle);
+  border: 1px solid var(--lumora-border, #eae5e0);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.04);
   display: flex;
   gap: 16px;
   align-items: center;
+  width: 550px;
+  margin-top: -25px;
 }
 
 .hotspot-featured-card__image-wrap {
-  width: 90px;
-  height: 90px;
-  border-radius: var(--radius-sm);
+  width: 88px;
+  height: 88px;
+  border-radius: 10px;
   overflow: hidden;
   flex-shrink: 0;
-  background-color: var(--lumora-bg-primary);
+  background-color: #f5f3f0;
 }
 
 .hotspot-featured-card__image-wrap img {
@@ -166,148 +171,179 @@
   flex: 1;
   display: flex;
   flex-direction: column;
+  min-width: 0;
 }
 
 .hotspot-featured-card__category {
-  font-size: 0.7rem;
-  color: var(--lumora-text-light);
+  font-size: 0.68rem;
+  color: #888888;
   text-transform: uppercase;
   letter-spacing: 0.08em;
   font-weight: 600;
 }
 
 .hotspot-featured-card__name {
-  font-family: 'Playfair Display', serif;
-  font-size: clamp(1.3rem, 2vw, 1.8rem);
+  font-family: Arial, Helvetica, sans-serif, Geneva, Tahoma, sans-serif;
+  font-size: 1.15rem;
   font-weight: 600;
-  line-height: 1.1;
-  color: var(--lumora-text-main);
-  margin-block: 4px 6px;
+  line-height: 1.25;
+  color: var(--lumora-text-main, #1a1a1a);
+  margin-block: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .hotspot-featured-card__material {
-  font-size: 0.8rem;
-  color: var(--lumora-text-muted);
-  line-height: 1.5;
-  margin-bottom: 12px;
+  font-size: 0.78rem;
+  color: var(--lumora-text-muted, #666666);
+  line-height: 1.4;
+  margin-bottom: 10px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .hotspot-featured-card__footer {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  margin-top: auto;
 }
 
 .hotspot-featured-card__price {
-  font-family: var(--font-sans);
-  font-size: 1.12rem;
+  font-size: 1.1rem;
   font-weight: 700;
-  color: var(--lumora-text-main);
+  color: #993C1D;
 }
 
 .hotspot-featured-card__btn {
-  padding: 8px 14px;
-  background-color: var(--lumora-accent-wood);
-  color: #FFFFFF;
-  font-size: 0.78rem;
-  font-weight: 600;
-  border-radius: var(--radius-full);
+  display: inline-flex;
+  align-items: center;
   gap: 6px;
-  transition: all var(--transition-fast);
+  padding: 8px 14px;
+  background-color: #1a1a1a;
+  color: #ffffff;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: 50px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
 }
 
 .hotspot-featured-card__btn:hover {
-  background-color: var(--lumora-accent-hover);
+  background-color: #C29A62;
 }
 
 .hotspot-featured-card__btn--added {
   background-color: #2E6B40;
 }
 
-/* List section */
+/* Danh sách sản phẩm bên dưới */
 .hotspot-list-section {
-  margin-top: 8px;
+  margin-top: 2px;
 }
 
 .hotspot-list-title {
-  font-size: 0.78rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--lumora-text-main);
-  margin-bottom: 12px;
+  font-size: 0.95rem;
+  font-weight: 600;
+ 
+  
+  color: var(--lumora-text-main, #1a1a1a);
+  margin-bottom: 8px;
+  font-family: Arial, Helvetica, sans-serif, Geneva, Tahoma, sans-serif;
 }
 
 .hotspot-list {
   display: flex;
   flex-direction: column;
   gap: 8px;
+  list-style: none;
+  padding: 0;
+  margin: 0;
 }
 
 .hotspot-list-item {
-  width: 100%;
+  width: 550px;
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 10px 14px;
-  background-color: rgba(255, 255, 255, 0.6);
-  border: 1px solid var(--lumora-border-subtle);
-  border-radius: var(--radius-sm);
-  transition: all var(--transition-fast);
+  padding: 8px 12px;
+  background-color: #ffffff;
+  border: 1px solid var(--lumora-border, #eae5e0);
+  border-radius: 10px;
+  transition: all 0.2s ease;
   text-align: left;
+  cursor: pointer;
 }
 
-.hotspot-list-item:hover,
+.hotspot-list-item:hover {
+  border-color: #b0a498;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+}
+
 .hotspot-list-item--active {
-  background-color: var(--lumora-card-white);
-  border-color: var(--lumora-accent-wood);
-  box-shadow: var(--shadow-subtle);
+  border-color: #1a1a1a;
+  background-color: #F8F6F2;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.05);
 }
 
 .hotspot-list-thumb {
   width: 40px;
   height: 40px;
-  border-radius: var(--radius-sm);
+  border-radius: 6px;
   object-fit: cover;
+  flex-shrink: 0;
 }
 
 .hotspot-list-info {
   flex: 1;
   display: flex;
   flex-direction: column;
+  min-width: 0;
 }
 
 .hotspot-list-name {
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   font-weight: 600;
-  line-height: 1.4;
-  color: var(--lumora-text-main);
+  line-height: 1.3;
+  color: var(--lumora-text-main, #1a1a1a);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .hotspot-list-material {
-  font-size: 0.74rem;
-  color: var(--lumora-text-muted);
-  line-height: 1.5;
+  font-size: 0.72rem;
+  color: var(--lumora-text-muted, #666666);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .hotspot-list-price {
-  font-size: 0.88rem;
+  font-size: 0.85rem;
   font-weight: 700;
-  color: var(--lumora-accent-wood);
+  color: #993C1D;
+  flex-shrink: 0;
+  margin-left: auto;
 }
 
 .editorial-spotlight__full-link {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  font-size: 0.85rem;
+  font-size: 0.82rem;
   font-weight: 700;
   letter-spacing: 0.04em;
-  color: var(--lumora-accent-wood);
-  margin-top: 10px;
-  transition: gap var(--transition-fast);
+  color: #1a1a1a;
+  text-decoration: none;
+  margin-top: 4px;
+  transition: gap 0.2s ease, color 0.2s ease;
 }
 
 .editorial-spotlight__full-link:hover {
   gap: 12px;
+  color: #8c7355;
 }
