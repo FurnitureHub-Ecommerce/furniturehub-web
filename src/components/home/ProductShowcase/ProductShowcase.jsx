@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Heart, ShoppingBag, Eye, Check, AlertCircle, RefreshCw, PackageX, ArrowRight } from 'lucide-react';
-import { PRODUCTS as MOCK_PRODUCTS } from '../../../data/lumoraData';
 import { useShop } from '../../../context/ShopContext';
 import Rating from '../../common/Rating/Rating';
 import { ProductCardSkeleton } from '../../common/Skeleton/Skeleton';
@@ -30,14 +29,14 @@ export function ProductShowcase({
 
   const { wishlist, toggleWishlist, addToCart, setQuickViewProduct } = useShop();
 
+  // Lấy dữ liệu thuần từ Backend (loại bỏ hoàn toàn MOCK_PRODUCTS)
   const rawProducts = Array.isArray(products)
     ? products
     : products?.data || products?.items || [];
 
-  const allProducts = rawProducts.length > 0 
-    ? rawProducts 
-    : (isLoading ? [] : MOCK_PRODUCTS);
+  const allProducts = rawProducts;
 
+  // Lọc sản phẩm theo tab (nếu sản phẩm từ BE có phân loại tab, không thì hiển thị tất cả)
   const filteredProducts = allProducts.filter((p) => {
     if (!p.tab) return true;
     return p.tab === activeTab;
@@ -119,10 +118,9 @@ export function ProductShowcase({
           <div className="ui-state-card ui-state-card--empty" style={{ textAlign: 'center', padding: '48px 20px', border: '1px solid var(--lumora-border)', borderRadius: 'var(--radius-lg)' }}>
             <PackageX size={40} color="var(--lumora-text-light)" style={{ marginBottom: '12px' }} />
             <h3 style={{ fontSize: '1.3rem', fontFamily: 'var(--font-serif)', marginBottom: '6px' }}>Danh sách sản phẩm API hiện đang rỗng</h3>
-            <p style={{ color: 'var(--lumora-text-muted)', fontSize: '0.95rem' }}>Hiện chưa có sản phẩm nào thuộc tab này trên server.</p>
+            <p style={{ color: 'var(--lumora-text-muted)', fontSize: '0.95rem' }}>Hiện chưa có sản phẩm nào từ máy chủ Backend.</p>
           </div>
         ) : (
-          /* Thêm key={currentIndex} ở đây để kích hoạt hiệu ứng mờ dần từ dưới lên mỗi khi đổi bộ 4 sản phẩm */
           <div className="product-showcase__grid" key={currentIndex}>
             {isLoading
               ? Array.from({ length: 4 }).map((_, idx) => <ProductCardSkeleton key={idx} />)
@@ -209,7 +207,6 @@ export function ProductShowcase({
                         <div className="product-card__details">
                           <div className="product-card__meta">
                             <span className="product-card__variant">{product.variantLabel || 'Gỗ sồi Bắc Âu / Tinh xảo'}</span>
-                            <Rating score={metrics.rating} reviewCount={metrics.reviewCount} />
                           </div>
 
                           <h3 className="product-card__title">
@@ -233,26 +230,26 @@ export function ProductShowcase({
                                 isJustAdded ? 'product-card__cart-btn--added' : ''
                               }`}
                               onClick={() => handleAddToCart(product)}
-                            aria-label={`Thêm ${product.name} vào giỏ hàng`}
-                            type="button"
-                          >
-                            {isJustAdded ? (
-                              <>
-                                <Check size={16} />
-                                <span>Đã thêm</span>
-                              </>
-                            ) : (
-                              <>
-                                <ShoppingBag size={16} />
-                                <span>Thêm vào giỏ</span>
-                              </>
-                            )}
-                          </button>
+                              aria-label={`Thêm ${product.name} vào giỏ hàng`}
+                              type="button"
+                            >
+                              {isJustAdded ? (
+                                <>
+                                  <Check size={16} />
+                                  <span>Đã thêm</span>
+                                </>
+                              ) : (
+                                <>
+                                  <ShoppingBag size={16} />
+                                  <span>Thêm vào giỏ</span>
+                                </>
+                              )}
+                            </button>
+                          </div>
                         </div>
-                      </div>
-                    </article>
-                  );
-                })}
+                      </article>
+                    );
+                  })}
           </div>
         )}
 
