@@ -283,7 +283,7 @@ export const orderAPI = {
   getOrdersById: (id) => api.get(`/api/orders/${id}`),
   confirmOrderStatus: (id) => api.patch(`/api/orders/${id}/confirm`),
   rejectOrderStatus: (id) => api.patch(`/api/orders/${id}/reject`),
-
+  updateOrderStatus: (id, status) => api.patch(`/api/orders/${id}/status`, { status }),
   // Customer
   createOrder: (orderData) => api.post("/api/orders", orderData),
   getMyOrders: (params = {}) => api.get("/api/orders/my-orders", { params }),
