@@ -1,23 +1,49 @@
-import { useRef } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowUpRight, ChevronLeft, ChevronRight, AlertCircle, RefreshCw, FolderX } from 'lucide-react';
-import { CATEGORIES as MOCK_CATEGORIES } from '../../../data/lumoraData';
+import { ChevronLeft, ChevronRight, AlertCircle, RefreshCw, FolderX, ShoppingBag } from 'lucide-react';
 import { Skeleton } from '../../common/Skeleton/Skeleton';
-import { formatCategoryName } from '../../../utils/formatters';
+import { formatCurrency } from '../../../utils/formatters';
+import { productAPI, getApiErrorMessage } from '../../../services/api';
 import './FeaturedCategories.css';
 
-export function FeaturedCategories({
-  isLoading = false,
-  error = null,
-  categories = null,
-  onRetry = null,
-}) {
+export function FeaturedCategories() {
   const scrollRef = useRef(null);
+  
+  const [products, setProducts] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const displayCategories =
-    categories && categories.length > 0
-      ? categories
-      : MOCK_CATEGORIES;
+  const fetchProducts = async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+
+      const response = await productAPI.getProducts();
+      
+      let actualData = [];
+      if (Array.isArray(response)) {
+        actualData = response;
+      } else if (Array.isArray(response?.data)) {
+        actualData = response.data;
+      } else if (Array.isArray(response?.data?.data)) {
+        actualData = response.data.data;
+      } else if (Array.isArray(response?.data?.products)) {
+        actualData = response.data.products;
+      }
+
+      setProducts(actualData);
+    } catch (err) {
+      const errorMsg = getApiErrorMessage(err, 'Không thể tải sản phẩm từ máy chủ.');
+      setError(errorMsg);
+      console.error('Lỗi tải sản phẩm:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchProducts();
+  }, []);
 
   const handleScroll = (direction) => {
     if (!scrollRef.current) return;
@@ -26,15 +52,15 @@ export function FeaturedCategories({
   };
 
   return (
-    <section className="section categories-section" aria-label="Danh mục nổi bật">
+    <section className="section categories-section" aria-label="Sản phẩm nổi bật">
       <div className="container">
         {/* Section Header */}
         <div className="categories__header">
-          <div>
-            <span className="section-heading__badge">Không gian kiến trúc</span>
-            <h2 className="categories__title">Danh mục nổi bật</h2>
+          <div className="categories__header-text">
+            <span className="section-heading__badge">Bộ sưu tập độc quyền</span>
+            <h2 className="categories__title">Sản phẩm nổi bật</h2>
             <p className="categories__subtitle">
-              Khám phá bộ sưu tập nội thất được chế tác tỉ mỉ, thiết kế cho không gian sống hài hòa.
+              Khám phá các thiết kế nội thất bán chạy nhất, mang lại sự sang trọng cho ngôi nhà của bạn.
             </p>
           </div>
 
@@ -42,7 +68,7 @@ export function FeaturedCategories({
             <button
               className="categories__arrow-btn"
               onClick={() => handleScroll('left')}
-              aria-label="Cuộn danh mục sang trái"
+              aria-label="Cuộn sang trái"
               type="button"
             >
               <ChevronLeft size={20} />
@@ -50,7 +76,7 @@ export function FeaturedCategories({
             <button
               className="categories__arrow-btn"
               onClick={() => handleScroll('right')}
-              aria-label="Cuộn danh mục sang phải"
+              aria-label="Cuộn sang phải"
               type="button"
             >
               <ChevronRight size={20} />
@@ -60,22 +86,20 @@ export function FeaturedCategories({
 
         {/* UI State Conditionals */}
         {error ? (
-          <div className="ui-state-card ui-state-card--error" style={{ textAlign: 'center', padding: '40px 20px', border: '1px solid var(--lumora-border)', borderRadius: 'var(--radius-lg)', backgroundColor: '#FFFBFB' }}>
-            <AlertCircle size={36} color="#D93838" style={{ marginBottom: '12px' }} />
-            <h3 style={{ fontSize: '1.2rem', fontFamily: 'var(--font-serif)', marginBottom: '8px' }}>Không thể tải danh mục từ API</h3>
-            <p style={{ color: 'var(--lumora-text-muted)', fontSize: '0.9rem', marginBottom: '16px' }}>{error}</p>
-            {onRetry && (
-              <button onClick={onRetry} style={{ padding: '10px 20px', backgroundColor: 'var(--lumora-text-main)', color: '#FFF', borderRadius: 'var(--radius-md)', gap: '8px', cursor: 'pointer' }}>
-                <RefreshCw size={16} />
-                <span>Thử Lại API</span>
-              </button>
-            )}
+          <div className="ui-state-card ui-state-card--error">
+            <AlertCircle size={36} color="#D93838" className="ui-state-icon" />
+            <h3 className="ui-state-title">Không thể tải dữ liệu từ Backend</h3>
+            <p className="ui-state-desc">{error}</p>
+            <button onClick={fetchProducts} className="ui-state-retry-btn" type="button">
+              <RefreshCw size={16} />
+              <span>Thử Lại API</span>
+            </button>
           </div>
-        ) : displayCategories.length === 0 && !isLoading ? (
-          <div className="ui-state-card ui-state-card--empty" style={{ textAlign: 'center', padding: '40px 20px', border: '1px solid var(--lumora-border)', borderRadius: 'var(--radius-lg)' }}>
-            <FolderX size={36} color="var(--lumora-text-light)" style={{ marginBottom: '12px' }} />
-            <h3 style={{ fontSize: '1.2rem', fontFamily: 'var(--font-serif)', marginBottom: '4px' }}>Chưa có danh mục nào từ API</h3>
-            <p style={{ color: 'var(--lumora-text-muted)', fontSize: '0.9rem' }}>Dữ liệu từ máy chủ hiện đang rỗng.</p>
+        ) : products.length === 0 && !isLoading ? (
+          <div className="ui-state-card ui-state-card--empty">
+            <FolderX size={36} color="var(--lumora-text-light)" className="ui-state-icon" />
+            <h3 className="ui-state-title">Chưa có sản phẩm nào từ Backend</h3>
+            <p className="ui-state-desc">Dữ liệu từ máy chủ hiện đang rỗng.</p>
           </div>
         ) : (
           <div className="categories__track-wrapper">
@@ -83,52 +107,64 @@ export function FeaturedCategories({
               {isLoading
                 ? Array.from({ length: 5 }).map((_, idx) => (
                     <div key={idx} className="category-card-skeleton">
-                      <Skeleton height="380px" borderRadius="var(--radius-md)" />
+                      <Skeleton height="340px" borderRadius="12px" />
                     </div>
                   ))
-                : displayCategories.map((category, idx) => {
-                    const fallbackImg = [
-                      'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=800&q=80',
-                      'https://images.unsplash.com/photo-1617806118233-18e1de247200?auto=format&fit=crop&w=800&q=80',
-                      'https://images.unsplash.com/photo-1616594039964-ae9021a400a0?auto=format&fit=crop&w=800&q=80',
-                      'https://images.unsplash.com/photo-1524758631624-e2822e304c36?auto=format&fit=crop&w=800&q=80',
-                      'https://images.unsplash.com/photo-1507473885765-e6ed057f782c?auto=format&fit=crop&w=800&q=80',
-                      'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?auto=format&fit=crop&w=800&q=80',
-                    ][idx % 6];
+                : products.map((item) => {
+                    const itemId = item.id || item._id;
+                    const itemName = item.name || 'Sản phẩm cao cấp';
+                    const itemPrice = item.minPrice ?? item.price ?? 2500000;
+                    
+                    const itemImage = Array.isArray(item.images) && item.images.length > 0 
+                      ? item.images[0] 
+                      : (item.image || item.imageUrl || 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=800&q=80');
 
                     return (
                       <Link
-                        key={category.id || category._id}
-                        to={category.link || `/category/${category.id || category._id}`}
+                        key={itemId}
+                        to={`/product/${itemId}`}
                         className="category-card"
-                        aria-label={`Khám phá bộ sưu tập ${category.name}`}
+                        aria-label={`Xem chi tiết ${itemName}`}
                       >
                         <div className="category-card__image-wrap">
+                          
                           <img
-                            src={category.image || fallbackImg}
-                            alt={category.name}
+                            src={itemImage}
+                            alt={itemName}
                             className="category-card__image"
                             loading="lazy"
                           />
-                          <div className="category-card__overlay" />
                         </div>
 
-                      <div className="category-card__content">
-                        <div className="category-card__top">
-                          <span className="category-card__count">{category.itemCount || 'Thiết kế cao cấp'}</span>
-                          <div className="category-card__icon-btn">
-                            <ArrowUpRight size={18} />
+                        <div className="category-card__content">
+                          <h3 className="category-card__name">
+                            {itemName}
+                          </h3>
+                          
+                          <div className="category-card__footer">
+                            <div className="category-card__price-box">
+                              <span className="category-card__price">
+                                {formatCurrency(itemPrice)}
+                              </span>
+                              <span className="category-card__desc">
+                                {item.description || 'Chính hãng cao cấp'}
+                              </span>
+                            </div>
+
+                            <div 
+                              className="category-card__action-btn"
+                              title="Thêm vào giỏ hàng"
+                              onClick={(e) => {
+                                e.preventDefault();
+                              }}
+                            >
+                              <ShoppingBag size={16} />
+                            </div>
                           </div>
                         </div>
-
-                        <div className="category-card__bottom">
-                          <h3 className="category-card__name">{formatCategoryName(category.name)}</h3>
-                          <p className="category-card__desc">{category.description || 'Nội thất sang trọng Wabi-Sabi & Bắc Âu.'}</p>
-                        </div>
-                      </div>
-                    </Link>
-                  );
-                })}
+                      </Link>
+                    );
+                  })}
             </div>
           </div>
         )}

@@ -129,6 +129,31 @@ export const authAPI = {
 
 // =========== USER / ADMIN MANAGEMENT API ===========
 
+export const getUserProfile = async () => {
+  try {
+    const res = await api.get("/api/users/profile");
+    return res;
+  } catch (error) {
+    console.error("[api] getUserProfile error:", error);
+    throw error;
+  }
+};
+
+export const updateUserProfile = async (data = {}) => {
+  try {
+    // Backend chỉ chấp nhận fullName, phone (email read-only, cấm role/id/các field khác)
+    const cleanData = {};
+    if (data.fullName !== undefined) cleanData.fullName = String(data.fullName).trim();
+    if (data.phone !== undefined) cleanData.phone = String(data.phone).trim();
+
+    const res = await api.patch("/api/users/profile", cleanData);
+    return res;
+  } catch (error) {
+    console.error("[api] updateUserProfile error:", error);
+    throw error;
+  }
+};
+
 export const userAPI = {
   // Admin lấy danh sách toàn bộ người dùng trong hệ thống
   getUsers: (params = {}) => api.get("/api/users", { params }),
@@ -137,8 +162,10 @@ export const userAPI = {
   createUser: (userData) => api.post("/api/users", userData),
 
   getProfile: () => api.get("/api/users/profile"),
+  getUserProfile,
 
-  updateProfile: (profileData) => api.patch("/api/users/profile", profileData),
+  updateProfile: (profileData) => updateUserProfile(profileData),
+  updateUserProfile,
 };
 
 // =========== PRODUCT API ===========
@@ -152,7 +179,8 @@ export const productAPI = {
 
   getProductById: (id) => api.get(`/api/products/${id}`),
 
-  updateProduct: (id, productData) => api.patch(`/api/products/${id}`, productData),
+  updateProduct: (id, productData) =>
+    api.patch(`/api/products/${id}`, productData),
 
   deactivateProduct: (id) => api.delete(`/api/products/${id}`),
 
@@ -171,13 +199,15 @@ export const productAPI = {
 export const categoryAPI = {
   getCategories: (params = {}) => api.get("/api/categories", { params }),
 
-  getCategoriesAdmin: (params = {}) => api.get("/api/categories/admin", { params }),
+  getCategoriesAdmin: (params = {}) =>
+    api.get("/api/categories/admin", { params }),
 
   getCategoryById: (id) => api.get(`/api/categories/${id}`),
 
   createCategory: (categoryData) => api.post("/api/categories", categoryData),
 
-  updateCategory: (id, categoryData) => api.patch(`/api/categories/${id}`, categoryData),
+  updateCategory: (id, categoryData) =>
+    api.patch(`/api/categories/${id}`, categoryData),
 
   deactivateCategory: (id) => api.delete(`/api/categories/${id}`),
 };
@@ -205,7 +235,8 @@ export const storageAPI = {
   getInventory: (params = {}) => api.get("/api/inventory", { params }),
 
   // Xem tồn kho chi tiết của một biến thể
-  getInventoryByVariantId: (variantId) => api.get(`/api/inventory/${variantId}`),
+  getInventoryByVariantId: (variantId) =>
+    api.get(`/api/inventory/${variantId}`),
 
   getLowStock: (params = {}) => api.get("/api/inventory/low-stock", { params }),
 
@@ -226,26 +257,40 @@ export const storageAPI = {
   deactivateVariant: (id) => api.delete(`/api/variants/${id}`),
 
   // Các hàm giao dịch kho hàng
-  getInventoryTransactions: (params = {}) => api.get('/api/inventory/transactions', { params }),
-  importInventory: (variantId, data) => api.post(`/api/inventory/${variantId}/import`, data),
-  exportInventory: (variantId, data) => api.post(`/api/inventory/${variantId}/export`, data),
+  getInventoryTransactions: (params = {}) =>
+    api.get("/api/inventory/transactions", { params }),
+  importInventory: (variantId, data) =>
+    api.post(`/api/inventory/${variantId}/import`, data),
+  exportInventory: (variantId, data) =>
+    api.post(`/api/inventory/${variantId}/export`, data),
 };
 
 // =========== ORDER API ===========
+
+export const getOrderTracking = async (orderId) => {
+  try {
+    const res = await api.get(`/api/orders/${orderId}/tracking`);
+    return res;
+  } catch (error) {
+    console.error(`[api] getOrderTracking error for #${orderId}:`, error);
+    throw error;
+  }
+};
 
 export const orderAPI = {
   // Admin & Staff
   getOrders: (params = {}) => api.get("/api/orders", { params }),
   getOrdersById: (id) => api.get(`/api/orders/${id}`),
-  updateOrderStatus: (id, status) =>
-    api.patch(`/api/orders/${id}/status`, { status }),
+  confirmOrderStatus: (id) => api.patch(`/api/orders/${id}/confirm`),
+  rejectOrderStatus: (id) => api.patch(`/api/orders/${id}/reject`),
 
   // Customer
   createOrder: (orderData) => api.post("/api/orders", orderData),
   getMyOrders: (params = {}) => api.get("/api/orders/my-orders", { params }),
   getMyOrderById: (id) => api.get(`/api/orders/${id}`),
-  getOrderTracking: (id) => api.get(`/api/orders/${id}/tracking`),
-  cancelOrder: (id) => api.patch(`/api/orders/${id}/cancel`),
+  getOrderTracking,
+  trackOrder: getOrderTracking,
+  cancelOrder: (id, data = {}) => api.patch(`/api/orders/${id}/cancel`, data),
 };
 
 // =========== CART API (CUSTOMER) ===========
@@ -289,7 +334,8 @@ export const checkoutAPI = {
 
 export const paymentAPI = {
   // Customer tạo Payment cho Order của mình (COD hoặc BANK_TRANSFER)
-  createPayment: (orderId, data) => api.post(`/api/orders/${orderId}/payment`, data),
+  createPayment: (orderId, data) =>
+    api.post(`/api/orders/${orderId}/payment`, data),
 
   // Customer xem Payment của Order mình
   getPaymentByOrder: (orderId) => api.get(`/api/orders/${orderId}/payment`),
@@ -301,12 +347,43 @@ export const paymentAPI = {
 
 // =========== REVIEW API (CUSTOMER & PUBLIC) ===========
 
+export const createProductReview = async (productId, data = {}) => {
+  try {
+    const payload =
+      typeof productId === "object" && productId !== null
+        ? productId
+        : { productId, ...data };
+
+    const body = {
+      productId: payload.productId,
+      rating: Number(payload.rating),
+      ...(payload.comment ? { comment: String(payload.comment).trim() } : {}),
+    };
+
+    const res = await api.post("/api/reviews", body);
+    return res;
+  } catch (error) {
+    console.error("[api] createProductReview error:", error);
+    throw error;
+  }
+};
+
+export const getProductReviews = async (productId, params = {}) => {
+  try {
+    const res = await api.get(`/api/reviews/product/${productId}`, { params });
+    return res;
+  } catch (error) {
+    console.error(`[api] getProductReviews error for #${productId}:`, error);
+    throw error;
+  }
+};
+
 export const reviewAPI = {
-  getProductReviews: (productId) => api.get(`/api/reviews/product/${productId}`),
-  createReview: (data) => api.post("/api/reviews", data),
+  getProductReviews,
+  createProductReview,
+  createReview: createProductReview,
   updateReview: (id, data) => api.patch(`/api/reviews/${id}`, data),
   deleteReview: (id) => api.delete(`/api/reviews/${id}`),
 };
 
 export default api;
-

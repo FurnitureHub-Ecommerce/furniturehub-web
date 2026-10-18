@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
+import { createContext, useContext, useState, useEffect, useCallback } from "react";
 
 const AuthContext = createContext(null);
 
@@ -63,6 +63,18 @@ export function AuthProvider({ children }) {
     setToken(null);
   }, []);
 
+  const updateUser = useCallback((newUserData) => {
+    setUser((prev) => {
+      const merged = { ...prev, ...newUserData };
+      try {
+        localStorage.setItem("user", JSON.stringify(merged));
+      } catch (err) {
+        console.warn("Could not sync user to localStorage:", err);
+      }
+      return merged;
+    });
+  }, []);
+
   return (
     <AuthContext.Provider
       value={{
@@ -71,6 +83,7 @@ export function AuthProvider({ children }) {
         isAuthenticated: !!token,
         login,
         logout,
+        updateUser,
       }}
     >
       {children}

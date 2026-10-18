@@ -59,13 +59,14 @@
 }
 
 .value-card__title {
- font-family: 'Playfair Display', serif;
+ font-family: Cambria, Cochin, Georgia, Times, 'Times New Roman', serif;
   font-size: clamp(1.55rem, 1.8vw, 1.95rem);
   font-weight: 600;
   line-height: 1.15;
   letter-spacing: -0.02em;
   color: var(--lumora-text-main);
   margin-bottom: 10px;
+  height: 55px;
 }
 
 .value-card__desc {

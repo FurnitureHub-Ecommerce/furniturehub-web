@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import {
   MapPin,
@@ -15,7 +15,7 @@ import { addressAPI, getApiErrorMessage } from "../../services/api";
 import AddressModal from "../../components/customer/AddressModal";
 import "./AddressManagement.css";
 
-export default function AddressManagementPage() {
+export default function AddressManagementPage({ embedded = false }) {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const redirectUrl = searchParams.get("redirect");
@@ -45,13 +45,39 @@ export default function AddressManagementPage() {
   }, []);
 
   useEffect(() => {
+    let ignore = false;
     const token = localStorage.getItem("token");
     if (!token) {
       navigate("/login?redirect=/addresses");
       return;
     }
-    fetchAddresses();
-  }, [fetchAddresses, navigate]);
+
+    async function loadInitial() {
+      try {
+        const res = await addressAPI.getAddresses();
+        if (ignore) return;
+        const list = res.data?.addresses || res.data || [];
+        setAddresses(Array.isArray(list) ? list : []);
+      } catch (err) {
+        if (ignore) return;
+        setError(
+          getApiErrorMessage(
+            err,
+            "Không thể tải danh sách địa chỉ. Vui lòng thử lại sau.",
+          ),
+        );
+      } finally {
+        if (!ignore) {
+          setIsLoading(false);
+        }
+      }
+    }
+
+    loadInitial();
+    return () => {
+      ignore = true;
+    };
+  }, [navigate]);
 
   const handleOpenCreate = () => {
     setAddressToEdit(null);
@@ -93,7 +119,7 @@ export default function AddressManagementPage() {
     } catch (err) {
       alert(
         "Lỗi thiết lập mặc định: " +
-          getApiErrorMessage(err, "Không thể đặt làm mặc định."),
+        getApiErrorMessage(err, "Không thể đặt làm mặc định."),
       );
     } finally {
       setActionLoadingId(null);
@@ -101,25 +127,29 @@ export default function AddressManagementPage() {
   };
 
   return (
-    <div className="address-page container">
+    <div className={embedded ? "address-page address-page--embedded" : "address-page container"}>
       {/* Breadcrumb & Navigation */}
-      <div className="address-page__nav">
-        {redirectUrl ? (
-          <Link to={redirectUrl} className="address-page__back-link">
-            <ArrowLeft size={16} /> Quay lại Trang Thanh Toán (Checkout)
-          </Link>
-        ) : (
-          <Link to="/" className="address-page__back-link">
-            <ArrowLeft size={16} /> Quay lại Trang Chủ
-          </Link>
-        )}
-      </div>
+      {!embedded && (
+        <div className="address-page__nav">
+          {redirectUrl ? (
+            <Link to={redirectUrl} className="address-page__back-link">
+              <ArrowLeft size={16} /> Quay lại Trang Thanh Toán (Checkout)
+            </Link>
+          ) : (
+            <Link to="/" className="address-page__back-link">
+              <ArrowLeft size={16} /> Quay lại Trang Chủ
+            </Link>
+          )}
+        </div>
+      )}
 
       {/* Header */}
       <div className="address-page__header">
         <div>
-          <span className="address-page__badge">TÀI KHOẢN KHÁCH HÀNG</span>
-          <h1 className="address-page__title">Sổ Địa Chỉ Giao Hàng</h1>
+          {!embedded && <span className="address-page__badge">TÀI KHOẢN KHÁCH HÀNG</span>}
+          <h2 className="address-page__title">
+            {embedded ? "Danh Sách Địa Chỉ Nhận Hàng" : "Sổ Địa Chỉ Giao Hàng"}
+          </h2>
           <p className="address-page__subtitle">
             Quản lý địa chỉ giao hàng White-Glove để đơn hàng của quý khách được giao nhận chính xác và chu đáo nhất.
           </p>
@@ -175,9 +205,8 @@ export default function AddressManagementPage() {
             return (
               <div
                 key={id}
-                className={`address-card ${
-                  addr.isDefault ? "address-card--default" : ""
-                }`}
+                className={`address-card ${addr.isDefault ? "address-card--default" : ""
+                  }`}
               >
                 <div className="address-card__header">
                   <div className="address-card__title-group">

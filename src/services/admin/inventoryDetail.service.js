@@ -1,4 +1,7 @@
 import { productAPI, storageAPI } from "../api.js";
+import { recordsFrom } from "./variants.service.js";
+
+const validId = (value) => typeof value === "string" && /^[0-9a-fA-F]{24}$/.test(value);
 
 function isNotFound(error) {
   return error?.response?.status === 404;
@@ -22,6 +25,14 @@ function optionalNumber(value, fieldName) {
   const parsed = Number(normalized);
 
   if (normalized === "" || !Number.isFinite(parsed) || parsed < 0) {
+    throw new Error(`Trường ${fieldName} trong phản hồi API không hợp lệ.`);
+  }
+  return parsed;
+}
+
+function requiredInventoryInteger(value, fieldName) {
+  const parsed = optionalNumber(value, fieldName);
+  if (parsed === null || !Number.isSafeInteger(parsed)) {
     throw new Error(`Trường ${fieldName} trong phản hồi API không hợp lệ.`);
   }
   return parsed;
@@ -55,7 +66,6 @@ function normalizeInventory(rawInventory) {
     "id",
     "variantId",
     "quantity",
-    "availableStock",
     "lowStockThreshold",
   ].some((field) => Object.prototype.hasOwnProperty.call(rawInventory, field));
 
@@ -67,9 +77,8 @@ function normalizeInventory(rawInventory) {
     ...rawInventory,
     _id: readId(rawInventory),
     variantId: readId(rawInventory.variantId),
-    quantity: optionalNumber(rawInventory.quantity, "Inventory.quantity"),
-    availableStock: optionalNumber(rawInventory.availableStock, "Inventory.availableStock"),
-    lowStockThreshold: optionalNumber(
+    quantity: requiredInventoryInteger(rawInventory.quantity, "Inventory.quantity"),
+    lowStockThreshold: requiredInventoryInteger(
       rawInventory.lowStockThreshold,
       "Inventory.lowStockThreshold",
     ),
@@ -102,16 +111,62 @@ async function getOptionalInventory(variantId) {
   } catch (error) {
     // Inventory chưa được tạo không làm mất khả năng xem thông tin Variant.
     if (isNotFound(error)) return null;
+    if (error && typeof error === "object") error.inventoryDetailSource = "Inventory";
     throw error;
   }
 }
 
-async function getRequiredVariant(variantId) {
+async function getRequiredVariant(variantId, productId) {
   try {
     const response = await storageAPI.getVariantById(variantId);
-    return normalizeVariant(unwrapVariant(response.data));
+    return { variant: normalizeVariant(unwrapVariant(response.data)), adminFallback: false };
   } catch (error) {
     if (isNotFound(error)) return null;
+    if (error?.response?.status === 400 && error?.response?.data?.message === "Product is inactive") {
+      if (!validId(productId)) {
+        const missingId = new Error("Product đang tạm ngừng; thiếu Product ID hợp lệ để tải Variant qua API Admin.");
+        missingId.inventoryDetailSource = "Variant";
+        throw missingId;
+      }
+      try {
+        const response = await productAPI.getProductVariantsAdmin(productId);
+        const matches = recordsFrom(response.data, "variants").filter(row => readId(row) === variantId);
+        if (matches.length !== 1 || readId(matches[0].productId) !== productId) {
+          throw new Error("Không xác minh được Variant và Product liên kết từ API Admin.", { cause: error });
+        }
+        const raw = matches[0];
+        if (typeof raw.sku !== "string" || !raw.sku.trim()
+          || !["price", "color", "size", "material", "isActive", "availableStock"]
+            .every(field => Object.prototype.hasOwnProperty.call(raw, field))
+          || typeof raw.isActive !== "boolean") {
+          throw new Error("Phản hồi Variant từ API Admin thiếu dữ liệu cần thiết.", { cause: error });
+        }
+        const variant = normalizeVariant(raw);
+        if (variant.price === null || (variant.availableStock !== null
+          && !Number.isSafeInteger(variant.availableStock))) {
+          throw new Error("Phản hồi giá hoặc tồn khả dụng của Variant không hợp lệ.", { cause: error });
+        }
+        return { variant, adminFallback: true };
+      } catch (fallbackError) {
+        if (fallbackError && typeof fallbackError === "object") fallbackError.inventoryDetailSource = "Variant";
+        throw fallbackError;
+      }
+    }
+    if (error && typeof error === "object") error.inventoryDetailSource = "Variant";
+    throw error;
+  }
+}
+
+async function getAdminProduct(productId) {
+  try {
+    const response = await productAPI.getProductsAdmin();
+    const matches = recordsFrom(response.data, "products").filter(row => readId(row) === productId);
+    if (matches.length !== 1 || typeof matches[0].name !== "string" || !matches[0].name.trim()) {
+      throw new Error("Không xác minh được thông tin Product từ API Admin.");
+    }
+    return normalizeProduct(matches[0]);
+  } catch (error) {
+    if (error && typeof error === "object") error.inventoryDetailSource = "Product";
     throw error;
   }
 }
@@ -125,21 +180,24 @@ async function getOptionalProduct(productId) {
   } catch (error) {
     // Product bị xóa không biến một Variant hợp lệ thành trạng thái không tìm thấy.
     if (isNotFound(error)) return null;
+    if (error && typeof error === "object") error.inventoryDetailSource = "Product";
     throw error;
   }
 }
 
-export async function getInventoryDetail(variantId) {
-  if (typeof variantId !== "string" || !variantId.trim()) {
+export async function getInventoryDetail(variantId, productId = null) {
+  if (!validId(variantId)) {
     throw new Error("Variant ID không hợp lệ.");
   }
 
-  const normalizedId = variantId.trim();
+  const normalizedId = variantId;
+  const detail = await getRequiredVariant(normalizedId, productId);
+
+  if (!detail) return null;
+
   const inventory = await getOptionalInventory(normalizedId);
-  const variant = await getRequiredVariant(normalizedId);
-
-  if (!variant) return null;
-
-  const product = await getOptionalProduct(variant.productId);
-  return { inventory, variant, product };
+  const product = detail.adminFallback
+    ? await getAdminProduct(detail.variant.productId)
+    : await getOptionalProduct(detail.variant.productId);
+  return { inventory, variant: detail.variant, product };
 }

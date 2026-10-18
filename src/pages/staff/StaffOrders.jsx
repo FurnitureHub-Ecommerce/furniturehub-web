@@ -1,57 +1,312 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
+import { useSearchParams } from "react-router-dom";
 import { MapPin, Check, Clock, Shield } from "lucide-react";
 import { orderAPI } from "../../services/api";
 import OrderTable from "../../components/order/OrderTable/OrderTable";
 
 const StaffOrders = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // Helper: read initial page from URL -> fallback to localStorage -> fallback to 1
+  const getInitialPage = () => {
+    const fromUrl = parseInt(searchParams.get("page"), 10);
+    if (!isNaN(fromUrl) && fromUrl >= 1) return fromUrl;
+    const fromStorage = parseInt(localStorage.getItem("staff_last_page"), 10);
+    if (!isNaN(fromStorage) && fromStorage >= 1) return fromStorage;
+    return 1;
+  };
+
+  // Helper: read initial orderId from URL -> fallback to localStorage -> null
+  const getInitialOrderId = () => {
+    const fromUrl = searchParams.get("orderId");
+    if (fromUrl) return fromUrl;
+    return localStorage.getItem("staff_last_order_id") || null;
+  };
+
+  const getInitialStatus = () => {
+    return (
+      searchParams.get("status") ||
+      localStorage.getItem("staff_last_status") ||
+      ""
+    );
+  };
+
   // ── State ──────────────────────────────────────────────
-  // orders from the API
   const [orderList, setOrderList] = useState([]);
-  // track which order the user clicked in the table
-  const [selectedOrderId, setSelectedOrderId] = useState(null);
-  // UI feedback states
+  const [currentPage, setCurrentPage] = useState(getInitialPage);
+  const [selectedOrderId, setSelectedOrderId] = useState(getInitialOrderId);
+  const [statusFilter, setStatusFilter] = useState(getInitialStatus);
+  const [standaloneOrder, setStandaloneOrder] = useState(null);
+  const [detailLoading, setDetailLoading] = useState(false);
+
+  const [pagination, setPagination] = useState({
+    page: 1,
+    limit: 10,
+    totalPages: 1,
+    totalItems: 0,
+  });
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-
   const [showNotification, setShowNotification] = useState(true);
+  const [confirming, setConfirming] = useState(false);
+  const [rejecting, setRejecting] = useState(false);
+  const [confirmError, setConfirmError] = useState(null);
+  const [actionError, setActionError] = useState(null);
+  const [successToast, setSuccessToast] = useState(null); // { orderId, shortId, type, title, sub }
 
-  // ── Fetch orders on mount ──────────────────────────────
-  // useEffect cannot be async directly, so we define an
-  // async function INSIDE it and call it immediately.
+  // Track initial mount so we respect restored orderId
+  const isInitialMount = useRef(true);
+
+  // Helper: Sync current page, orderId & status to both URL and localStorage
+  const syncStateToUrlAndStorage = (page, orderId, status = statusFilter) => {
+    const params = { page: page.toString() };
+    if (status) params.status = status;
+    if (orderId) params.orderId = orderId;
+    setSearchParams(params, { replace: true });
+    localStorage.setItem("staff_last_page", page.toString());
+    if (orderId) {
+      localStorage.setItem("staff_last_order_id", orderId);
+    }
+    if (status) {
+      localStorage.setItem("staff_last_status", status);
+    } else {
+      localStorage.removeItem("staff_last_status");
+    }
+  };
+
+  // If the target order isn't in current page's list, fetch it by ID directly
+  const fetchStandaloneOrder = async (orderId, fallbackOrders = []) => {
+    try {
+      setDetailLoading(true);
+      const res = await orderAPI.getOrdersById(orderId);
+      const ord = res.data?.order || res.data;
+      if (ord && ord._id) {
+        setStandaloneOrder(ord);
+        setSelectedOrderId(ord._id);
+        syncStateToUrlAndStorage(currentPage, ord._id, statusFilter);
+      } else if (fallbackOrders.length > 0) {
+        setSelectedOrderId(fallbackOrders[0]._id);
+        setStandaloneOrder(null);
+        syncStateToUrlAndStorage(
+          currentPage,
+          fallbackOrders[0]._id,
+          statusFilter,
+        );
+      }
+    } catch (err) {
+      console.warn("Could not fetch standalone order by ID:", err);
+      if (fallbackOrders.length > 0) {
+        setSelectedOrderId(fallbackOrders[0]._id);
+        setStandaloneOrder(null);
+        syncStateToUrlAndStorage(
+          currentPage,
+          fallbackOrders[0]._id,
+          statusFilter,
+        );
+      }
+    } finally {
+      setDetailLoading(false);
+    }
+  };
+
+  // ── Fetch orders whenever currentPage or statusFilter changes ──
   useEffect(() => {
     const fetchOrders = async () => {
       try {
         setLoading(true);
         setError(null);
 
-        // Call GET /api/orders?page=1&limit=10
-        // Axios wraps the HTTP response; the actual JSON body is in `res.data`
-        const res = await orderAPI.getOrders({ page: 1, limit: 10 });
+        const queryParams = { page: currentPage, limit: 10 };
+        if (statusFilter) {
+          queryParams.status = statusFilter;
+        }
 
-        // Your backend returns { orders: [...], page, limit, total }
-        // We grab the array from res.data.orders
+        const res = await orderAPI.getOrders(queryParams);
         const orders = res.data.orders || [];
-        setOrderList(orders);
+        const meta = res.data.pagination || {};
 
-        // Auto-select the first order so the detail panel isn't empty
-        if (orders.length > 0) {
-          setSelectedOrderId(orders[0]._id);
+        setOrderList(orders);
+        setPagination({
+          page: meta.page || currentPage,
+          limit: meta.limit || 10,
+          totalPages: meta.totalPages || 1,
+          totalItems: meta.totalItems ?? orders.length,
+        });
+
+        if (isInitialMount.current) {
+          isInitialMount.current = false;
+          const initialTargetId = getInitialOrderId();
+
+          if (initialTargetId) {
+            const found = orders.find((o) => o._id === initialTargetId);
+            if (found) {
+              setSelectedOrderId(found._id);
+              setStandaloneOrder(null);
+              syncStateToUrlAndStorage(currentPage, found._id, statusFilter);
+            } else {
+              // Target order is on another page -> fetch directly
+              setSelectedOrderId(initialTargetId);
+              fetchStandaloneOrder(initialTargetId, orders);
+            }
+          } else if (orders.length > 0) {
+            setSelectedOrderId(orders[0]._id);
+            setStandaloneOrder(null);
+            syncStateToUrlAndStorage(currentPage, orders[0]._id, statusFilter);
+          }
+        } else {
+          // Page or filter transition: auto-select first order of new list
+          setStandaloneOrder(null);
+          if (orders.length > 0) {
+            setSelectedOrderId(orders[0]._id);
+            syncStateToUrlAndStorage(currentPage, orders[0]._id, statusFilter);
+          } else {
+            setSelectedOrderId(null);
+            syncStateToUrlAndStorage(currentPage, null, statusFilter);
+          }
         }
       } catch (err) {
         console.error("Failed to fetch orders:", err);
         setError("Không thể tải danh sách đơn hàng. Vui lòng thử lại.");
       } finally {
-        // Whether success or failure, stop the loading spinner
         setLoading(false);
       }
     };
 
     fetchOrders();
-  }, []); // empty deps array → runs once on mount
+  }, [currentPage, statusFilter]);
+
+  // Handler when user clicks an order row in table
+  const handleSelectOrder = (orderId) => {
+    setSelectedOrderId(orderId);
+    setStandaloneOrder(null);
+    syncStateToUrlAndStorage(currentPage, orderId, statusFilter);
+  };
+
+  // Handler when user switches status tab
+  const handleStatusChange = (newStatus) => {
+    setStatusFilter(newStatus);
+    setCurrentPage(1);
+    syncStateToUrlAndStorage(1, null, newStatus);
+  };
+
+  // Handler for direct ID lookup
+  const handleSearchExactId = (id) => {
+    fetchStandaloneOrder(id, orderList);
+  };
+
+  // Handler when user navigates page
+  const handlePageChange = (newPage) => {
+    if (
+      newPage >= 1 &&
+      newPage <= pagination.totalPages &&
+      newPage !== currentPage
+    ) {
+      setCurrentPage(newPage);
+    }
+  };
 
   // ── Derived state ───────────────────────────────────────
-  // Find the full order object that matches what the user clicked
-  const selectedOrder = orderList.find((o) => o._id === selectedOrderId);
+  // Find full order from list or use standalone fetched order
+  const selectedOrder =
+    orderList.find((o) => o._id === selectedOrderId) || standaloneOrder;
+
+  // ── Toast Notification Helper ────────────────────────
+  const showToast = useCallback(
+    (
+      orderId,
+      shortId,
+      type = "confirm",
+      title = "Xác nhận thành công!",
+      sub = `Đơn hàng #${shortId} đã được duyệt.`,
+    ) => {
+      setSuccessToast({ orderId, shortId, type, title, sub });
+      setTimeout(() => setSuccessToast(null), 3500);
+    },
+    [],
+  );
+
+  // ── Confirm order (pending → confirmed) ───────────────
+  const handleConfirmOrder = async () => {
+    if (!selectedOrder || confirming || rejecting) return;
+    try {
+      setConfirming(true);
+      setConfirmError(null);
+      setActionError(null);
+      await orderAPI.confirmOrderStatus(selectedOrder._id);
+      // Optimistically update status in local list
+      setOrderList((prev) =>
+        prev.map((o) =>
+          o._id === selectedOrder._id ? { ...o, status: "confirmed" } : o,
+        ),
+      );
+      if (standaloneOrder && standaloneOrder._id === selectedOrder._id) {
+        setStandaloneOrder((prev) =>
+          prev ? { ...prev, status: "confirmed" } : null,
+        );
+      }
+      showToast(
+        selectedOrder._id,
+        selectedOrder._id.slice(-8).toUpperCase(),
+        "confirm",
+        "Xác nhận thành công!",
+        `Đơn hàng #${selectedOrder._id.slice(-8).toUpperCase()} đã được duyệt.`,
+      );
+    } catch (err) {
+      console.error("Confirm order failed:", err);
+      setConfirmError(
+        err?.response?.data?.message || "Xác nhận thất bại. Vui lòng thử lại.",
+      );
+    } finally {
+      setConfirming(false);
+    }
+  };
+
+  // ── Reject order (pending/confirmed → rejected) ────────
+  const handleRejectOrder = async () => {
+    if (!selectedOrder || rejecting || confirming) return;
+
+    const shortId = selectedOrder._id.slice(-8).toUpperCase();
+    const isConfirmed = selectedOrder.status === "confirmed";
+
+    try {
+      setRejecting(true);
+      setActionError(null);
+      setConfirmError(null);
+
+      await orderAPI.rejectOrderStatus(selectedOrder._id);
+
+      // Optimistically update status in local list
+      setOrderList((prev) =>
+        prev.map((o) =>
+          o._id === selectedOrder._id ? { ...o, status: "rejected" } : o,
+        ),
+      );
+      if (standaloneOrder && standaloneOrder._id === selectedOrder._id) {
+        setStandaloneOrder((prev) =>
+          prev ? { ...prev, status: "rejected" } : null,
+        );
+      }
+
+      showToast(
+        selectedOrder._id,
+        shortId,
+        "reject",
+        "Đã từ chối đơn hàng!",
+        isConfirmed
+          ? `Đơn hàng #${shortId} đã bị từ chối và tự động hoàn trả kho.`
+          : `Đơn hàng #${shortId} đã bị từ chối.`,
+      );
+    } catch (err) {
+      console.error("Reject order failed:", err);
+      setActionError(
+        err?.response?.data?.message ||
+          "Từ chối đơn hàng thất bại. Vui lòng thử lại.",
+      );
+    } finally {
+      setRejecting(false);
+    }
+  };
 
   // ── Helper: format VND currency ────────────────────────
   const formatVND = (amount) =>
@@ -78,12 +333,13 @@ const StaffOrders = () => {
       shipping: "Đang giao",
       delivered: "Đã giao",
       cancelled: "Đã hủy",
+      rejected: "Bị từ chối",
     };
     return map[status] || status;
   };
 
-  // ── Loading state ──────────────────────────────────────
-  if (loading) {
+  // ── Loading state (initial load only) ──────────────────
+  if (loading && orderList.length === 0) {
     return (
       <div
         className="staff-orders"
@@ -95,7 +351,7 @@ const StaffOrders = () => {
   }
 
   // ── Error state ────────────────────────────────────────
-  if (error) {
+  if (error && orderList.length === 0) {
     return (
       <div
         className="staff-orders"
@@ -108,6 +364,28 @@ const StaffOrders = () => {
 
   return (
     <div className="staff-orders">
+      {/* ── Success Toast ──────────────────────────────── */}
+      {successToast && (
+        <div
+          className={`confirm-toast confirm-toast--enter ${
+            successToast.type === "reject" ? "confirm-toast--reject" : ""
+          }`}
+        >
+          <div className="confirm-toast__icon">
+            {successToast.type === "reject" ? "✕" : "✓"}
+          </div>
+          <div className="confirm-toast__body">
+            <span className="confirm-toast__title">{successToast.title}</span>
+            <span className="confirm-toast__sub">{successToast.sub}</span>
+          </div>
+          <button
+            className="confirm-toast__close"
+            onClick={() => setSuccessToast(null)}
+          >
+            ×
+          </button>
+        </div>
+      )}
       {/* Role Guard Banner */}
       <div className="role-guard-banner">
         <div className="role-guard__left">
@@ -139,22 +417,44 @@ const StaffOrders = () => {
         <div className="staff-page-header__actions">
           <span className="sla-badge">
             <Shield size={14} />
-            Tổng: {orderList.length} đơn hàng
+            Tổng: {pagination.totalItems || orderList.length} đơn hàng
           </span>
         </div>
       </div>
 
       {/* Two-Column Layout */}
       <div className="order-desk-layout">
-        {/* Left: Active Orders Table — pass real data */}
+        {/* Left: Active Orders Table — pass real data & pagination */}
         <OrderTable
           orders={orderList}
           selectedOrderId={selectedOrderId}
-          onSelectOrder={setSelectedOrderId}
+          onSelectOrder={handleSelectOrder}
+          statusFilter={statusFilter}
+          onStatusChange={handleStatusChange}
+          currentPage={currentPage}
+          totalPages={pagination.totalPages}
+          totalItems={pagination.totalItems}
+          onPageChange={handlePageChange}
+          loading={loading}
+          onSearchExactId={handleSearchExactId}
         />
 
         {/* Right: Order Detail Panel */}
-        {selectedOrder && (
+        {detailLoading ? (
+          <div
+            className="order-inspection"
+            style={{
+              padding: 60,
+              textAlign: "center",
+              color: "#8c857b",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            Đang tải chi tiết đơn hàng...
+          </div>
+        ) : selectedOrder ? (
           <div className="order-inspection">
             {/* Header */}
             <div className="order-inspection__header">
@@ -163,7 +463,7 @@ const StaffOrders = () => {
                   CHI TIẾT ĐƠN HÀNG
                 </span>
                 <div className="order-inspection__id">
-                  {selectedOrder._id.slice(-8).toUpperCase()}
+                  {selectedOrder._id.toUpperCase()}
                 </div>
               </div>
               <div className="order-inspection__priority">
@@ -273,11 +573,38 @@ const StaffOrders = () => {
 
             {/* Action Buttons */}
             <div className="order-actions">
-              <button className="btn-approve">
-                <Check size={16} />
-                DUYỆT & PHÂN BỔ
-              </button>
-              <button className="btn-decline">TỪ CHỐI / HỦY</button>
+              {selectedOrder.status === "pending" && (
+                <button
+                  className="btn-approve"
+                  onClick={handleConfirmOrder}
+                  disabled={confirming || rejecting}
+                >
+                  <Check size={16} />
+                  {confirming ? "ĐANG XÁC NHẬN..." : "DUYỆT & PHÂN BỔ"}
+                </button>
+              )}
+              {["pending", "confirmed"].includes(selectedOrder.status) && (
+                <button
+                  className="btn-decline"
+                  onClick={handleRejectOrder}
+                  disabled={confirming || rejecting}
+                >
+                  {rejecting ? "ĐANG TỪ CHỐI..." : "TỪ CHỐI / HỦY"}
+                </button>
+              )}
+              {(actionError || confirmError) && (
+                <span
+                  style={{
+                    fontSize: 12,
+                    color: "#dc2626",
+                    marginTop: 6,
+                    width: "100%",
+                    display: "block",
+                  }}
+                >
+                  {actionError || confirmError}
+                </span>
+              )}
             </div>
 
             {/* Dispatch Notification */}
@@ -299,6 +626,20 @@ const StaffOrders = () => {
                 </button>
               </div>
             )}
+          </div>
+        ) : (
+          <div
+            className="order-inspection"
+            style={{
+              padding: 60,
+              textAlign: "center",
+              color: "#8c857b",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            Vui lòng chọn một đơn hàng để xem chi tiết
           </div>
         )}
       </div>
