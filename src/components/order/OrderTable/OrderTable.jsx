@@ -165,8 +165,7 @@ const OrderTable = ({
         {/* Top: Title & Status Tabs */}
         <div className="order-table-header__top">
           <div className="order-table-header__title-group">
-            <h3>Đơn Hàng Đang Hoạt Động</h3>
-            <span className="order-route">Tuyến: /staff/orders</span>
+            <h3 style={{ fontSize: "24px", fontWeight: 700, color: "#111827", margin: 0,  fontFamily: "math" }}>Đơn Hàng Đang Hoạt Động</h3>
           </div>
 
           <div className="order-status-tabs" role="tablist">

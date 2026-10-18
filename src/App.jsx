@@ -27,6 +27,8 @@ import {
 // =========== AUTH PAGES ===========
 import Login from "./pages/auth/Login";
 import Register from "./pages/auth/Register";
+import StaffProfile from "./pages/staff/StaffProfile";
+import StaffDashboard from "./pages/staff/StaffDashboard";
 
 // =========== STORAGE PAGES (Lazy load toàn bộ) ===========
 const StorageLayout = lazy(() => import("./pages/storage/StorageLayout"));
@@ -325,6 +327,8 @@ function App() {
             >
               <Route path="/staff" element={<StaffLayout />}>
                 <Route index element={<StaffOrders />} />
+                <Route path="dashboard" element={<StaffDashboard />} />
+                <Route path="profile" element={<StaffProfile />} />
               </Route>
             </Route>
 
