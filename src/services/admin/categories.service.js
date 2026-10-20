@@ -28,7 +28,7 @@ export async function getCategoryById(id) {
   const response = await categoryAPI.getCategoryById(id);
   return entity(response.data?.category ?? response.data?.data ?? response.data);
 }
-// Giữ endpoint hiện có; UI chưa kích hoạt khi nghiệp vụ ngừng sử dụng chưa được xác nhận.
+// DELETE vô hiệu hóa theo Swagger; không suy ra trạng thái từ response.
 export async function deactivateCategory(id) {
   const response = await categoryAPI.deactivateCategory(id);
   return response.data;

@@ -1,6 +1,8 @@
 import {
   Banknote,
+  ChartNoAxesCombined,
   ClipboardList,
+  Database,
   Download,
   RefreshCw,
   Sparkles,
@@ -36,8 +38,10 @@ function UnavailableMetric({ label, icon }) {
 
 function UnavailablePanel() {
   return (
-    <div className="lan-state" role="status">
-      Chưa có nguồn dữ liệu Analytics từ Backend
+    <div className="lan-state">
+      <ChartNoAxesCombined size={24} aria-hidden="true" />
+      <strong>Chưa thể hiển thị phân tích</strong>
+      <p>Backend chưa cung cấp dữ liệu Analytics cần thiết cho phần này.</p>
     </div>
   );
 }
@@ -47,10 +51,9 @@ export default function AdminAnalytics() {
 
   return (
     <div className="lan-page">
-      <p className="lan-eyebrow">
-        DASHBOARD & GOVERNANCE / THỐNG KÊ & PHÂN TÍCH
-      </p>
-      <div className="lan-intro">
+      <div className="lan-hero">
+        <p className="lan-eyebrow">DASHBOARD & GOVERNANCE / THỐNG KÊ & PHÂN TÍCH</p>
+        <div className="lan-intro">
         <div>
           <h1>
             Thống Kê & Phân Tích
@@ -93,10 +96,11 @@ export default function AdminAnalytics() {
             </button>
           </div>
         </div>
+        </div>
       </div>
       <div className="lan-demo" role="status">
-        <strong>{availability.title}</strong>
-        <span>{availability.message}</span>
+        <span className="lan-demo-icon"><Database size={22} aria-hidden="true" /></span>
+        <div><span className="lan-demo-code">{availability.code}</span><strong>{availability.title}</strong><p>{availability.message}. Không có biểu đồ hoặc chỉ số thực để hiển thị.</p></div>
       </div>
       <div className="lan-kpis">
         <UnavailableMetric label="TỔNG DOANH THU (GMV)" icon={<Banknote size={19} />} />
@@ -110,14 +114,6 @@ export default function AdminAnalytics() {
             Biểu đồ sẽ được kết nối sau khi có contract Analytics.
           </Heading>
           <UnavailablePanel />
-          <div className="lan-channel-summary">
-            {["Bán lẻ Living", "Penthouse & Villa", "Dịch vụ White-Glove"].map((label) => (
-              <div key={label}>
-                <span>{label}</span>
-                <strong>Chưa tích hợp</strong>
-              </div>
-            ))}
-          </div>
         </section>
         <section className="lan-card">
           <Heading eyebrow="PORTFOLIO INTELLIGENCE" title="Cơ Cấu Doanh Thu Theo Danh Mục">

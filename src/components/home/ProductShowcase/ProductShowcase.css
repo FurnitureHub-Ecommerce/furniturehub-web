@@ -1,24 +1,28 @@
 .product-showcase {
-  background-color: var(--lumora-bg-primary);
+  background-color: #fffef8; /* Màu nền trắng bên trong khung */
+  max-width: 1380px;        /* Giới hạn độ rộng tối đa để tạo khung gọn gàng */
+  margin: 60px auto;        /* Căn giữa và tạo khoảng cách trên dưới với các phần khác */
+  padding: 60px 40px;       /* Khoảng cách đệm bên trong khung */
+  border-radius: 24px;      /* Bo góc mềm mại, sang trọng */
+  box-shadow: 0 16px 40px rgba(44, 34, 30, 0.08); /* Đổ bóng nổi bồng bềnh lên trên nền */
+  border: 1px solid #E5E0D8;/* Đường viền tinh tế */
 }
 
-.section-heading__title{
-  font-family: "Bodoni Moda", serif; /* Thay tên font bạn muốn ở đây (Ví dụ: Lora, Cinzel, Merriweather) */
-  font-size: clamp(2.2rem, 3vw, 3.2rem);
+.section-heading__title {
+  font-family: "Bodoni Moda", serif;
+  font-size: clamp(2.2rem, 3vw, 2.9rem);
   font-weight: 600;
   color: var(--lumora-text-main);
   letter-spacing: -0.02em;
   line-height: 1.08;
 }
-.section-heading__title,
-.product-card__title {
-  font-family: "Bodoni Moda", serif;
-}
 
 .section-heading__subtitle,
 .section-heading__badge {
-  font-family: 'Playfair Display', serif;
+  font-family: "Bodoni Moda", serif;
+  font-size: 17px;
 }
+
 /* Tabs */
 .product-showcase__tabs {
   display: flex;
@@ -26,7 +30,6 @@
   gap: 12px;
   margin-bottom: var(--space-xl);
   flex-wrap: wrap;
-  ;
 }
 
 .product-showcase__tab {
@@ -40,7 +43,6 @@
   border: 1px solid var(--lumora-border);
   background-color: var(--lumora-card-white);
   transition: all var(--transition-fast);
-  
 }
 
 .product-showcase__tab:hover {
@@ -72,6 +74,7 @@
 @media (min-width: 992px) {
   .product-showcase__grid {
     grid-template-columns: repeat(4, 1fr);
+    gap: 32px;
   }
 }
 
@@ -96,7 +99,7 @@
 .product-card__image-container {
   position: relative;
   width: 100%;
-  aspect-ratio: 4 / 5;
+  aspect-ratio: 2 / 3;
   background-color: var(--lumora-bg-secondary);
   overflow: hidden;
 }
@@ -185,15 +188,10 @@
   color: #E53E3E;
 }
 
-.product-card__wishlist-btn:active {
-  transform: scale(0.9);
-}
-
 .product-card__wishlist-btn--active {
   background-color: #FFFFFF;
   border-color: #FEB2B2;
   color: #E53E3E;
-  box-shadow: 0 4px 14px rgba(229, 62, 62, 0.25);
 }
 
 /* Quick Actions Overlay */
@@ -223,6 +221,9 @@
   letter-spacing: 0.08em;
   text-transform: uppercase;
   border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
   gap: 8px;
   transition: background-color var(--transition-fast);
 }
@@ -244,24 +245,37 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: 8px;
+  gap: 8px;
 }
 
 .product-card__variant {
-  font-size: 0.74rem;
+  font-size: 0.72rem;
   color: var(--lumora-text-muted);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 150px;
-  line-height: 1.5;
+  flex: 1;
 }
 
+/* FIX: Thu nhỏ tiêu đề, giới hạn tối đa 2 dòng, tránh bị quá to thô */
 .product-card__title {
-  font-size: clamp(1.2rem, 2vw, 1.7em);
+  font-family: "Bodoni Moda", serif;
+  font-size: 1.25rem;
   font-weight: 600;
-  line-height: 1.14;
-  margin-bottom: 14px;
+  line-height: 1.25;
+  margin-bottom: 16px;
   color: var(--lumora-text-main);
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  -webkit-line-clamp: 2;
+  text-overflow: ellipsis;
+  min-height: 3.1rem; /* Giữ khoảng đều cho các card */
+}
+
+.product-card__title a {
+  text-decoration: none;
+  color: inherit;
 }
 
 .product-card__title a:hover {
@@ -275,61 +289,57 @@
   align-items: center;
   padding-top: 12px;
   border-top: 1px solid var(--lumora-border-subtle);
+  gap: 8px;
 }
 
 .product-card__pricing {
   display: flex;
   align-items: baseline;
-  gap: 8px;
+  white-space: nowrap; /* Tránh bị rớt chữ đ xuống dòng */
 }
 
+/* FIX: Thu nhỏ giá tiền vừa vặn, không bị tràn khung */
 .product-card__price {
   font-family: var(--font-sans);
-  font-size: 1.14rem;
+  font-size: 1.05rem;
   font-weight: 700;
   color: var(--lumora-text-main);
 }
 
 .product-card__old-price {
-  font-size: 0.82rem;
+  font-size: 0.78rem;
   color: var(--lumora-text-light);
   text-decoration: line-through;
+  margin-left: 6px;
 }
 
+/* FIX: Tối ưu nút bấm thêm vào giỏ gọn gàng */
 .product-card__cart-btn {
-  padding: 8px 14px;
+  padding: 8px 12px;
   background-color: var(--lumora-bg-secondary);
   color: var(--lumora-text-main);
-  font-size: 0.74rem;
+  font-size: 0.72rem;
   font-weight: 700;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.02em;
   border-radius: var(--radius-full);
-  gap: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  white-space: nowrap;
   transition: all var(--transition-fast);
+  border: 1px solid var(--lumora-border);
+  cursor: pointer;
 }
 
 .product-card__cart-btn:hover {
   background-color: var(--lumora-accent-wood);
   color: #FFFFFF;
+  border-color: var(--lumora-accent-wood);
 }
 
 .product-card__cart-btn--added {
   background-color: #2E6B40;
   color: #FFFFFF;
-}
-
-/* Hiệu ứng chuyển động mượt mà cho grid sản phẩm */
-.product-showcase__grid {
-  animation: fadeInProducts 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-}
-
-@keyframes fadeInProducts {
-  from {
-    opacity: 0;
-    transform: translateY(12px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  border-color: #2E6B40;
 }

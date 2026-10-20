@@ -6,6 +6,29 @@
   --la-muted: #756d64;
   --la-accent: #8a6a48;
   --la-line: #e9e3d9;
+  --la-card-border: #b8a38b;
+  --la-card-accent: #8a6a48;
+  --lm-surface-l1: #eee4d6;
+  --lm-surface-l2: #fffdfa;
+  --lm-surface-l3: #fffdfa;
+  --lm-surface-l4: #faf8f3;
+  --lm-border-l1: #8a6a48;
+  --lm-border-l2: #b8a38b;
+  --lm-border-l3: #ded3c5;
+  --lm-text-primary: #30302a;
+  --lm-text-secondary: #756d64;
+  --lm-hero-executive: linear-gradient(115deg, #272723 0%, #3e352e 62%, #73533c 100%);
+  --lm-hero-identity: linear-gradient(115deg, #2c302e 0%, #41433b 62%, #746a54 100%);
+  --lm-hero-operations: linear-gradient(115deg, #302c29 0%, #514235 62%, #89684c 100%);
+  --lm-hero-text: #fff8ee;
+  --lm-motion-fast: 120ms;
+  --lm-motion-base: 160ms;
+  --lm-motion-medium: 240ms;
+  --lm-motion-slow: 300ms;
+  --lm-motion-page: 320ms;
+  --lm-motion-reveal: 460ms;
+  --lm-ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --lm-ease-emphasized: cubic-bezier(0.2, 0.8, 0.2, 1);
   min-height: 100vh;
   background: var(--la-bg);
   color: var(--la-text);
@@ -20,18 +43,71 @@
 }
 .lumora-admin button,
 .lumora-admin input,
-.lumora-admin select {
+.lumora-admin select,
+.lumora-admin textarea {
   font: inherit;
+}
+.lumora-admin button,
+.lumora-admin a,
+.lumora-admin input,
+.lumora-admin select,
+.lumora-admin textarea,
+.lumora-admin [role="button"] {
+  transition:
+    color var(--lm-motion-fast) var(--lm-ease-standard),
+    background-color var(--lm-motion-base) var(--lm-ease-standard),
+    border-color var(--lm-motion-base) var(--lm-ease-standard),
+    box-shadow var(--lm-motion-base) var(--lm-ease-standard),
+    opacity var(--lm-motion-fast) var(--lm-ease-standard),
+    transform var(--lm-motion-fast) var(--lm-ease-emphasized);
 }
 .lumora-admin button {
   border-radius: 3px;
 }
 .lumora-admin :focus-visible {
-  outline: 2px solid var(--la-accent);
-  outline-offset: 4px;
+  outline: 2px solid #765738;
+  outline-offset: 3px;
+  box-shadow: 0 0 0 3px #faf8f3, 0 0 0 5px #8a6a4866;
 }
-.lumora-admin button:disabled {
+.lumora-admin button:disabled,
+.lumora-admin input:disabled,
+.lumora-admin select:disabled,
+.lumora-admin textarea:disabled,
+.lumora-admin [aria-disabled="true"] {
   cursor: not-allowed;
+  opacity: 0.58;
+  box-shadow: none;
+  transform: none;
+}
+.lumora-admin [aria-busy="true"] {
+  cursor: progress;
+  opacity: 0.72;
+}
+@keyframes lm-dialog-enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes lm-backdrop-enter {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.lumora-admin dialog[open] {
+  animation: lm-dialog-enter var(--lm-motion-medium) var(--lm-ease-emphasized) both;
+}
+.lumora-admin dialog[open]::backdrop {
+  animation: lm-backdrop-enter var(--lm-motion-medium) var(--lm-ease-standard) both;
+}
+.lumora-admin button:not(:disabled):active,
+.lumora-admin a:active,
+.lumora-admin [role="button"]:not([aria-disabled="true"]):active {
+  transform: scale(0.98);
 }
 .la-sidebar {
   position: fixed;
@@ -41,9 +117,11 @@
   height: 100dvh;
   min-height: 0;
   overflow-y: auto;
-  background: #fff;
+  background: #fffdf9;
   padding: 30px 24px 0;
   z-index: 30;
+  border-right: 1px solid var(--la-line);
+  box-shadow: 10px 0 28px #4d3d2c08;
 }
 .la-brand {
   display: flex;
@@ -53,6 +131,14 @@
   font-family: var(--font-serif);
   font-size: 21px;
   line-height: 1;
+}
+.brand-logo img {
+   width: 100%;
+  max-width: 200px;
+  height: auto;
+  margin-bottom: 32px;
+  object-fit: contain;
+ 
 }
 .la-brand small {
   display: block;
@@ -93,11 +179,14 @@
   border-radius: 3px;
 }
 .la-nav-group {
-  margin-bottom: 28px;
+  margin-bottom: 22px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid #eee8df;
 }
+.la-nav-group:last-child { border-bottom: 0; }
 .la-nav-group > p,
 .la-nav-caption {
-  font-size: 10px;
+  font-size: 12px;
   letter-spacing: 1px;
   color: var(--la-muted);
   margin-bottom: 9px;
@@ -130,7 +219,7 @@
   background: #f7f5ef;
   margin: 16px -24px 0;
   padding: 24px;
-  font-size: 10px;
+  font-size: 13px;
   letter-spacing: 0.5px;
 }
 .la-system > div {
@@ -144,9 +233,8 @@
   color: var(--la-accent);
 }
 .la-system button {
-  margin-top: 19px;
   color: #a23f31;
-  font-size: 11px;
+  font-size: 13px;
   gap: 8px;
 }
 .la-system > small {
@@ -166,8 +254,13 @@
   align-items: center;
   gap: 14px;
   padding: 12px 24px;
-  border-bottom: 1px solid var(--la-line);
-  background: #fbf9f4;
+  position: sticky;
+  top: 0;
+  z-index: 18;
+  border-bottom: 1px solid #dfd6c9;
+  background: #fffdf9f2;
+  backdrop-filter: blur(12px);
+  box-shadow: 0 8px 24px #4d3d2c0a;
 }
 .la-enterprise {
   color: var(--la-accent);
@@ -176,10 +269,26 @@
   line-height: 1.25;
 }
 .la-governance {
-  font-size: 10px;
+  display: grid;
+  gap: 2px;
+  min-width: 155px;
+  padding-left: 14px;
+  border-left: 1px solid var(--la-line);
+  font-family: 'Times New Roman', Times, serif;
+}
+.la-governance span {
+  font-size: 8px;
   line-height: 1.2;
+  letter-spacing: 0.8px;
   color: var(--la-muted);
-  max-width: 90px;
+}
+.la-governance strong {
+  max-width: 210px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font: 600 15px/1.2 var(--font-serif);
+  color: var(--la-text);
 }
 .la-role-tabs {
   display: flex;
@@ -238,6 +347,7 @@
   padding: 6px;
 }
 .la-profile {
+  margin-left: auto;
   text-align: right;
   font-size: 11px;
   font-weight: 650;
@@ -268,6 +378,13 @@
   margin-inline: auto;
   padding: 0 24px 40px;
 }
+@keyframes lm-page-enter {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.la-content-route-enter {
+  animation: lm-page-enter var(--lm-motion-page) var(--lm-ease-emphasized) both;
+}
 .la-menu-toggle,
 .la-drawer-close,
 .la-backdrop {
@@ -277,16 +394,74 @@
   display: flex;
   gap: 9px;
   align-items: center;
-  padding: 10px 9px;
-  border-radius: 3px;
+  min-height: 44px;
+  padding: 7px 9px 7px 7px;
+  border-radius: 6px;
   color: #69635a;
-  font-size: 12px;
+  font-size: 14px;
+  position: relative;
 }
-.la-nav-group .la-nav-link svg { flex-shrink: 0; }
-.la-nav-group .la-nav-link:hover { background: var(--la-soft); }
-.la-nav-group .la-nav-link.la-nav-active { background: var(--la-accent); color: white; }
+.la-nav-group .la-nav-link svg {
+  flex-shrink: 0;
+  width: 30px;
+  height: 30px;
+  padding: 6px;
+  border-radius: 5px;
+  background: #f4f0e9;
+  transition: color var(--lm-motion-fast) var(--lm-ease-standard);
+}
+.la-nav-group .la-nav-link.la-nav-active {
+  background: var(--la-accent);
+  color: white;
+  box-shadow: 0 7px 16px #6c4f3026;
+}
+.la-nav-group .la-nav-link.la-nav-active svg {
+  color: #4f371f;
+  background: #fff8ed;
+}
 .la-nav-group button:disabled { color: #827a70; }
 .la-nav-pending { margin-left: auto; font-size: 8px; white-space: nowrap; }
+@media (hover: hover) and (pointer: fine) {
+  .lumora-admin button:not(:disabled):hover,
+  .lumora-admin [role="button"]:not([aria-disabled="true"]):hover {
+    border-color: #b8a68f;
+  }
+  .lumora-admin tbody tr:has(a, button:not(:disabled)):hover td {
+    background-color: #f8f5ef;
+  }
+  .la-nav-group .la-nav-link:not(.la-nav-active):hover {
+    background: #eee6db;
+    color: #4e453b;
+  }
+  .la-nav-group .la-nav-link:not(.la-nav-active):hover svg {
+    color: var(--la-accent);
+    transform: translateX(2px);
+  }
+  .la-menu-toggle:hover,
+  .la-drawer-close:hover {
+    background: var(--la-soft);
+    color: var(--la-accent);
+  }
+  .la-system button:hover {
+    background: #f2e8e4;
+    color: #873326;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lumora-admin *,
+  .lumora-admin *::before,
+  .lumora-admin *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    transition-delay: 0s !important;
+    animation: none !important;
+  }
+  .lumora-admin button:not(:disabled):active,
+  .lumora-admin a:active,
+  .lumora-admin [role="button"]:not([aria-disabled="true"]):active {
+    transform: none;
+  }
+}
 @media (min-width: 1600px) {
   .la-header {
     gap: 20px;
@@ -310,10 +485,15 @@
     overflow-y: auto;
     visibility: hidden;
     transform: translateX(-100%);
+    transition:
+      transform var(--lm-motion-medium) var(--lm-ease-emphasized),
+      visibility 0s linear var(--lm-motion-medium);
+    will-change: transform;
   }
   .la-sidebar-open {
     visibility: visible;
     transform: translateX(0);
+    transition-delay: 0s;
   }
   .lumora-admin .la-backdrop {
     display: block;
@@ -322,6 +502,18 @@
     z-index: 20;
     background: #28201865;
     border-radius: 0;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition:
+      opacity var(--lm-motion-medium) var(--lm-ease-standard),
+      visibility 0s linear var(--lm-motion-medium);
+  }
+  .lumora-admin .la-backdrop-open {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    transition-delay: 0s;
   }
   .la-menu-toggle {
     display: inline-flex;
@@ -363,7 +555,16 @@
     padding-inline: 16px;
   }
   .la-governance {
-    font-size: 9px;
+    min-width: 0;
+    flex: 1;
+    padding-left: 10px;
+  }
+  .la-governance span {
+    display: none;
+  }
+  .la-governance strong {
+    max-width: 160px;
+    font-size: 14px;
   }
   .la-live {
     font-size: 8px;
@@ -371,4 +572,646 @@
   .la-sidebar {
     width: min(300px, calc(100vw - 40px));
   }
+}
+
+/* UI-11C: one visual language for the existing Users, Categories and Brands dialogs. */
+@keyframes lm-form-dialog-enter {
+  from { opacity: 0; transform: translateY(20px) scale(.96); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes lm-form-feedback-enter {
+  from { opacity: 0; transform: translateY(7px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.lumora-admin :is(.lu-page, .lcat-page, .lb-page) :is(.lu-create-dialog, .lcat-dialog, .lb-dialog)[open] {
+  width: min(620px, calc(100vw - 32px));
+  max-height: min(88dvh, 760px);
+  border: 1px solid #d8ccbc;
+  border-radius: 12px;
+  background: #fffdfa;
+  box-shadow: 0 28px 80px #241b143d, 0 4px 18px #241b1414;
+  animation: lm-form-dialog-enter 360ms var(--lm-ease-emphasized) both;
+}
+.lumora-admin :is(.lu-page, .lcat-page, .lb-page) :is(.lu-create-dialog, .lcat-dialog, .lb-dialog)::backdrop {
+  background: #241d18a6;
+}
+.lumora-admin :is(.lu-page, .lcat-page, .lb-page) :is(.lu-create-dialog, .lcat-dialog, .lb-dialog)[open]::backdrop {
+  animation: lm-backdrop-enter 360ms var(--lm-ease-standard) both;
+}
+.lumora-admin :is(.lu-page, .lcat-page, .lb-page) :is(.lu-create-dialog, .lcat-dialog, .lb-dialog) > header {
+  padding: 27px 30px 24px;
+  border-bottom: 1px solid #e5dbce;
+  background: linear-gradient(145deg, #faf6ef, #fffdfa 80%);
+}
+.lumora-admin :is(.lu-page, .lcat-page, .lb-page) :is(.lu-create-dialog, .lcat-dialog, .lb-dialog) > header > div { min-width: 0; }
+.lumora-admin :is(.lu-page, .lcat-page, .lb-page) :is(.lu-create-dialog, .lcat-dialog, .lb-dialog) > header :is(.lu-eyebrow, .lcat-eyebrow, .lb-eyebrow) {
+  color: #795d3f;
+  font: 700 10px/1.4 var(--font-sans);
+  letter-spacing: .16em;
+}
+.lumora-admin :is(.lu-page, .lcat-page, .lb-page) :is(.lu-create-dialog, .lcat-dialog, .lb-dialog) h2 {
+  margin: 8px 0 0;
+  color: #2d2b25;
+  font: 500 clamp(27px, 3vw, 33px)/1.13 var(--font-serif);
+  overflow-wrap: anywhere;
+}
+.lumora-admin :is(.lu-page, .lcat-page, .lb-page) :is(.lu-create-dialog, .lcat-dialog, .lb-dialog) > header button {
+  width: 36px;
+  height: 36px;
+  padding: 7px;
+  flex: 0 0 auto;
+  border: 1px solid #ddd2c4;
+  border-radius: 50%;
+  background: #fffdfa;
+  color: #554c42;
+}
+.lumora-admin :is(.lu-page, .lcat-page, .lb-page) :is(.lu-create-dialog, .lcat-dialog, .lb-dialog) > header button:not(:disabled):hover {
+  background: #f0e9df;
+  border-color: #bfa98f;
+}
+.lumora-admin :is(.lu-page, .lcat-page, .lb-page) :is(.lu-create-body, .lcat-dialog-body, .lb-dialog-body) {
+  padding: 26px 30px 30px;
+  gap: 22px;
+}
+.lumora-admin :is(.lu-page, .lcat-page, .lb-page) :is(.lu-create-dialog, .lcat-dialog, .lb-dialog) label {
+  gap: 8px;
+  color: #51483e;
+  font-size: 14px;
+  font-weight: 650;
+  line-height: 1.45;
+}
+.lumora-admin :is(.lu-page, .lcat-page, .lb-page) :is(.lu-create-dialog, .lcat-dialog, .lb-dialog) :is(input:not([type="radio"]), select, textarea) {
+  min-height: 44px;
+  padding: 10px 12px;
+  border: 1px solid #d9d0c5;
+  border-radius: 5px;
+  background: #fff;
+  color: var(--la-text);
+  font-size: 13px;
+  font-weight: 450;
+  line-height: 1.5;
+}
+.lumora-admin :is(.lu-page, .lcat-page, .lb-page) :is(.lu-create-dialog, .lcat-dialog, .lb-dialog) :is(input:not([type="radio"]), select, textarea):focus-visible {
+  border-color: #8a6a48;
+  outline: 2px solid #8a6a48;
+  outline-offset: 2px;
+  box-shadow: 0 0 0 5px #8a6a4824;
+}
+.lumora-admin :is(.lu-page, .lcat-page, .lb-page) :is(.lu-create-dialog, .lcat-dialog, .lb-dialog) :is(input, select, textarea):disabled {
+  background: #f1eee9;
+  color: #6e675f;
+  opacity: 1;
+}
+.lumora-admin :is(.lu-page, .lcat-page, .lb-page) :is(.lu-create-dialog, .lcat-dialog, .lb-dialog) :is(input, textarea):user-invalid {
+  border-color: #a33e30;
+  background: #fff8f6;
+}
+.lumora-admin :is(.lu-page, .lcat-page, .lb-page) :is(.lu-create-dialog, .lcat-dialog, .lb-dialog) footer {
+  gap: 12px;
+  padding: 18px 30px;
+  border-top: 1px solid #e5dbce;
+  background: #faf7f1;
+  box-shadow: 0 -8px 18px #32271908;
+}
+.lumora-admin :is(.lu-page, .lcat-page, .lb-page) :is(.lu-create-dialog, .lcat-dialog, .lb-dialog) footer button {
+  min-height: 42px;
+  padding: 10px 18px;
+  border: 1px solid #cabdad;
+  border-radius: 5px;
+  font-size: 12px;
+  font-weight: 700;
+}
+.lumora-admin :is(.lu-page, .lcat-page, .lb-page) :is(.lu-create-dialog, .lcat-dialog, .lb-dialog) footer button:not(:disabled):hover {
+  border-color: #8a6a48;
+  box-shadow: 0 4px 12px #42301d18;
+}
+.lumora-admin :is(.lu-page, .lcat-page, .lb-page) :is(.lu-create-dialog, .lcat-dialog, .lb-dialog) footer :is(.lu-button-dark, .lcat-primary, .lb-primary) {
+  border-color: #705337;
+  background: #705337;
+  color: #fff;
+}
+.lumora-admin :is(.lu-page, .lcat-page, .lb-page) :is(.lu-create-dialog, .lcat-dialog, .lb-dialog) footer :is(.lu-button-dark, .lcat-primary, .lb-primary):disabled {
+  opacity: 1;
+  background: #9b8063;
+  color: #fff;
+  cursor: progress;
+}
+.lumora-admin :is(.lu-page, .lcat-page, .lb-page) :is(.lu-create-dialog, .lcat-dialog, .lb-dialog) :is(.lu-create-error, .lcat-error, .lb-error) {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 0;
+  padding: 12px 14px;
+  border: 1px solid #e9c6bd;
+  border-left: 3px solid #a33e30;
+  border-radius: 5px;
+  background: #fff3ef;
+  color: #772d24;
+  font-size: 13px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+  animation: lm-form-feedback-enter 180ms var(--lm-ease-standard) both;
+}
+.lumora-admin :is(.lu-page, .lcat-page, .lb-page) :is(.lu-api-notice, .lcat-notice, .lb-notice)[role="status"] {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 13px 16px;
+  border: 1px solid #d4dec9;
+  border-left: 3px solid #697c50;
+  border-radius: 5px;
+  background: #f1f6ed;
+  color: #35452d;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+  animation: lm-form-feedback-enter 220ms var(--lm-ease-standard) both;
+}
+.lumora-admin :is(.lu-page, .lcat-page, .lb-page) :is(.lu-api-notice, .lcat-notice, .lb-notice, .lu-create-error, .lcat-error, .lb-error) svg {
+  flex: 0 0 auto;
+  margin-top: 1px;
+}
+@media (max-width: 767px) {
+  .lumora-admin :is(.lu-page, .lcat-page, .lb-page) :is(.lu-create-dialog, .lcat-dialog, .lb-dialog)[open] { width: calc(100vw - 20px); max-height: calc(100dvh - 20px); }
+  .lumora-admin :is(.lu-page, .lcat-page, .lb-page) :is(.lu-create-dialog, .lcat-dialog, .lb-dialog) > header { padding: 20px; }
+  .lumora-admin :is(.lu-page, .lcat-page, .lb-page) :is(.lu-create-body, .lcat-dialog-body, .lb-dialog-body) { padding: 20px; gap: 18px; }
+  .lumora-admin :is(.lu-page, .lcat-page, .lb-page) :is(.lu-create-dialog, .lcat-dialog, .lb-dialog) footer { padding: 14px 20px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lumora-admin :is(.lu-page, .lcat-page, .lb-page) :is(.lu-create-dialog, .lcat-dialog, .lb-dialog)[open],
+  .lumora-admin :is(.lu-page, .lcat-page, .lb-page) :is(.lu-create-dialog, .lcat-dialog, .lb-dialog)[open]::backdrop,
+  .lumora-admin :is(.lu-page, .lcat-page, .lb-page) :is(.lu-api-notice, .lcat-notice, .lb-notice, .lu-create-error, .lcat-error, .lb-error) {
+    animation: none;
+  }
+}
+
+/* UI-12D.6: v2.2 surfaces are scoped to the three approved example pages. */
+.lumora-admin .la-content :is(.la-dashboard, .lu-page, .lc-page) {
+  --lm-surface-l2: #fffdfa;
+  --lm-border-l2: #c9b8a5;
+  --lm-surface-l3: #e9dfd2;
+  --lm-border-l3: #e1d8cd;
+  --lm-surface-l4: #f8f5f0;
+}
+
+/* L2: main content containers. */
+.lumora-admin .la-content :is(
+  .la-dashboard .la-panel,
+  .lu-user-list,
+  .lr-card:not(.lr-selection),
+  .lr-matrix-box,
+  .lc-table-box,
+  .lc-directory,
+  .lv-table-box,
+  .lcat-table-box,
+  .lb-table-box,
+  .lb-bottom-grid > section,
+  .lm-order-box,
+  .lm-watchlist,
+  .lod-card,
+  .lid-card,
+  .lid-history,
+  .lan-demo,
+  .lan-card
+) {
+  border: 1px solid var(--lm-border-l2);
+  background-color: var(--lm-surface-l2);
+}
+
+/* L3: values and data cards within a page. */
+.lumora-admin .la-content :is(
+  .la-dashboard .la-kpi,
+  .lu-kpi,
+  .lr-kpis article,
+  .lr-role,
+  .lc-kpis article,
+  .lv-kpis article,
+  .lcat-kpis article,
+  .lb-kpis article,
+  .lm-kpis .lm-card,
+  .lm-capacity,
+  .lod-kpis article,
+  .lid-kpis article,
+  .lan-kpis article
+) {
+  border: 1px solid var(--lm-border-l3);
+  background-color: var(--lm-surface-l3);
+}
+
+/* L4: supporting surfaces and placeholders inside a stronger parent. */
+.lumora-admin .la-content :is(
+  .la-dashboard .la-api-supplement dl > div,
+  .la-dashboard .la-api-chart-empty,
+  .la-dashboard .la-data-state,
+  .lr-policy,
+  .lr-state,
+  .lv-api-policy,
+  .lcat-principles article,
+  .lm-card.lm-state,
+  .lid-state,
+  .lid-policy,
+  .lid-bottom article,
+  .lid-spec-grid article,
+  .lid-barcode,
+  .lan-state
+) {
+  border: 1px solid #e9e3d9;
+  background-color: var(--lm-surface-l4);
+}
+
+/* Selected and policy callouts carry meaning without becoming page heroes. */
+.lumora-admin .la-content :is(.lr-selection, .lm-capacity, .lid-kpis article:first-child) {
+  border: 1px solid var(--lm-border-l2);
+  background-color: #f6f2ec;
+}
+
+.lumora-admin .la-content .la-dashboard .la-kpi:first-child {
+  border-color: var(--lm-border-l3);
+  background: #f6f2ec;
+}
+
+.lumora-admin .la-content .la-dashboard .la-analytics > .la-panel:first-child {
+  border-color: var(--lm-border-l2);
+  background: var(--lm-surface-l2);
+}
+
+.lumora-admin .la-content .lan-page .lan-demo {
+  border-color: #ad8c68;
+  background-color: #f6f2ec;
+}
+
+.lumora-admin .la-content .lr-page .lr-role.lr-role-selected {
+  border: 2px solid var(--la-card-accent);
+  background-color: #eee7dd;
+}
+
+.lumora-admin .la-content .lr-page .lr-role-selected::after,
+.lumora-admin .la-content .la-dashboard .la-kpi::before {
+  content: none;
+}
+
+.lumora-admin .la-content :is(
+  .lm-card.lm-state[role="alert"],
+  .la-dashboard .la-data-error,
+  .lr-state.lr-state-error,
+  .lid-state.lid-state-error
+) {
+  border: 2px solid #b76d62;
+  background-color: #fff8f5;
+}
+
+.lumora-admin .la-content .lod-page .lod-card.lod-state {
+  border: 2px solid #a17953;
+}
+
+.lumora-admin .la-content .la-dashboard :is(.la-kpi, .la-panel) {
+  box-shadow: 0 5px 16px #55432d12;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .lumora-admin .la-content .la-dashboard .la-kpi:hover {
+    border-color: #8a6a48;
+    box-shadow: 0 7px 18px #55432d18;
+  }
+}
+
+.lumora-admin .la-content :is(
+  .lcat-badge,
+  .lb-badge,
+  .lv-stock,
+  .lm-status,
+  .lid-stock-status,
+  .lod-status,
+  .lr-status
+) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 32px;
+  padding: 6px 12px;
+  text-align: center;
+  line-height: 1.3;
+  white-space: nowrap;
+}
+
+/* --- CẢI TIẾN GIAO DIỆN ADMIN (LAYOUT & HEADER) --- */
+.la-sidebar {
+  background: #fffdf9;
+  border-right: 1px solid #e7ded3;
+  padding: 20px 16px;
+  display: flex;
+  flex-direction: column;
+}
+
+.la-brand {
+  padding: 6px 4px 16px;
+  border-bottom: 1px solid #eee6dc;
+  margin-bottom: 12px;
+}
+
+.la-logo-slot {
+  width: 95px;
+  height: 38px;
+  object-fit: contain;
+}
+
+
+
+.la-nav-group-title {
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: #8c8275;
+  margin-bottom: 6px;
+  padding-left: 6px;
+}
+
+.la-nav-items {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.la-nav-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 6px;
+  color: #595249;
+  font-size: 13px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.la-nav-icon-wrap {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  background: #f3eee6;
+  color: #735d46;
+}
+
+.la-nav-link:hover {
+  background: #f5f0e8;
+  color: #2c2824;
+}
+
+.la-nav-link.la-nav-active {
+  background: #8a6a48;
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(138, 106, 72, 0.2);
+}
+
+.la-nav-link.la-nav-active .la-nav-icon-wrap {
+  background: #fff8ee;
+  color: #8a6a48;
+}
+
+/* Header & Right Profile / Logout Actions */
+.la-header {
+  min-height: 64px;
+  padding: 0 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: rgba(255, 253, 249, 0.95);
+  border-bottom: 1px solid #e7ded3;
+}
+
+.la-governance strong {
+  font-family: var(--font-serif);
+  font-size: 16px;
+  color: #2c2824;
+  font-weight: 600;
+}
+
+.la-header-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-left: auto;
+}
+
+.la-profile-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 5px 10px 5px 6px;
+  background: #f5f0e8;
+  border: 1px solid #e2d8cb;
+  border-radius: 30px;
+}
+
+.la-avatar-slot {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: #ffffff;
+  color: #8a6a48;
+  border: 1px solid #d5cbc0;
+}
+
+.la-profile-info {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.15;
+}
+
+.la-profile-name {
+  font-size: 11.5px;
+  font-weight: 650;
+  color: #2c2824;
+}
+
+.la-profile-role {
+  font-size: 8.5px;
+  font-weight: 500;
+  color: #8a6a48;
+  letter-spacing: 0.5px;
+}
+
+.la-logout-icon-btn {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  background: #f5f0e8;
+  border: 1px solid #e2d8cb;
+  border-radius: 8px;
+  color: #a33e30;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.la-logout-icon-btn:hover {
+  background: #fff5f4;
+  border-color: #d4a39e;
+  transform: translateY(-1px);
+}
+
+/* --- ĐIỀU CHỈNH SIDEBAR & PROFILE CARD Ở ĐÁY (GIỐNG STAFF) --- */
+.la-sidebar {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  background: #fbf9f4 !important;
+  border-right: 1px solid #e7ded3;
+  padding: 20px 16px 20px 16px !important;
+  height: 100vh;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 280px;
+  z-index: 30;
+}
+
+.la-brand {
+  padding: 4px 4px 16px;
+  border-bottom: 1px solid #eee6dc;
+  margin-bottom: 12px;
+  flex-shrink: 0;
+}
+
+.la-nav-container {
+  flex: 1;
+  overflow-y: auto;
+  padding-bottom: 10px;
+ 
+}
+
+/* Footer Profile Card ở đáy Sidebar */
+.la-sidebar-footer {
+  position: relative;
+  flex-shrink: 0;
+  padding-top: 12px;
+  border-top: 1px solid #eae2d6;
+}
+
+.la-sidebar-profile-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  background: #ffffff;
+  border: 1px solid #e2d8cb;
+  border-radius: 14px;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+  transition: all 0.2s ease;
+}
+
+.la-sidebar-profile-card:hover {
+  border-color: #c4b4a0;
+  background: #fffdf9;
+}
+
+.la-sidebar-avatar {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: #1a1a1a;
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  flex-shrink: 0;
+}
+
+.la-sidebar-user-info {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.25;
+  min-width: 0;
+  flex: 1;
+}
+
+.la-sidebar-name {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #2c2824;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.la-sidebar-role {
+  font-size: 9px;
+  font-weight: 600;
+  color: #8a6a48;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.la-sidebar-gear {
+  background: transparent;
+  border: none;
+  color: #756d64;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  padding: 4px;
+  border-radius: 6px;
+  transition: color 0.2s;
+}
+
+.la-sidebar-gear:hover {
+  color: #2c2824;
+  background: #f0e9df;
+}
+
+/* Popup menu khi bấm vào thẻ profile */
+.la-profile-popup-menu {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 0;
+  right: 0;
+  background: #ffffff;
+  border: 1px solid #e2d8cb;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  z-index: 40;
+  animation: lm-form-feedback-enter 180ms ease both;
+}
+
+.la-profile-popup-menu button {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 9px 12px;
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  color: #443e37;
+  font-size: 12px;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.la-profile-popup-menu button:hover {
+  background: #f4efe7;
+  color: #2c2824;
+}
+
+.la-profile-popup-menu button.la-logout-option {
+  color: #a33e30;
+}
+
+.la-profile-popup-menu button.la-logout-option:hover {
+  background: #fff5f4;
+  color: #872b1e;
 }

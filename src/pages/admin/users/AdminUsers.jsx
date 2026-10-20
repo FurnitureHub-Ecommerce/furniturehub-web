@@ -1,11 +1,20 @@
-﻿import { useEffect, useRef, useState } from "react";
-import { Search, UserPlus, RefreshCw, User, X, Eye, EyeOff } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { Search, UserPlus, RefreshCw, User, X, Eye, EyeOff, CircleAlert, CircleCheck } from "lucide-react";
 import { getUsers, createAdminUser } from "../../../services/admin/users.service.js";
 import "./AdminUsers.css";
 
 const initialForm = { fullName: "", email: "", password: "", phone: "", role: "STAFF" };
 const roles = { ADMIN: "Admin", STAFF: "Staff", STORAGE_MANAGER: "Storage Manager", CUSTOMER: "Customer" };
+const PAGE_SIZE = 10;
 const text = value => typeof value === "string" && value.trim() ? value : "Chưa có dữ liệu";
+const initials = name => {
+  if (typeof name !== "string") return null;
+  const words = name.trim().split(/\s+/u).filter(word => /^[\p{L}\p{N}]/u.test(word));
+  if (!words.length) return null;
+  const first = Array.from(words[0])[0];
+  const last = words.length > 1 ? Array.from(words[words.length - 1])[0] : "";
+  return `${first}${last}`.toLocaleUpperCase("vi");
+};
 
 function CreateUserDialog({ onClose, onCreated }) {
   const dialog = useRef(null);
@@ -41,8 +50,8 @@ function CreateUserDialog({ onClose, onCreated }) {
         <label>Email *<input required type="email" autoComplete="email" value={form.email} onChange={e => updateField("email", e.target.value)} disabled={saving} /></label>
         <label>Mật khẩu *<span className="lu-password-field"><input required minLength={8} type={showPassword ? "text" : "password"} autoComplete="new-password" value={form.password} onChange={e => updateField("password", e.target.value)} disabled={saving} /><button type="button" onClick={() => setShowPassword(value => !value)} aria-label={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"} aria-pressed={showPassword}>{showPassword ? <EyeOff size={18} /> : <Eye size={18} />}</button></span></label>
         <label>Số điện thoại<input type="tel" autoComplete="tel" value={form.phone} onChange={e => updateField("phone", e.target.value)} disabled={saving} /></label>
-        <label>Vai trò<select value={form.role} onChange={e => updateField("role", e.target.value)} disabled={saving}>{["STAFF", "STORAGE_MANAGER", "ADMIN"].map(role => <option key={role} value={role}>{roles[role]}</option>)}</select></label>
-        {error && <p className="lu-create-error" role="alert">{error}</p>}
+        <label>Vai trò<select value={form.role} onChange={e => updateField("role", e.target.value)} disabled={saving}>{["STAFF", "STORAGE_MANAGER"].map(role => <option key={role} value={role}>{roles[role]}</option>)}</select></label>
+        {error && <p className="lu-create-error" role="alert"><CircleAlert size={17} aria-hidden="true" />{error}</p>}
       </div>
       <footer><button type="button" className="lu-button" disabled={saving} onClick={onClose}>Hủy Bỏ</button><button type="submit" className="lu-button lu-button-dark" disabled={saving}>{saving ? "Đang tạo…" : "Tạo Tài Khoản"}</button></footer>
     </form>
@@ -56,6 +65,7 @@ export default function AdminUsers() {
   const [notice, setNotice] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [roleFilter, setRoleFilter] = useState("ALL");
+  const [page, setPage] = useState(1);
   useEffect(() => {
     let cancelled = false;
     getUsers().then(rows => { if (!cancelled) setState({ rows, loading: false, error: "" }); })
@@ -63,6 +73,7 @@ export default function AdminUsers() {
     return () => { cancelled = true; };
   }, [revision]);
   function reload() {
+    setPage(1);
     setState(current => ({ ...current, loading: true, error: "" }));
     setRevision(value => value + 1);
   }
@@ -77,20 +88,38 @@ export default function AdminUsers() {
     return (!keyword || values.some(value => typeof value === "string" && value.toLowerCase().includes(keyword)))
       && (roleFilter === "ALL" || user.role === roleFilter);
   });
+  const totalPages = Math.max(1, Math.ceil(filteredUsers.length / PAGE_SIZE));
+  const currentPage = Math.min(page, totalPages);
+  const firstIndex = (currentPage - 1) * PAGE_SIZE;
+  const visibleUsers = filteredUsers.slice(firstIndex, firstIndex + PAGE_SIZE);
   // Các số đếm chỉ mô tả tập API đã tải, không khẳng định tổng tài khoản toàn hệ thống.
   const metrics = [
-    ["TÀI KHOẢN ĐÃ TẢI", state.rows.length],
+    ["Tài Khoản Đã Tải", state.rows.length],
     ...["ADMIN", "STAFF", "STORAGE_MANAGER"].map(role => [roles[role], state.rows.filter(user => user.role === role).length]),
   ];
   return <div className="lu-page">
-    <p className="lu-context"><span>NGƯỜI DÙNG & PHÂN QUYỀN</span></p>
-    <header className="lu-heading"><div><h1>Quản Lý Người Dùng</h1><p>Tra cứu tài khoản và tạo người dùng qua hệ thống quản trị LUMORA.</p></div><div className="lu-heading-actions"><button className="lu-button" onClick={reload} disabled={state.loading}><RefreshCw size={16} />Tải lại</button><button className="lu-button lu-button-dark" onClick={() => setShowModal(true)}><UserPlus size={16} />Tạo Tài Khoản</button></div></header>
-    {notice && <p className="lu-api-notice" role="status">{notice}</p>}
-    {!state.loading && !state.error && <><section className="lu-kpis" aria-label="Số tài khoản trong danh sách đã tải">{metrics.map(([label, value]) => <article className="lu-card lu-kpi" key={label}><h2>{label}</h2><strong>{value}</strong><p>Trong danh sách đã tải</p></article>)}</section><p className="lu-api-note">Tìm kiếm và bộ lọc áp dụng trên danh sách đã tải từ Backend.</p></>}
-    <section className="lu-filters" aria-label="Lọc tài khoản"><label className="lu-search"><Search size={18} /><input type="search" aria-label="Tìm theo tên, email hoặc số điện thoại" placeholder="Tìm tên, email, số điện thoại…" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} /></label><div className="lu-selects"><label>VAI TRÒ<select value={roleFilter} onChange={e => setRoleFilter(e.target.value)}><option value="ALL">Tất cả vai trò</option>{Object.entries(roles).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label></div></section>
-    <section className="lu-card lu-user-list">
-      {state.loading ? <p className="lu-api-state" role="status">Đang tải tài khoản…</p> : state.error ? <div className="lu-api-state" role="alert"><p>{state.error}</p><button className="lu-button" onClick={reload}>Thử lại</button></div> : filteredUsers.length === 0 ? <p className="lu-api-state">Không có người dùng phù hợp.</p> : <div className="lu-table-scroll" tabIndex={0} aria-label="Danh sách người dùng, cuộn ngang để xem các cột"><table className="lu-table lu-api-table"><thead><tr><th scope="col">NGƯỜI DÙNG</th><th scope="col">EMAIL</th><th scope="col">VAI TRÒ</th><th scope="col">ĐIỆN THOẠI</th></tr></thead><tbody>{filteredUsers.map((user, index) => <tr key={user._id || user.id || index}><td><div className="lu-user-identity"><span className="lu-avatar" aria-hidden="true"><User size={18} /></span><strong>{text(user.fullName || user.name)}</strong></div></td><td>{text(user.email)}</td><td><span className="lu-api-role">{roles[user.role] || text(user.role)}</span></td><td>{text(user.phone)}</td></tr>)}</tbody></table></div>}
-      {!state.loading && !state.error && <p className="lu-api-note lu-api-result">Hiển thị {filteredUsers.length} / {state.rows.length} tài khoản đã tải</p>}
+    <div className="lu-intro">
+      <p className="lu-context"><span>QUẢN LÝ TÀI KHOẢN</span></p>
+      <header className="lu-heading"><div><h1>Quản Lý Người Dùng</h1><p>Theo dõi tài khoản và quản lý nhân sự trên hệ thống.</p></div><div className="lu-heading-actions"><button className="lu-button" onClick={reload} disabled={state.loading}><RefreshCw size={16} aria-hidden="true" />Tải lại</button><button className="lu-button lu-button-dark" onClick={() => setShowModal(true)}><UserPlus size={16} aria-hidden="true" />Tạo Tài Khoản</button></div></header>
+    </div>
+    {notice && <p className="lu-api-notice" role="status"><CircleCheck size={17} aria-hidden="true" />{notice}</p>}
+    {!state.loading && !state.error && <section className="lu-kpis" aria-label="Số tài khoản trong danh sách đã tải">{metrics.map(([label, value], index) => <article className={`lu-card lu-kpi ${index === 0 ? "lu-kpi-featured" : ""}`} key={label}><h2>{label}</h2><strong>{value}</strong></article>)}</section>}
+    <section className="lu-filters" aria-label="Lọc tài khoản"><label className="lu-search"><Search size={18} /><input type="search" aria-label="Tìm theo tên, email hoặc số điện thoại" placeholder="Tìm tên, email, số điện thoại…" value={searchTerm} onChange={e => { setSearchTerm(e.target.value); setPage(1); }} /></label><div className="lu-selects"><label className="lu-role-filter"><span className="lu-visually-hidden">Vai trò</span><select value={roleFilter} onChange={e => { setRoleFilter(e.target.value); setPage(1); }}><option value="ALL">Tất cả vai trò</option>{Object.entries(roles).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label></div></section>
+    <section className="lu-card lu-user-list" aria-labelledby="lu-list-title">
+      <div className="lu-list-header"><div><span className="lu-list-eyebrow">DANH SÁCH TÀI KHOẢN</span><h2 id="lu-list-title">Người Dùng Hệ Thống</h2></div>{!state.loading && !state.error && <span className="lu-list-count">{filteredUsers.length} tài khoản phù hợp</span>}</div>
+      {state.loading ? <div className="lu-api-state" role="status"><RefreshCw size={24} aria-hidden="true" /><div><strong>Đang tải tài khoản</strong><p>Dữ liệu người dùng đang được cập nhật…</p></div></div> : state.error ? <div className="lu-api-state lu-api-error" role="alert"><CircleAlert size={24} aria-hidden="true" /><div><strong>Không thể tải tài khoản</strong><p>{state.error}</p></div><button className="lu-button" onClick={reload}>Thử lại</button></div> : filteredUsers.length === 0 ? <div className="lu-api-state"><Search size={24} aria-hidden="true" /><div><strong>Không có kết quả</strong><p>Không có người dùng phù hợp.</p></div></div> : <div className="lu-table-scroll" tabIndex={0} aria-label="Danh sách người dùng, cuộn ngang để xem các cột"><table className="lu-table lu-api-table"><thead><tr><th scope="col">NGƯỜI DÙNG</th><th scope="col">EMAIL</th><th scope="col">VAI TRÒ</th><th scope="col">ĐIỆN THOẠI</th></tr></thead><tbody>{visibleUsers.map((user, index) => <tr key={user._id || user.id || index}><td><div className="lu-user-identity"><span className="lu-avatar" aria-hidden="true">{initials(user.fullName || user.name) ?? <User size={18} />}</span><strong>{text(user.fullName || user.name)}</strong></div></td><td><span className="lu-email" title={text(user.email)}>{text(user.email)}</span></td><td><span className="lu-api-role" data-role={user.role}>{roles[user.role] || text(user.role)}</span></td><td>{text(user.phone)}</td></tr>)}</tbody></table></div>}
+      {!state.loading && !state.error && (
+        <footer className="lu-pagination">
+          <span>Hiển thị {filteredUsers.length ? firstIndex + 1 : 0}–{firstIndex + visibleUsers.length} / {filteredUsers.length} kết quả trong {state.rows.length} tài khoản đã tải</span>
+          {filteredUsers.length > PAGE_SIZE && (
+            <nav aria-label="Phân trang người dùng">
+              <button type="button" onClick={() => setPage(currentPage - 1)} disabled={currentPage === 1}>Trước</button>
+              <span aria-live="polite">Trang {currentPage} / {totalPages}</span>
+              <button type="button" onClick={() => setPage(currentPage + 1)} disabled={currentPage === totalPages}>Tiếp</button>
+            </nav>
+          )}
+        </footer>
+      )}
     </section>
     {showModal && <CreateUserDialog onClose={() => setShowModal(false)} onCreated={created} />}
   </div>;

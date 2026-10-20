@@ -267,34 +267,25 @@ function normalizeInventoryRow(row, index) {
     typeof populatedVariant.productId === "object"
       ? populatedVariant.productId
       : null;
-  const quantity = optionalNumber(row.quantity, `Inventory[${index}].quantity`);
-  const lowStockThreshold = optionalNumber(
+  const quantity = requiredInteger(row.quantity, `Inventory[${index}].quantity`, 0);
+  const lowStockThreshold = requiredInteger(
     row.lowStockThreshold,
     `Inventory[${index}].lowStockThreshold`,
+    0,
   );
 
   return {
     inventoryId,
     variantId,
+    productId: readId(populatedVariant?.productId),
     sku: populatedVariant?.sku ?? null,
     productName: product?.name ?? null,
     material: populatedVariant?.material ?? null,
     color: populatedVariant?.color ?? null,
     size: populatedVariant?.size ?? null,
     quantity,
-    inventoryAvailableStock: optionalNumber(
-      row.availableStock,
-      `Inventory[${index}].availableStock`,
-    ),
-    variantAvailableStock: optionalNumber(
-      populatedVariant?.availableStock,
-      `Inventory[${index}].variant.availableStock`,
-    ),
     lowStockThreshold,
-    isLowStock:
-      typeof quantity === "number" && typeof lowStockThreshold === "number"
-        ? quantity <= lowStockThreshold
-        : null,
+    isLowStock: quantity <= lowStockThreshold,
     createdAt: row.createdAt ?? null,
     updatedAt: row.updatedAt ?? null,
   };

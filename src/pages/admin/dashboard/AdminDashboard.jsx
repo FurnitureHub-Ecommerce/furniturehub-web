@@ -3,9 +3,10 @@ import {
   Landmark,
   ShoppingBag,
   Users,
+  UserRound,
   Package,
   RefreshCw,
-  Download,
+  CircleAlert,
 } from "lucide-react";
 import { getDashboardStatistics } from "../../../services/admin/dashboard.service.js";
 import "./AdminDashboard.css";
@@ -13,9 +14,21 @@ import "./AdminDashboard.css";
 const labels = {
   pending: "Chờ xử lý",
   confirmed: "Đã xác nhận",
+  shipping: "Đang giao",
+  delivered: "Hoàn thành",
   rejected: "Đã từ chối",
   cancelled: "Đã hủy",
 };
+
+const statusColors = {
+  pending: "#B98436",
+  confirmed: "#487C59",
+  shipping: "#3B7A9E",
+  delivered: "#2E5A88",
+  rejected: "#B9634B",
+  cancelled: "#8D4848",
+};
+
 const numeric = (value) => typeof value === "number" && Number.isFinite(value);
 const count = (value) =>
   numeric(value)
@@ -25,13 +38,14 @@ const money = (value) =>
   numeric(value)
     ? new Intl.NumberFormat("vi-VN", {
         style: "currency",
-        currency: "EUR",
+        currency: "VND",
       }).format(value)
     : "Chưa có dữ liệu";
 
 export default function AdminDashboard() {
   const [state, setState] = useState({ data: null, loading: true, error: "" });
   const [revision, setRevision] = useState(0);
+
   useEffect(() => {
     let cancelled = false;
     getDashboardStatistics()
@@ -52,18 +66,21 @@ export default function AdminDashboard() {
       cancelled = true;
     };
   }, [revision]);
+
   function reload() {
     setState({ data: null, loading: true, error: "" });
     setRevision((value) => value + 1);
   }
+
   const data = state.data;
-  // Chỉ dùng các field đã được implementation hiện tại đọc; thiếu dữ liệu không đồng nghĩa bằng 0.
   const metrics = [
     ["TỔNG DOANH THU", data?.totalRevenue, Landmark, money],
     ["TỔNG ĐƠN HÀNG", data?.totalOrders, ShoppingBag, count],
     ["TỔNG SẢN PHẨM", data?.totalProducts, Package, count],
     ["TỔNG KHÁCH HÀNG", data?.totalCustomers, Users, count],
+    ["TỔNG TÀI KHOẢN", data?.totalUsers, UserRound, count],
   ];
+
   const statuses =
     data?.ordersByStatus &&
     typeof data.ordersByStatus === "object" &&
@@ -73,129 +90,116 @@ export default function AdminDashboard() {
         )
       : [];
   const total = data?.totalOrders;
+
   return (
     <div className="la-dashboard">
-      <div className="la-context">
-        <span>TỔNG QUAN ĐIỀU HÀNH</span>
-        <span>DỮ LIỆU TỪ BACKEND</span>
-      </div>
-      <section className="la-page-heading">
-        <div>
-          <h1>
-            Tổng Quan Điều Hành Doanh Nghiệp <em>&</em> Phân Tích Thống Kê
-          </h1>
-          <p>
-            Theo dõi doanh thu, đơn hàng, sản phẩm và khách hàng trong hệ thống
-            LUMORA.
-          </p>
-        </div>
-        <div className="la-report-controls">
+      {/* Banner Tổng Quan Điều Hành */}
+      <div className="la-dashboard-hero">
+        <div className="la-dashboard-hero-content">
+          <div className="la-dashboard-titles">
+            <span className="la-hero-badge">TỔNG QUAN ĐIỀU HÀNH</span>
+            <h1>Tổng Quan <em>Điều Hành</em></h1>
+            <p>Theo dõi doanh thu, đơn hàng, sản phẩm và khách hàng trong hệ thống LUMORA Atelier.</p>
+          </div>
           <button
-            className="la-button"
-            disabled
-            title="Xuất báo cáo chưa tích hợp"
-          >
-            <Download size={15} />
-            Xuất Báo Cáo (PDF/Excel)
-          </button>
-          <button
-            className="la-button la-button-dark"
+            className="la-refresh-btn"
             onClick={reload}
             disabled={state.loading}
           >
-            <RefreshCw size={15} />
-            Làm Mới Dữ Liệu
+            <RefreshCw size={15} className={state.loading ? "la-spin" : ""} aria-hidden="true" />
+            <span>{state.loading ? "Đang tải…" : "Làm Mới Dữ Liệu"}</span>
           </button>
         </div>
-      </section>
+      </div>
+
       {state.loading ? (
         <div className="la-data-state" role="status">
-          Đang tải thống kê…
+          <Landmark size={24} aria-hidden="true" />
+          <div>
+            <strong>Đang tải thống kê hệ thống</strong>
+            <p>Dữ liệu điều hành đang được đồng bộ…</p>
+          </div>
         </div>
       ) : state.error ? (
-        <div className="la-data-state" role="alert">
-          <p>{state.error}</p>
-          <button className="la-button" onClick={reload}>
-            Thử lại
-          </button>
+        <div className="la-data-state la-data-error" role="alert">
+          <CircleAlert size={24} aria-hidden="true" />
+          <div>
+            <strong>Không thể tải thống kê</strong>
+            <p>{state.error}</p>
+          </div>
+          <button className="la-button" onClick={reload}>Thử lại</button>
         </div>
       ) : (
         <>
+          <div className="la-dashboard-section-heading">
+            <div>
+              <span className="la-eyebrow">BỨC TRANH TOÀN CẢNH</span>
+              <h2>Chỉ Số Cốt Lõi</h2>
+            </div>
+            
+          </div>
+
+          {/* Các thẻ KPI thống kê (đã bỏ 01/05) */}
           <section className="la-kpis" aria-label="Chỉ số tổng quan">
             {metrics.map(([label, value, Icon, format]) => (
               <article className="la-kpi" key={label}>
-                <div className="la-kpi-label">
-                  {label}
-                  <Icon size={19} />
+                <div className="la-kpi-top">
+                  <span className="la-kpi-icon">
+                    <Icon size={18} aria-hidden="true" />
+                  </span>
                 </div>
-                <strong
-                  className={`la-kpi-value ${numeric(value) ? "" : "la-api-missing"}`}
-                >
-                  {format(value)}
-                </strong>
+                <div className="la-kpi-metric">
+                  <span className="la-kpi-label">{label}</span>
+                  <strong className={`la-kpi-value ${numeric(value) ? "" : "la-api-missing"}`}>
+                    {format(value)}
+                  </strong>
+                </div>
               </article>
             ))}
           </section>
+
+          {/* Khu vực Trạng thái đơn hàng dạng Grid Cards */}
           <div className="la-analytics">
-            <section className="la-panel la-revenue">
-              <div className="la-section-header">
+            <section className="la-panel">
+              <div className="la-panel-heading">
                 <div>
-                  <p className="la-eyebrow">TRAJECTORY & CASH FLOW</p>
-                  <h2>Dòng Chảy Doanh Thu</h2>
-                  <p>Doanh thu theo thời gian</p>
+                  <span className="la-eyebrow">TÌNH HÌNH VẬN HÀNH</span>
+                  <h2>Đơn Hàng Theo Trạng Thái</h2>
                 </div>
               </div>
-              <div className="la-api-chart-empty">Chưa có dữ liệu</div>
-            </section>
-            <section className="la-panel">
-              <p className="la-eyebrow">ORDER INTELLIGENCE</p>
-              <h2>Đơn Hàng Theo Trạng Thái</h2>
               {statuses.length ? (
-                <ul className="la-api-statuses">
-                  {statuses.map(([key, value]) => (
-                    <li key={key}>
-                      <div>
-                        <span>{labels[key] || key}</span>
-                        <strong>{count(value)}</strong>
+                <div className="la-status-grid">
+                  {statuses.map(([key, value]) => {
+                    const percentage = numeric(total) && total > 0 ? (value / total) * 100 : 0;
+                    return (
+                      <div className="la-status-card" key={key} style={{ "--status-color": statusColors[key] ?? "#8a6a48" }}>
+                        <div className="la-status-card-header">
+                          <span className="la-status-dot" />
+                          <span className="la-status-name">{labels[key] ?? key}</span>
+                        </div>
+                        <div className="la-status-card-metric">
+                          <strong>{count(value)}</strong>
+                          <span className="la-status-percent">
+                            {numeric(total) && `${new Intl.NumberFormat("vi-VN", { maximumFractionDigits: 1 }).format(percentage)}%`}
+                          </span>
+                        </div>
+                        {numeric(total) && (
+                          <div className="la-progress-track">
+                            <div 
+                              className="la-progress-fill" 
+                              style={{ width: `${Math.min(percentage, 100)}%`, background: statusColors[key] ?? "#8a6a48" }}
+                            />
+                          </div>
+                        )}
                       </div>
-                      {numeric(total) && total > 0 && value <= total && (
-                        <progress
-                          value={value}
-                          max={total}
-                          aria-label={`${labels[key] || key}: ${count(value)} trên ${count(total)} đơn`}
-                        />
-                      )}
-                    </li>
-                  ))}
-                </ul>
+                    );
+                  })}
+                </div>
               ) : (
-                <p className="la-api-empty">Chưa có dữ liệu</p>
+                <p className="la-api-empty">Chưa có dữ liệu trạng thái đơn hàng</p>
               )}
             </section>
           </div>
-          <section className="la-panel la-api-supplement">
-            <p className="la-eyebrow">THÔNG TIN BỔ SUNG</p>
-            <h2>Chỉ Số Vận Hành</h2>
-            <dl>
-              <div>
-                <dt>Tổng tài khoản</dt>
-                <dd>{count(data?.totalUsers)}</dd>
-              </div>
-              {[
-                "Giá trị tồn kho",
-                "Biên lợi nhuận",
-                "SLA",
-                "Khách hàng VIP",
-                "Tỷ lệ mua lại",
-                "Phân bổ Hub",
-              ].map((label) => (
-                <div key={label}>
-                  <dt>{label}</dt>
-                  <dd>Chưa có dữ liệu</dd>
-                </div>
-              ))}
-            </dl>
-          </section>
         </>
       )}
     </div>
