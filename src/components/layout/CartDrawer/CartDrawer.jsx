@@ -94,8 +94,12 @@ export function CartDrawer() {
               return (
                 <div key={itemId} className="cart-item">
                   <img
-                    src={product.image}
+                    src={product.image || 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=300&q=80'}
                     alt={product.name}
+                    onError={(e) => {
+                      e.currentTarget.onerror = null;
+                      e.currentTarget.src = 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=300&q=80';
+                    }}
                     className="cart-item-image"
                   />
                   <div className="cart-item-details">

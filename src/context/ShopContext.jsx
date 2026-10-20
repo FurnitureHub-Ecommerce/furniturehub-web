@@ -126,24 +126,51 @@ export function ShopProvider({ children }) {
       const detailed = [];
 
       rawList.forEach((item) => {
-        const p = typeof item.productId === 'object' && item.productId !== null ? item.productId : null;
-        const pId = p ? (p._id || p.id) : item.productId;
+        const p =
+          typeof item.productId === 'object' && item.productId !== null
+            ? item.productId
+            : typeof item.product === 'object' && item.product !== null
+            ? item.product
+            : typeof item === 'object' && item !== null && (item.name || item._id)
+            ? item
+            : null;
+
+        const pId = p ? (p._id || p.id) : (item.productId || item.product || item._id || item.id);
+        const price =
+          item.product?.price ||
+          item.product?.minPrice ||
+          item.productId?.price ||
+          item.productId?.minPrice ||
+          item.price ||
+          item.minPrice ||
+          p?.price ||
+          p?.minPrice ||
+          0;
+
+        const name = p?.name || item.product?.name || item.productId?.name || item.name || 'Sản phẩm nội thất';
+        const image =
+          p?.images?.[0] ||
+          p?.image ||
+          item.product?.images?.[0] ||
+          item.product?.image ||
+          item.images?.[0] ||
+          item.image ||
+          'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=600&q=80';
+
         if (pId) {
           ids.push(String(pId));
-          if (p) {
-            detailed.push({
-              id: p._id || p.id,
-              _id: p._id || p.id,
-              name: p.name || 'Sản phẩm',
-              price: p.minPrice || p.price || 0,
-              image: p.images?.[0] || p.image || '',
-              description: p.description || '',
-              slug: p.slug || p._id || p.id,
-              variantLabel: 'Bộ sưu tập độc bản',
-              rating: 4.9,
-              reviewCount: 18,
-            });
-          }
+          detailed.push({
+            id: String(pId),
+            _id: String(pId),
+            name,
+            price: Number(price) || 0,
+            image,
+            description: p?.description || item.description || '',
+            slug: p?.slug || item.slug || String(pId),
+            variantLabel: 'Bộ sưu tập độc bản',
+            rating: 4.9,
+            reviewCount: 18,
+          });
         }
       });
 

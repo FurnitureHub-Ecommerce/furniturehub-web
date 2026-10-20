@@ -36,11 +36,25 @@ export function ProductShowcase({
 
   const allProducts = rawProducts;
 
-  // Lọc sản phẩm theo tab (nếu sản phẩm từ BE có phân loại tab, không thì hiển thị tất cả)
-  const filteredProducts = allProducts.filter((p) => {
-    if (!p.tab) return true;
-    return p.tab === activeTab;
-  });
+  // Lọc và sắp xếp sản phẩm theo tab (nếu sản phẩm từ BE có phân loại tab thì lọc, hoặc sắp xếp theo tiêu chí)
+  const filteredProducts = [...allProducts]
+    .filter((p) => {
+      if (p.tab) return p.tab === activeTab;
+      return true;
+    })
+    .sort((a, b) => {
+      if (activeTab === 'new-arrivals') {
+        if (a.isNew && !b.isNew) return -1;
+        if (!a.isNew && b.isNew) return 1;
+        return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
+      }
+      if (activeTab === 'best-sellers') {
+        const scoreA = (a.soldCount || 0) * 10 + (a.rating || 0);
+        const scoreB = (b.soldCount || 0) * 10 + (b.rating || 0);
+        return scoreB - scoreA;
+      }
+      return 0;
+    });
 
   // Tự động xoay vòng sản phẩm mỗi 4.5 giây
   useEffect(() => {

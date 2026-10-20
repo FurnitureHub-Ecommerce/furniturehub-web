@@ -56,8 +56,12 @@ export function QuickViewModal() {
 
         <div className="quickview-gallery">
           <img
-            src={quickViewProduct.image}
+            src={quickViewProduct.image || 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=800&q=80'}
             alt={quickViewProduct.name}
+            onError={(e) => {
+              e.currentTarget.onerror = null;
+              e.currentTarget.src = 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=800&q=80';
+            }}
             className="quickview-main-img"
           />
         </div>

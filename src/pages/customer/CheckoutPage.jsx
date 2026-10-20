@@ -279,7 +279,7 @@ export default function CheckoutPage() {
           </Link>
         </div>
         <div className="checkout-header__titles">
-          <span className="checkout-badge">SECURE WHITE-GLOVE CHECKOUT</span>
+          <span className="checkout-badge">TIÊU CHUẨN GIAO HÀNG WHITE-GLOVE</span>
           <h1 className="checkout-title">Xác Nhận & Thanh Toán Đơn Hàng</h1>
           <p className="checkout-subtitle">
             Hoàn tất các bước dưới đây để chúng tôi chuẩn bị chế tác và giao nhận sản phẩm tận nhà quý khách.
@@ -500,7 +500,7 @@ export default function CheckoutPage() {
               <div className="checkout-summary-row">
                 <span className="flex items-center gap-1">
                   Vận chuyển White-Glove
-                  <span className="checkout-pill">VIP</span>
+                  <span className="checkout-pill">CAO CẤP</span>
                 </span>
                 <span className="text-emerald-700 font-semibold">Miễn phí</span>
               </div>
@@ -583,8 +583,14 @@ export default function CheckoutPage() {
                   src={`https://img.vietqr.io/image/MB-0912345678-compact2.png?amount=${
                     createdOrder.totalAmount || finalAmount
                   }&addInfo=DH${(createdOrder._id || "").slice(-6).toUpperCase()}&accountName=CONG%20TY%20NOI%20THAT%20LUMORA`}
-                  alt="VietQR Code"
+                  alt="Mã thanh toán VietQR"
                   className="vietqr-card__img"
+                  onError={(e) => {
+                    e.currentTarget.onerror = null;
+                    e.currentTarget.src =
+                      "https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=" +
+                      encodeURIComponent(`https://lumora.vn/pay/${createdOrder._id || ""}`);
+                  }}
                 />
                 <span className="vietqr-card__hint">
                   Quét bằng ứng dụng ngân hàng hoặc VNPAY
