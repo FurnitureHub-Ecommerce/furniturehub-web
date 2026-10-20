@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, ChevronLeft, ChevronRight, Sparkles, TreeDeciduous, Truck, ShieldCheck, Leaf } from 'lucide-react';
 import { HERO_BANNERS, USP_ITEMS } from '../../../data/lumoraData';

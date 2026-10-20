@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { 
   Heart, ShoppingBag, Star, ShieldCheck, Truck, 
-  ChevronRight, ZoomIn, AlertTriangle, Award, Wifi, ArrowLeft,
+  ChevronRight, ZoomIn, AlertTriangle, Award, ArrowLeft,
   Sparkles, Edit3, CheckCircle2
 } from 'lucide-react';
 import { productAPI, reviewAPI } from '../../services/api';
@@ -268,11 +268,6 @@ export function ProductDetailPage() {
             <ChevronRight size={12} />
             <span className="text-stone-900 font-medium truncate max-w-xs">{product.name}</span>
           </nav>
-
-          <div className="flex items-center gap-1.5 px-3 py-1 bg-white border border-stone-200 rounded-full shadow-xs text-[11px] font-medium text-emerald-800 bg-emerald-50">
-            <Wifi size={13} className="text-emerald-600" />
-            <span>Đồng bộ API Live</span>
-          </div>
         </div>
 
         {/* Product Main Section (2 Columns) */}
@@ -283,8 +278,12 @@ export function ProductDetailPage() {
             <div className="lg:col-span-7 space-y-4">
               <div className="relative aspect-[4/3] w-full rounded-2xl overflow-hidden bg-stone-100 border border-stone-200/60 group">
                 <img
-                  src={selectedImage || product.gallery?.[0] || product.image}
+                  src={selectedImage || product.gallery?.[0] || product.image || 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=1000&q=85'}
                   alt={product.name}
+                  onError={(e) => {
+                    e.currentTarget.onerror = null;
+                    e.currentTarget.src = 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=1000&q=85';
+                  }}
                   className="w-full h-full object-cover object-center transition-transform duration-500 group-hover:scale-105"
                 />
                 
@@ -317,7 +316,15 @@ export function ProductDetailPage() {
                           : 'border-stone-200 opacity-70 hover:opacity-100'
                       }`}
                     >
-                      <img src={imgUrl} alt={`Thumbnail ${index + 1}`} className="w-full h-full object-cover" />
+                      <img
+                        src={imgUrl}
+                        alt={`Thumbnail ${index + 1}`}
+                        onError={(e) => {
+                          e.currentTarget.onerror = null;
+                          e.currentTarget.src = 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=200&q=80';
+                        }}
+                        className="w-full h-full object-cover"
+                      />
                     </button>
                   ))}
                 </div>
@@ -398,9 +405,16 @@ export function ProductDetailPage() {
                     <label className="text-xs font-bold uppercase tracking-wider text-stone-800">
                       Chọn Biến Thể / Phiên Bản:
                     </label>
-                    <span className="text-xs text-stone-500">
-                      Tồn kho: <strong className="text-emerald-700">{currentStock} cái</strong>
-                    </span>
+                    {currentStock > 0 ? (
+                      <span className="text-xs font-medium text-emerald-700 flex items-center gap-1.5">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block"></span>
+                        Còn hàng
+                      </span>
+                    ) : (
+                      <span className="text-xs font-medium text-rose-600">
+                        Hết hàng
+                      </span>
+                    )}
                   </div>
 
                   <div className="grid grid-cols-1 gap-2">
@@ -430,9 +444,15 @@ export function ProductDetailPage() {
                             <span className="text-xs font-bold text-amber-900">
                               {formatPrice(v.price)}
                             </span>
-                            <span className="block text-[10px] text-stone-400">
-                              Còn {v.availableStock}
-                            </span>
+                            {v.availableStock > 0 ? (
+                              <span className="block text-[10px] text-emerald-600 font-medium">
+                                Còn hàng
+                              </span>
+                            ) : (
+                              <span className="block text-[10px] text-rose-500 font-medium">
+                                Hết hàng
+                              </span>
+                            )}
                           </div>
                         </button>
                       );

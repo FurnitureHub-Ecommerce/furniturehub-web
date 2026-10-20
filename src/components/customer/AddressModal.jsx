@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState } from "react";
 import { X, MapPin, User, Phone, Home, Check, AlertCircle } from "lucide-react";
 import { addressAPI, getApiErrorMessage } from "../../services/api";
 import "./AddressModal.css";
@@ -22,40 +22,31 @@ export default function AddressModal({
   addressToEdit = null,
   onSuccess,
 }) {
-  const [formData, setFormData] = useState({
-    receiverName: "",
-    phone: "",
-    addressLine: "",
-    ward: "",
-    city: "Hồ Chí Minh",
-    isDefault: false,
-  });
+  const currentEditId = addressToEdit?._id || addressToEdit?.id || null;
+  const [prevAddressId, setPrevAddressId] = useState(currentEditId);
+  const [formData, setFormData] = useState(() => ({
+    receiverName: addressToEdit?.receiverName || "",
+    phone: addressToEdit?.phone || "",
+    addressLine: addressToEdit?.addressLine || "",
+    ward: addressToEdit?.ward || "",
+    city: addressToEdit?.city || "Hồ Chí Minh",
+    isDefault: Boolean(addressToEdit?.isDefault),
+  }));
+
+  if (currentEditId !== prevAddressId) {
+    setPrevAddressId(currentEditId);
+    setFormData({
+      receiverName: addressToEdit?.receiverName || "",
+      phone: addressToEdit?.phone || "",
+      addressLine: addressToEdit?.addressLine || "",
+      ward: addressToEdit?.ward || "",
+      city: addressToEdit?.city || "Hồ Chí Minh",
+      isDefault: Boolean(addressToEdit?.isDefault),
+    });
+  }
 
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
-
-  useEffect(() => {
-    if (addressToEdit) {
-      setFormData({
-        receiverName: addressToEdit.receiverName || "",
-        phone: addressToEdit.phone || "",
-        addressLine: addressToEdit.addressLine || "",
-        ward: addressToEdit.ward || "",
-        city: addressToEdit.city || "Hồ Chí Minh",
-        isDefault: Boolean(addressToEdit.isDefault),
-      });
-    } else {
-      setFormData({
-        receiverName: "",
-        phone: "",
-        addressLine: "",
-        ward: "",
-        city: "Hồ Chí Minh",
-        isDefault: false,
-      });
-    }
-    setError(null);
-  }, [addressToEdit, isOpen]);
 
   if (!isOpen) return null;
 
@@ -200,7 +191,8 @@ export default function AddressModal({
                   value={formData.receiverName}
                   onChange={handleChange}
                   required
-                  className="w-full pl-11 pr-4 py-2.5 text-sm bg-white border border-[#E2DBD0] rounded-lg text-[#252525] focus:outline-none focus:border-[#8A6A48] focus:ring-2 focus:ring-[#8A6A48]/20 transition-all box-border"
+                  style={{ paddingLeft: "3rem" }}
+                  className="w-full pl-12 pr-4 py-2.5 text-sm bg-white border border-[#E2DBD0] rounded-lg text-[#252525] focus:outline-none focus:border-[#8A6A48] focus:ring-2 focus:ring-[#8A6A48]/20 transition-all box-border"
                 />
               </div>
             </div>
@@ -219,7 +211,8 @@ export default function AddressModal({
                   value={formData.phone}
                   onChange={handleChange}
                   required
-                  className="w-full pl-11 pr-4 py-2.5 text-sm bg-white border border-[#E2DBD0] rounded-lg text-[#252525] focus:outline-none focus:border-[#8A6A48] focus:ring-2 focus:ring-[#8A6A48]/20 transition-all box-border"
+                  style={{ paddingLeft: "3rem" }}
+                  className="w-full pl-12 pr-4 py-2.5 text-sm bg-white border border-[#E2DBD0] rounded-lg text-[#252525] focus:outline-none focus:border-[#8A6A48] focus:ring-2 focus:ring-[#8A6A48]/20 transition-all box-border"
                 />
               </div>
             </div>
@@ -241,7 +234,8 @@ export default function AddressModal({
                   value={formData.city}
                   onChange={handleChange}
                   required
-                  className="w-full pl-11 pr-4 py-2.5 text-sm bg-white border border-[#E2DBD0] rounded-lg text-[#252525] focus:outline-none focus:border-[#8A6A48] focus:ring-2 focus:ring-[#8A6A48]/20 transition-all box-border"
+                  style={{ paddingLeft: "3rem" }}
+                  className="w-full pl-12 pr-4 py-2.5 text-sm bg-white border border-[#E2DBD0] rounded-lg text-[#252525] focus:outline-none focus:border-[#8A6A48] focus:ring-2 focus:ring-[#8A6A48]/20 transition-all box-border"
                 />
                 <datalist id="city-suggestions">
                   {POPULAR_CITIES.map((c) => (
@@ -265,7 +259,8 @@ export default function AddressModal({
                   value={formData.ward}
                   onChange={handleChange}
                   required
-                  className="w-full pl-11 pr-4 py-2.5 text-sm bg-white border border-[#E2DBD0] rounded-lg text-[#252525] focus:outline-none focus:border-[#8A6A48] focus:ring-2 focus:ring-[#8A6A48]/20 transition-all box-border"
+                  style={{ paddingLeft: "3rem" }}
+                  className="w-full pl-12 pr-4 py-2.5 text-sm bg-white border border-[#E2DBD0] rounded-lg text-[#252525] focus:outline-none focus:border-[#8A6A48] focus:ring-2 focus:ring-[#8A6A48]/20 transition-all box-border"
                 />
               </div>
             </div>

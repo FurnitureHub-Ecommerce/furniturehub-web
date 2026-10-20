@@ -4,6 +4,7 @@
    ============================================================ */
 
 .checkout-page {
+  font-family: var(--font-sans, 'Plus Jakarta Sans', 'Inter', sans-serif);
   padding-top: 2rem;
   padding-bottom: 6rem;
   max-width: 1240px;

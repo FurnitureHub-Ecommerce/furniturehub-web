@@ -41,7 +41,14 @@ export function ProductListPage() {
   const [brandsData, setBrandsData] = useState([]);
 
   // Filter States
-  const [selectedCategories, setSelectedCategories] = useState([]);
+  const targetCategory = categoryIdFromUrl || searchParams.get('category') || null;
+  const [prevCategoryParam, setPrevCategoryParam] = useState(targetCategory);
+  const [selectedCategories, setSelectedCategories] = useState(() => targetCategory ? [targetCategory] : []);
+
+  if (targetCategory !== prevCategoryParam) {
+    setPrevCategoryParam(targetCategory);
+    setSelectedCategories(targetCategory ? [targetCategory] : []);
+  }
   const [selectedBrands, setSelectedBrands] = useState([]);
   const [priceRange, setPriceRange] = useState({ min: 0, max: 50000000 });
   const [onlyInStock, setOnlyInStock] = useState(false);
@@ -105,7 +112,8 @@ export function ProductListPage() {
     };
   };
 
-  // Fetch Data 100% from Backend API
+  const [reloadKey, setReloadKey] = useState(0);
+
   const loadData = useCallback(async () => {
     setIsLoading(true);
     setApiError(null);
@@ -175,7 +183,12 @@ export function ProductListPage() {
 
   useEffect(() => {
     loadData();
-  }, [loadData]);
+  }, [loadData, reloadKey]);
+
+  const handleRefresh = () => {
+    setIsLoading(true);
+    setReloadKey((prev) => prev + 1);
+  };
 
   useEffect(() => {
     if (categoryIdFromUrl) {
@@ -343,7 +356,7 @@ export function ProductListPage() {
               <span className="leading-normal">{apiError}</span>
             </div>
             <button
-              onClick={loadData}
+              onClick={handleRefresh}
               className="inline-flex items-center gap-2 px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold rounded-lg transition-colors"
             >
               <RefreshCw size={14} />

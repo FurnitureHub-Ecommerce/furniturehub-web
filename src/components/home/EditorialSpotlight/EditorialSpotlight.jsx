@@ -169,7 +169,15 @@ export function EditorialSpotlight() {
                 /* Active Highlighted Product Card */
                 <div className="hotspot-featured-card">
                   <div className="hotspot-featured-card__image-wrap">
-                    <img src={activeItem.image} alt={activeItem.name} />
+                    <img
+                      src={activeItem.image}
+                      alt={activeItem.name}
+                      onError={(e) => {
+                        e.currentTarget.onerror = null;
+                        e.currentTarget.src =
+                          'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=800&q=80';
+                      }}
+                    />
                   </div>
                   <div className="hotspot-featured-card__details">
                     <span className="hotspot-featured-card__category">{activeItem.category}</span>
@@ -216,7 +224,16 @@ export function EditorialSpotlight() {
                               onClick={() => setActiveProductId(spot.id)}
                               type="button"
                             >
-                              <img src={spot.image} alt={spot.name} className="hotspot-list-thumb" />
+                              <img
+                                src={spot.image}
+                                alt={spot.name}
+                                className="hotspot-list-thumb"
+                                onError={(e) => {
+                                  e.currentTarget.onerror = null;
+                                  e.currentTarget.src =
+                                    'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=400&q=80';
+                                }}
+                              />
                               <div className="hotspot-list-info">
                                 <span className="hotspot-list-name">{spot.name}</span>
                                 <span className="hotspot-list-material">{spot.material}</span>
