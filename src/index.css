@@ -96,7 +96,7 @@ html {
 }
 
 body {
-  font-family: var(--font-sans);
+  font-family: 'CustomFont', sans-serif;
   font-size: 16px;
   font-weight: 400;
   color: var(--lumora-text-main);
@@ -283,4 +283,12 @@ main {
   100% {
     background-position: 200% 0;
   }
+}
+
+@font-face {
+  font-family: 'CustomFont'; /* Đặt tên tùy ý cho font của bạn */
+  src: url('./assets/fonts/TenFont.woff2') format('woff2'),
+       url('./assets/fonts/TenFont.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
 }
