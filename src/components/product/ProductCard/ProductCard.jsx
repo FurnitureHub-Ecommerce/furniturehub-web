@@ -52,13 +52,13 @@ function ProductCard({ product }) {
         )}
 
         {/* Hover action buttons */}
-        <div className="product-card__actions" role="group" aria-label="Quick actions">
+        <div className="product-card__actions" role="group" aria-label="Thao tác nhanh">
           <button
             id={`add-to-cart-${id}`}
             className="product-card__action-btn"
             type="button"
-            aria-label={`Add ${name} to cart`}
-            title="Add to cart"
+            aria-label={`Thêm ${name} vào giỏ hàng`}
+            title="Thêm vào giỏ hàng"
           >
             <ShoppingCart size={15} strokeWidth={1.5} />
           </button>
@@ -66,8 +66,8 @@ function ProductCard({ product }) {
             id={`wishlist-${id}`}
             className="product-card__action-btn"
             type="button"
-            aria-label={`Add ${name} to wishlist`}
-            title="Add to wishlist"
+            aria-label={`Lưu ${name} vào yêu thích`}
+            title="Lưu yêu thích"
           >
             <Heart size={15} strokeWidth={1.5} fill="none" />
           </button>
@@ -75,8 +75,8 @@ function ProductCard({ product }) {
             id={`quick-view-${id}`}
             className="product-card__action-btn"
             type="button"
-            aria-label={`Quick view ${name}`}
-            title="Quick view"
+            aria-label={`Xem nhanh ${name}`}
+            title="Xem nhanh"
           >
             <Eye size={15} strokeWidth={1.5} />
           </button>

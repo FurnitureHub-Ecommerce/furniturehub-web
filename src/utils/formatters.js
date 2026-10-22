@@ -25,11 +25,21 @@ export const CATEGORY_MAP = {
   'Dining Room': 'Phòng ăn',
   'Bedroom': 'Phòng ngủ',
   'Lighting & Decor': 'Đèn & Trang trí',
+  'Studio & Office': 'Phòng làm việc',
+  'Outdoor Living': 'Ngoại thất & Sân vườn',
+  // Slug mappings
+  'living-room': 'Phòng khách',
+  'dining-room': 'Phòng ăn',
+  'bedroom': 'Phòng ngủ',
+  'lighting-decor': 'Đèn & Trang trí',
+  'studio-office': 'Phòng làm việc',
+  'outdoor-living': 'Ngoại thất',
+  'wabi-sabi': 'Phòng khách Wabi-Sabi',
 };
 
 export function formatCategoryName(name) {
-  if (!name) return 'Nội thất';
-  return CATEGORY_MAP[name] || name;
+  if (!name) return '';
+  return CATEGORY_MAP[name] || CATEGORY_MAP[name.toLowerCase()] || name;
 }
 
 // Media mapping to ensure accurate product imagery

@@ -1,22 +1,19 @@
-import React, { useState, useEffect } from "react";
-import { Link, useLocation, useSearchParams, useNavigate, useParams } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { Link, useLocation, useSearchParams, useParams } from "react-router-dom";
 import {
   CheckCircle2,
   Package,
   MapPin,
-  Calendar,
   CreditCard,
   Truck,
-  ArrowRight,
   ShoppingBag,
-  Clock,
   ShieldCheck,
   PhoneCall,
   QrCode,
   Copy,
   Check,
 } from "lucide-react";
-import { orderAPI, paymentAPI, getApiErrorMessage } from "../../services/api";
+import { orderAPI, paymentAPI } from "../../services/api";
 import { formatCurrency } from "../../utils/formatters";
 import "./PaymentResult.css";
 
@@ -26,7 +23,6 @@ export default function PaymentSuccessPage() {
   const [searchParams] = useSearchParams();
   const { orderId: paramOrderId } = useParams();
   const location = useLocation();
-  const navigate = useNavigate();
 
   const queryOrderId = searchParams.get("orderId") || paramOrderId;
   const queryMethod = searchParams.get("method");
@@ -34,7 +30,6 @@ export default function PaymentSuccessPage() {
   const [order, setOrder] = useState(location.state?.order || null);
   const [payment, setPayment] = useState(location.state?.payment || null);
   const [isLoading, setIsLoading] = useState(!location.state?.order && Boolean(queryOrderId));
-  const [error, setError] = useState(null);
   const [copiedField, setCopiedField] = useState(null);
 
   const orderId = order?._id || order?.id || queryOrderId;
@@ -85,7 +80,6 @@ export default function PaymentSuccessPage() {
   };
 
   const shipping = order?.shippingAddress || {};
-  const items = order?.items || [];
   const totalAmount = order?.totalAmount ?? order?.subtotal ?? 0;
 
   return (

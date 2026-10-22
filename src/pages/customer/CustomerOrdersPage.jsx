@@ -20,7 +20,6 @@ import OrderDetailModal from "../../components/order/OrderDetailModal/OrderDetai
 import CancelOrderModal from "../../components/order/CancelOrderModal/CancelOrderModal";
 import OrderTrackingTimeline from "../../components/customer/OrderTrackingTimeline";
 import OrderTrackingModal from "../../components/customer/OrderTrackingModal";
-import QuickOrderTrack from "../../components/customer/QuickOrderTrack";
 import "./CustomerOrders.css";
 
 const FALLBACK_PRODUCT_IMAGE =
@@ -34,6 +33,7 @@ export default function CustomerOrdersPage() {
 
   const [orders, setOrders] = useState([]);
   const [activeTab, setActiveTab] = useState("all");
+  const [timeFilter, setTimeFilter] = useState("all");
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -203,9 +203,37 @@ export default function CustomerOrdersPage() {
   }, [orders]);
 
   const filteredOrders = useMemo(() => {
-    if (activeTab === "all") return orders;
-    return orders.filter((o) => o.status === activeTab);
-  }, [orders, activeTab]);
+    let result = orders;
+
+    if (activeTab !== "all") {
+      result = result.filter((o) => o.status === activeTab);
+    }
+
+    if (timeFilter !== "all") {
+      const now = new Date();
+      result = result.filter((o) => {
+        if (!o.createdAt) return true;
+        const orderDate = new Date(o.createdAt);
+        if (isNaN(orderDate.getTime())) return true;
+
+        if (timeFilter === "30days") {
+          const thirtyDaysAgo = new Date();
+          thirtyDaysAgo.setDate(now.getDate() - 30);
+          return orderDate >= thirtyDaysAgo;
+        } else if (timeFilter === "6months") {
+          const sixMonthsAgo = new Date();
+          sixMonthsAgo.setMonth(now.getMonth() - 6);
+          return orderDate >= sixMonthsAgo;
+        } else if (timeFilter === "thisYear") {
+          const startOfYear = new Date(now.getFullYear(), 0, 1);
+          return orderDate >= startOfYear;
+        }
+        return true;
+      });
+    }
+
+    return result;
+  }, [orders, activeTab, timeFilter]);
 
   return (
     <div className="section container customer-orders-page">
@@ -227,67 +255,101 @@ export default function CustomerOrdersPage() {
         </p>
       </div>
 
-      {/* Task 6: Tra Cứu Tiến Độ Đơn Hàng Nhanh (Quick Track) */}
-      <QuickOrderTrack
-        onViewOrderDetail={(id) => handleOpenDetail({ _id: id })}
-      />
+      {/* Filter Toolbar: Status Tabs & Time Filter */}
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          flexWrap: "wrap",
+          gap: "16px",
+          marginBottom: "24px",
+        }}
+      >
+        {/* Tabs Filter */}
+        <div className="orders-tabs" role="tablist" style={{ margin: 0 }}>
+          <button
+            type="button"
+            className={`orders-tab ${
+              activeTab === "all" ? "orders-tab--active" : ""
+            }`}
+            onClick={() => setActiveTab("all")}
+          >
+            Tất cả ({tabCounts.all})
+          </button>
+          <button
+            type="button"
+            className={`orders-tab ${
+              activeTab === "pending" ? "orders-tab--active" : ""
+            }`}
+            onClick={() => setActiveTab("pending")}
+          >
+            Chờ xác nhận ({tabCounts.pending})
+          </button>
+          <button
+            type="button"
+            className={`orders-tab ${
+              activeTab === "confirmed" ? "orders-tab--active" : ""
+            }`}
+            onClick={() => setActiveTab("confirmed")}
+          >
+            Đã xác nhận ({tabCounts.confirmed})
+          </button>
+          <button
+            type="button"
+            className={`orders-tab ${
+              activeTab === "shipping" ? "orders-tab--active" : ""
+            }`}
+            onClick={() => setActiveTab("shipping")}
+          >
+            Đang vận chuyển ({tabCounts.shipping})
+          </button>
+          <button
+            type="button"
+            className={`orders-tab ${
+              activeTab === "delivered" ? "orders-tab--active" : ""
+            }`}
+            onClick={() => setActiveTab("delivered")}
+          >
+            Đã giao hàng ({tabCounts.delivered})
+          </button>
+          <button
+            type="button"
+            className={`orders-tab ${
+              activeTab === "cancelled" ? "orders-tab--active" : ""
+            }`}
+            onClick={() => setActiveTab("cancelled")}
+          >
+            Đã hủy ({tabCounts.cancelled})
+          </button>
+        </div>
 
-      {/* Tabs Filter */}
-      <div className="orders-tabs" role="tablist">
-        <button
-          type="button"
-          className={`orders-tab ${
-            activeTab === "all" ? "orders-tab--active" : ""
-          }`}
-          onClick={() => setActiveTab("all")}
-        >
-          Tất cả ({tabCounts.all})
-        </button>
-        <button
-          type="button"
-          className={`orders-tab ${
-            activeTab === "pending" ? "orders-tab--active" : ""
-          }`}
-          onClick={() => setActiveTab("pending")}
-        >
-          Chờ xác nhận ({tabCounts.pending})
-        </button>
-        <button
-          type="button"
-          className={`orders-tab ${
-            activeTab === "confirmed" ? "orders-tab--active" : ""
-          }`}
-          onClick={() => setActiveTab("confirmed")}
-        >
-          Đã xác nhận ({tabCounts.confirmed})
-        </button>
-        <button
-          type="button"
-          className={`orders-tab ${
-            activeTab === "shipping" ? "orders-tab--active" : ""
-          }`}
-          onClick={() => setActiveTab("shipping")}
-        >
-          Đang vận chuyển ({tabCounts.shipping})
-        </button>
-        <button
-          type="button"
-          className={`orders-tab ${
-            activeTab === "delivered" ? "orders-tab--active" : ""
-          }`}
-          onClick={() => setActiveTab("delivered")}
-        >
-          Đã giao hàng ({tabCounts.delivered})
-        </button>
-        <button
-          type="button"
-          className={`orders-tab ${
-            activeTab === "cancelled" ? "orders-tab--active" : ""
-          }`}
-          onClick={() => setActiveTab("cancelled")}
-        >
-          Đã hủy ({tabCounts.cancelled})
-        </button>
+        {/* Time Filter Select */}
+        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+          <span style={{ fontSize: "0.85rem", color: "var(--lumora-text-muted)", fontWeight: 500 }}>
+            Thời gian:
+          </span>
+          <select
+            value={timeFilter}
+            onChange={(e) => setTimeFilter(e.target.value)}
+            style={{
+              padding: "8px 12px",
+              borderRadius: "8px",
+              border: "1px solid var(--lumora-border)",
+              backgroundColor: "#fff",
+              fontSize: "0.85rem",
+              color: "var(--lumora-text-main)",
+              cursor: "pointer",
+              outline: "none",
+            }}
+            aria-label="Lọc đơn hàng theo thời gian"
+          >
+            <option value="all">Tất cả thời gian</option>
+            <option value="30days">30 ngày gần đây</option>
+            <option value="6months">6 tháng gần đây</option>
+            <option value="thisYear">Năm nay</option>
+          </select>
+        </div>
       </div>
 
       {/* Error alert with retry */}
