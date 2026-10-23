@@ -59,14 +59,14 @@ export default function VariantDialog({ variant, products, onClose, onSaved }) {
   return <dialog ref={dialog} className="lv-variant-dialog" aria-labelledby="lv-dialog-title"
     onCancel={event => { event.preventDefault(); if (!submitting.current) onClose(); }}>
     <form onSubmit={submit} aria-busy={loading || saving}>
-      <header><h2 id="lv-dialog-title">{id ? "Chỉnh sửa Variant" : "Thêm Variant mới"}</h2><button type="button" disabled={saving} onClick={onClose}>Đóng</button></header>
-      {loading ? <p role="status">Đang tải chi tiết Variant…</p> : loadFailed ? <div><p className="lv-action-error" role="alert">{error}</p><button type="button" onClick={retry}>Thử lại</button></div> : <>
+      <header><h2 id="lv-dialog-title">{id ? "Chỉnh sửa sản phẩm" : "Thêm sản phẩm mới"}</h2><button type="button" disabled={saving} onClick={onClose}>X</button></header>
+      {loading ? <p role="status">Đang tải chi tiết sản phẩm…</p> : loadFailed ? <div><p className="lv-action-error" role="alert">{error}</p><button type="button" onClick={retry}>Thử lại</button></div> : <>
         {id ? <p>Sản phẩm: <strong>{variant.product?.name || variant.productId}</strong></p> : <label>Sản phẩm *<select required disabled={saving} value={form.productId} onChange={event => update("productId", event.target.value)}><option value="">Chọn sản phẩm</option>{options.map(product => <option key={entityId(product)} value={entityId(product)}>{product.name || entityId(product)}{product.isActive === false ? " (tạm ngừng)" : ""}</option>)}</select></label>}
         <label>SKU *<input autoFocus required disabled={saving} value={form.sku} onChange={event => update("sku", event.target.value)} /></label>
         <label>Giá *<input type="number" min="0" step="any" required disabled={saving} value={form.price} onChange={event => update("price", event.target.value)} /></label>
         {[["color", "Màu sắc"], ["size", "Kích thước"], ["material", "Chất liệu"]].map(([field, label]) => <label key={field}>{label}<input disabled={saving} value={form[field]} onChange={event => update(field, event.target.value)} /></label>)}
         {error && <p className="lv-action-error" role="alert">{error}</p>}
-        <footer><button type="button" disabled={saving} onClick={onClose}>Hủy</button><button type="submit" className="lv-primary" disabled={saving || (!id && !options.length)}>{saving ? "Đang lưu…" : "Lưu Variant"}</button></footer>
+        <footer><button type="button" disabled={saving} onClick={onClose}>Hủy</button><button type="submit" className="lv-primary" disabled={saving || (!id && !options.length)}>{saving ? "Đang lưu…" : "Lưu"}</button></footer>
       </>}
     </form>
   </dialog>;

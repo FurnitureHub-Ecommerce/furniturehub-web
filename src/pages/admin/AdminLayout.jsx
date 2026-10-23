@@ -18,21 +18,21 @@ import "./AdminLayout.css";
 
 const navigation = [
   {
-    label: "TỔNG QUAN",
+    label: "Tổng quan",
     items: [[LayoutDashboard, "Bảng điều khiển ", "/admin/dashboard"]],
   },
   {
-    label: "NGƯỜI DÙNG",
-    items: [[Users, "Quản Lý Người Dùng", "/admin/users"]],
+    label: "Tài khoản",
+    items: [[Users, "Tài khoản người dùng", "/admin/users"]],
   },
   {
-    label: "QUẢN TRỊ DANH MỤC ",
+    label: "Hệ thống sản phẩm ",
     items: [
-      [Sofa, "Quản Lý Sản Phẩm", "/admin/catalog"],
-      [SlidersHorizontal, "Biến Thể & SKU", "/admin/variants"],
-      [Folder, "Danh Mục & Bộ Sưu Tập", "/admin/categories"],
-      [DraftingCompass, "Thương Hiệu & Xưởng Atelier", "/admin/brands"],
-      [ChartNoAxesCombined, "Giám Sát Đơn Hàng & Tồn Kho", "/admin/monitoring"],
+      [Sofa, "Quản lý sản phẩm", "/admin/catalog"],
+      [SlidersHorizontal, "Quản lý SKU", "/admin/variants"],
+      [Folder, "Danh mục sản phẩm", "/admin/categories"],
+      [DraftingCompass, "Quản lý thương hiệu", "/admin/brands"],
+      [ChartNoAxesCombined, "Quản lý đơn hàng & tồn kho", "/admin/monitoring"],
     ],
   },
 ];
@@ -169,7 +169,7 @@ export default function AdminLayout() {
         {/* Navigation Links */}
         <nav className="la-nav-container" aria-label="Các trang quản trị">
           {navigation.map((group) => (
-            <div className="la-nav-group" key={group.label}>
+            <div className="la-nav-group" key={group.label} style={{ fontFamily: "Be Vietnam Pro, Segoe UI, sans-serif" }}>
               <p className="la-nav-group-title">{group.label}</p>
               <div className="la-nav-items">
                 {group.items.map(([Icon, label, to]) => (
@@ -183,9 +183,6 @@ export default function AdminLayout() {
                       if (open) closeMenu();
                     }}
                   >
-                    <span className="la-nav-icon-wrap">
-                      <Icon size={16} strokeWidth={1.8} />
-                    </span>
                     <span className="la-nav-label">{label}</span>
                   </NavLink>
                 ))}
@@ -198,7 +195,7 @@ export default function AdminLayout() {
         <div className="la-sidebar-footer" ref={dropdownRef}>
           {showDropdown && (
             <div className="la-profile-popup-menu">
-              <button
+              {/* <button
                 type="button"
                 onClick={() => {
                   setShowDropdown(false);
@@ -206,7 +203,7 @@ export default function AdminLayout() {
                 }}
               >
                 <Settings size={15} /> Cài Đặt Hệ Thống
-              </button>
+              </button> */}
               <button
                 type="button"
                 className="la-logout-option"
