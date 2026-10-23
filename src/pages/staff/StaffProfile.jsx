@@ -43,12 +43,13 @@ const StaffProfile = () => {
           <div style={{
             width: "72px", height: "72px", borderRadius: "50%", background: "#111827", color: "#fff",
             display: "flex", alignItems: "center", justifyContent: "center", fontSize: "28px", fontWeight: 700,
-            boxShadow: "0 4px 10px rgba(0,0,0,0.1)"
+            boxShadow: "0 4px 10px rgba(0,0,0,0.1)",
+           
           }}>
             {profile.fullName && profile.fullName !== "Chưa cập nhật" ? profile.fullName.charAt(0).toUpperCase() : "S"}
           </div>
           <div>
-            <h3 style={{ fontSize: "20px", fontWeight: 700, color: "#111827", margin: "0 0 6px 0" }}>{profile.fullName}</h3>
+            <h3 style={{ fontSize: "20px", fontWeight: 700, color: "#111827", margin: "0 0 6px 0", fontFamily: "math" }}>{profile.fullName}</h3>
             <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
               <span style={{ fontSize: "11px", fontWeight: 700, background: "#FEF3C7", color: "#92400E", padding: "3px 10px", borderRadius: "6px", textTransform: "uppercase" }}>
                 {profile.role}
@@ -94,7 +95,7 @@ const StaffProfile = () => {
               <Shield size={18} /> Quyền hạn hệ thống:
             </div>
             <div style={{ fontSize: "14px", fontWeight: 600, color: "#374151" }}>
-              Nhân viên vận hành đơn hàng (Staff)
+              Nhân viên vận hành đơn hàng
             </div>
           </div>
         </div>
