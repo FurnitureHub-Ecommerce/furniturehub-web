@@ -109,7 +109,7 @@ const Login = () => {
             <div className="auth-header">
               <h2
                 style={{
-                  fontFamily: "Bodoni Moda",
+                  fontFamily: "Bodoni Moda " ,
                   fontSize: "clamp(2rem, 2.5vw, 2.7rem)",
                   color: "#1a1a1a",
                   letterSpacing: "-0.02em",

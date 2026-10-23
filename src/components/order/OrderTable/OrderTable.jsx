@@ -7,6 +7,8 @@ const STATUS_TABS = [
   { key: "", label: "Tất cả" },
   { key: "pending", label: "Chờ xác nhận" },
   { key: "confirmed", label: "Đã xác nhận" },
+  { key: "shipping", label: "Đang giao" },
+  { key: "delivered", label: "Đã giao" },
   { key: "cancelled", label: "Đã hủy" },
   { key: "rejected", label: "Bị từ chối" },
 ];
@@ -26,24 +28,22 @@ const OrderTable = ({
 }) => {
   const [jumpPage, setJumpPage] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
-  const [dateFilter, setDateFilter] = useState("all"); // 'all' | 'today' | '7days' | '30days' | 'custom'
+  const [dateFilter, setDateFilter] = useState("all");
   const [customDate, setCustomDate] = useState("");
 
-  // Format VND
   const formatVND = (amount) =>
     new Intl.NumberFormat("vi-VN", {
       style: "currency",
       currency: "VND",
     }).format(amount);
 
-  // Short date
-  const formatDate = (iso) =>
+ const formatDate = (iso) =>
     new Date(iso).toLocaleDateString("vi-VN", {
       day: "2-digit",
       month: "2-digit",
+      year: "numeric",
     });
 
-  // Vietnamese status label
   const statusLabel = (s) =>
     ({
       pending: "Chờ xác nhận",
@@ -54,10 +54,8 @@ const OrderTable = ({
       rejected: "Bị từ chối",
     })[s] || s;
 
-  // Filter orders in current page by search term & date
   const filteredOrders = useMemo(() => {
     return orders.filter((order) => {
-      // 1. Search term (Mã đơn, Tên người nhận, SĐT)
       if (searchTerm.trim()) {
         const term = searchTerm.trim().toLowerCase();
         const idMatch = order._id.toLowerCase().includes(term);
@@ -73,7 +71,6 @@ const OrderTable = ({
         }
       }
 
-      // 2. Date filter (Ngày tạo)
       if (dateFilter !== "all") {
         const orderDate = new Date(order.createdAt);
         const now = new Date();
@@ -106,7 +103,6 @@ const OrderTable = ({
     });
   }, [orders, searchTerm, dateFilter, customDate]);
 
-  // Is searching for a 24-hex MongoDB ID that is missing from current page?
   const isLookingForObjectId = useMemo(() => {
     const term = searchTerm.trim();
     return /^[0-9a-fA-F]{24}$/.test(term) && filteredOrders.length === 0;
@@ -120,7 +116,6 @@ const OrderTable = ({
     setCustomDate("");
   };
 
-  // Generate pagination items with ellipses (Approach 1)
   const getPaginationItems = (current, total) => {
     if (total <= 5) {
       return Array.from({ length: total }, (_, i) => i + 1);
@@ -144,7 +139,6 @@ const OrderTable = ({
     return items;
   };
 
-  // Handle Quick Jump submission (Approach 2)
   const handleJumpSubmit = (e) => {
     e.preventDefault();
     const pageNum = parseInt(jumpPage, 10);
@@ -162,10 +156,9 @@ const OrderTable = ({
   return (
     <div className="order-table-wrapper">
       <div className="order-table-header">
-        {/* Top: Title & Status Tabs */}
         <div className="order-table-header__top">
           <div className="order-table-header__title-group">
-            <h3 style={{ fontSize: "24px", fontWeight: 700, color: "#111827", margin: 0,  fontFamily: "math" }}>Đơn Hàng Đang Hoạt Động</h3>
+            <h3 style={{ fontSize: "24px", fontWeight: 700, color: "#111827", margin: 0, fontFamily: "math" }}>Đơn Hàng Đang Hoạt Động</h3>
           </div>
 
           <div className="order-status-tabs" role="tablist">
@@ -184,9 +177,7 @@ const OrderTable = ({
           </div>
         </div>
 
-        {/* Toolbar: Universal Search & Date Filters */}
         <div className="order-table-toolbar">
-          {/* Universal Search (Mã đơn, Người nhận, SĐT) */}
           <div className="order-search-box">
             <Search size={14} />
             <input
@@ -208,7 +199,6 @@ const OrderTable = ({
             )}
           </div>
 
-          {/* Date Range Presets & Custom Picker */}
           <div className="order-date-filters">
             <select
               value={dateFilter}
@@ -247,7 +237,6 @@ const OrderTable = ({
         </div>
       </div>
 
-      {/* Global Lookup Hint if exact ID not found in current page */}
       {isLookingForObjectId && (
         <div className="lookup-global-hint">
           <span>
@@ -331,7 +320,6 @@ const OrderTable = ({
         </span>
 
         <div className="pagination-controls">
-          {/* Approach 1: Numbered pagination */}
           <div className="pagination">
             <button
               type="button"
@@ -373,7 +361,6 @@ const OrderTable = ({
             </button>
           </div>
 
-          {/* Approach 2: Quick Jump */}
           {totalPages > 1 && (
             <form onSubmit={handleJumpSubmit} className="page-jump-form">
               <span>Đến trang</span>

@@ -100,7 +100,7 @@ const StaffLayout = () => {
             <div className="settings-dropdown">
               <NavLink to="/staff/profile" onClick={() => setShowSettingsMenu(false)}>
                 <User size={16} />
-                Hồ Sơ & Thống Kê
+                Trang cá nhân
               </NavLink>
               <button onClick={handleLogout} className="logout-btn">
                 <LogOut size={16} />

@@ -112,7 +112,7 @@ const Register = () => {
               <h2 style={{ fontFamily: "Bodoni Moda", fontSize: 'clamp(2rem, 2.5vw, 2.7rem)', color: '#1a1a1a', letterSpacing: '-0.02em', fontWeight: 600 }}>
                 Đăng Ký Tài Khoản
               </h2>
-              <p>Chỉ dành cho Khách hàng (Customer). Tài khoản quản trị/nhân viên do Admin cung cấp.</p>
+            
             </div>
 
             {/* Thông báo trạng thái */}
