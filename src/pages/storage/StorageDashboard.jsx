@@ -1,12 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { loadStorageVariants } from '../../services/storageData';
-import { Layers, FileSpreadsheet, Search } from 'lucide-react';
+import { Layers, FileSpreadsheet, Search, X, Package, Info } from 'lucide-react';
 
 const StorageDashboard = () => {
   const [skuProducts, setSkuProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
+  
+  // State quản lý việc hiển thị Modal chi tiết sản phẩm
+  const [selectedProduct, setSelectedProduct] = useState(null);
 
   const fetchDashboardData = async () => {
     try {
@@ -70,8 +73,8 @@ const StorageDashboard = () => {
 
   const storageMetrics = [
     { label: 'TỔNG SỐ SKU', value: skuProducts.length, sub: 'Đang quản lý trong hệ thống' },
-    { label: 'HÀNG TỒN KHO (TỔNG)', value: hasStockData ? totalStock.toLocaleString() : 'Chưa cập nhật', sub: 'Sản phẩm sẵn sàng lưu trữ' },
-    { label: 'CẢNH BÁO TỒN THẤP', value: hasStockData ? `${lowStockCount} SKU` : 'Chưa cập nhật', sub: 'Dưới mức tồn kho tối thiểu' }
+    { label: 'TỔNG HÀNG TỒN KHO', value: hasStockData ? totalStock.toLocaleString() : 'Chưa cập nhật', sub: 'Sản phẩm sẵn sàng lưu trữ' },
+    { label: 'CẢNH BÁO TỒN THẤP', value: hasStockData ? `${lowStockCount} sản phẩm` : 'Chưa cập nhật', sub: 'Dưới mức tồn kho tối thiểu' }
   ];
 
   if (loading) {
@@ -123,7 +126,7 @@ const StorageDashboard = () => {
               placeholder="Tìm theo tên hoặc mã SKU..." 
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              style={{ border: 'none', outline: 'none', fontSize: '14px' }}
+              style={{ border: 'none', outline: 'none', fontSize: '14px', background: 'transparent' }}
             />
           </div>
         </div>
@@ -144,7 +147,15 @@ const StorageDashboard = () => {
                 return (
                   <tr key={prod.id || Math.random()}>
                     <td>
-                      <strong>{prod.name}</strong>
+                      <strong 
+                        onClick={() => setSelectedProduct(prod)}
+                        style={{ color: '#2563eb', cursor: 'pointer', transition: 'color 0.2s' }}
+                        title="Bấm để xem chi tiết sản phẩm"
+                        onMouseEnter={(e) => e.target.style.textDecoration = 'underline'}
+                        onMouseLeave={(e) => e.target.style.textDecoration = 'none'}
+                      >
+                        {prod.name}
+                      </strong>
                       <br />
                       <small style={{ color: '#888' }}>{prod.id}</small>
                     </td>
@@ -175,6 +186,122 @@ const StorageDashboard = () => {
           </tbody>
         </table>
       </section>
+
+      {/* MODAL HIỂN THỊ CHI TIẾT SẢN PHẨM KHI BẤM VÀO TÊN */}
+      {selectedProduct && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100vw',
+          height: '100vh',
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          zIndex: 1000,
+          backdropFilter: 'blur(4px)'
+        }}>
+          <div style={{
+            background: '#fff',
+            borderRadius: '12px',
+            width: '90%',
+            maxWidth: '550px',
+            boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+            overflow: 'hidden',
+            animation: 'fadeIn 0.2s ease-out'
+          }}>
+            {/* Header Modal */}
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              padding: '20px 24px',
+              borderBottom: '1px solid #f3f4f6',
+              backgroundColor: '#f9fafb'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <Package size={22} color="#2563eb" />
+                <h3 style={{ margin: 0, fontSize: '1.2rem', color: '#111827' }}>Chi Tiết Sản Phẩm & SKU</h3>
+              </div>
+              <button 
+                onClick={() => setSelectedProduct(null)}
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  cursor: 'pointer',
+                  padding: '4px',
+                  borderRadius: '50%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#6b7280',
+                  transition: 'background 0.2s'
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#e5e7eb'}
+                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* Body Modal */}
+            <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div>
+                <span style={{ fontSize: '12px', fontWeight: '600', color: '#6b7280', textTransform: 'uppercase' }}>Tên Sản Phẩm</span>
+                <h2 style={{ margin: '4px 0 0 0', fontSize: '1.4rem', color: '#1f2937' }}>{selectedProduct.name}</h2>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', background: '#f9fafb', padding: '16px', borderRadius: '8px' }}>
+                <div>
+                  <span style={{ fontSize: '12px', fontWeight: '600', color: '#6b7280' }}>MÃ SKU</span>
+                  <p style={{ margin: '4px 0 0 0', fontWeight: '600', color: '#374151', fontFamily: 'monospace', fontSize: '14px' }}>{selectedProduct.id}</p>
+                </div>
+                <div>
+                  <span style={{ fontSize: '12px', fontWeight: '600', color: '#6b7280' }}>SỐ LƯỢNG TỒN KHO</span>
+                  <p style={{ margin: '4px 0 0 0', fontWeight: '700', color: '#2563eb', fontSize: '16px' }}>
+                    {selectedProduct.stock !== null && selectedProduct.stock !== undefined ? `${selectedProduct.stock} chiếc` : 'Chưa cập nhật'}
+                  </p>
+                </div>
+              </div>
+
+              <div>
+                <span style={{ fontSize: '12px', fontWeight: '600', color: '#6b7280', textTransform: 'uppercase' }}>Quy Cách & Biến Thể Chi Tiết</span>
+                <p style={{ margin: '6px 0 0 0', color: '#4b5563', lineHeight: '1.5', background: '#fff', border: '1px solid #e5e7eb', padding: '12px', borderRadius: '6px' }}>
+                  {selectedProduct.specs || 'Không có thông tin quy cách cụ thể.'}
+                </p>
+              </div>
+
+              {/* Hiển thị các trường thông tin mở rộng khác nếu có trong object sản phẩm */}
+              
+            </div>
+
+            {/* Footer Modal */}
+            <div style={{
+              padding: '16px 24px',
+              backgroundColor: '#f9fafb',
+              borderTop: '1px solid #f3f4f6',
+              display: 'flex',
+              justifyContent: 'flex-end'
+            }}>
+              <button 
+                onClick={() => setSelectedProduct(null)}
+                style={{
+                  backgroundColor: '#111827',
+                  color: '#fff',
+                  border: 'none',
+                  padding: '8px 16px',
+                  borderRadius: '6px',
+                  fontWeight: '500',
+                  cursor: 'pointer'
+                }}
+              >
+                Đóng
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

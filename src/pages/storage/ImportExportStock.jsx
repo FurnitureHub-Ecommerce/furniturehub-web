@@ -13,6 +13,11 @@ import {
   CheckCircle2,
   Calendar,
   Package,
+  Info,
+  CheckCircle,
+  XCircle,
+  User,
+  Hash,
 } from "lucide-react";
 
 const ImportExportStock = () => {
@@ -30,6 +35,10 @@ const ImportExportStock = () => {
   });
   const [submitting, setSubmitting] = useState(false);
   const [thongBaoThanhCong, setThongBaoThanhCong] = useState("");
+
+  // State quản lý Modal xem chi tiết sản phẩm và giao dịch kho
+  const [selectedTransactionDetail, setSelectedTransactionDetail] = useState(null);
+  const [isOpenDetailModal, setIsOpenDetailModal] = useState(false);
 
   const fetchData = async () => {
     try {
@@ -53,11 +62,12 @@ const ImportExportStock = () => {
         else if (typeof tx.sku === "string") prodName = tx.sku;
 
         const itemObj = {
-          code: tx.code || `TX-${tx._id?.slice(-4) || index}`,
           date: tx.createdAt
             ? new Date(tx.createdAt).toLocaleString()
             : "Hôm nay",
           productName: prodName,
+          // Lưu toàn bộ transaction object để truyền dữ liệu qua modal chi tiết
+          transactionData: tx,
           quantity: tx.quantity || 0,
           note: tx.note || "",
           status: "Hoàn Thành",
@@ -136,6 +146,12 @@ const ImportExportStock = () => {
     }
   };
 
+  // Hàm mở modal chi tiết giao dịch kho và sản phẩm
+  const handleOpenTransactionDetail = (txData) => {
+    setSelectedTransactionDetail(txData);
+    setIsOpenDetailModal(true);
+  };
+
   return (
     <div
       className="dashboard-main"
@@ -201,6 +217,10 @@ const ImportExportStock = () => {
         .custom-table tbody tr:hover {
           background: #fcfbfa;
         }
+        .product-link:hover {
+          color: #2563eb !important;
+          text-decoration: underline;
+        }
       `}</style>
 
       <header className="dash-header" style={{ marginBottom: "24px" }}>
@@ -219,8 +239,7 @@ const ImportExportStock = () => {
             Quản Lý Nhập Kho & Xuất Kho
           </h2>
           <p style={{ color: "#666", fontSize: "14px", margin: 0 }}>
-            Đồng bộ chứng từ và lịch sử dòng chảy hàng hóa trực tiếp từ Database
-            Backend.
+            Đồng bộ chứng từ và lịch sử dòng chảy hàng hóa trực tiếp từ dữ liệu.
           </p>
         </div>
         <div className="actions">
@@ -278,20 +297,20 @@ const ImportExportStock = () => {
           <FileText size={18} color="#1c1c1c" />
           <h3 style={{ margin: 0, fontSize: "1.1rem", fontWeight: 600, color: "#1c1c1c" }}>
             Danh Sách Chứng Từ{" "}
-            {tabHienTai === "import" ? "Nhập Kho" : "Xuất Kho"} (Từ Database)
+            {tabHienTai === "import" ? "Nhập Kho" : "Xuất Kho"} 
           </h3>
         </div>
 
         {loading ? (
           <div style={{ padding: "50px", textAlign: "center", color: "#888", background: "#fff", borderRadius: "12px", border: "1px solid #eae6df" }}>
-            Đang tải dữ liệu từ Database...
+            Đang tải dữ liệu, vui lòng đợi trong giây lát...
           </div>
         ) : (
           <div style={{ overflowX: "auto" }}>
             <table className="custom-table">
               <thead>
                 <tr>
-                  <th style={{ width: "110px" }}>MÃ</th>
+                  <th style={{ width: "70px", textAlign: "center" }}>STT</th>
                   <th style={{ width: "170px" }}>THỜI GIAN</th>
                   <th>TÊN SẢN PHẨM</th>
                   <th style={{ textAlign: "center", width: "100px" }}>SỐ LƯỢNG</th>
@@ -303,18 +322,16 @@ const ImportExportStock = () => {
                 {chungTu[tabHienTai] && chungTu[tabHienTai].length > 0 ? (
                   chungTu[tabHienTai].map((item, idx) => (
                     <tr key={idx}>
-                      <td>
+                      <td style={{ textAlign: "center" }}>
                         <span style={{ 
-                          fontFamily: "monospace", 
                           fontWeight: 700, 
-                          color: "#1c1c1c",
+                          color: "#78716c",
                           background: "#f4f1ea",
                           padding: "4px 8px",
                           borderRadius: "4px",
-                          fontSize: "12px",
-                          whiteSpace: "nowrap"
+                          fontSize: "12px"
                         }}>
-                          {item.code}
+                          {idx + 1}
                         </span>
                       </td>
                       <td>
@@ -324,9 +341,15 @@ const ImportExportStock = () => {
                         </div>
                       </td>
                       <td>
-                        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                        <div 
+                          onClick={() => handleOpenTransactionDetail(item.transactionData)}
+                          style={{ display: "flex", alignItems: "center", gap: "8px", cursor: "pointer" }}
+                          title="Click để xem chi tiết sản phẩm và giao dịch"
+                        >
                           <Package size={15} color="#d97706" style={{ flexShrink: 0 }} />
-                          <strong style={{ color: "#1c1c1c", fontWeight: 600, lineHeight: 1.4 }}>{item.productName}</strong>
+                          <strong className="product-link" style={{ color: "#1c1c1c", fontWeight: 600, lineHeight: 1.4, transition: "color 0.2s" }}>
+                            {item.productName}
+                          </strong>
                         </div>
                       </td>
                       <td style={{ textAlign: "center" }}>
@@ -381,6 +404,188 @@ const ImportExportStock = () => {
           </div>
         )}
       </section>
+
+      {/* MODAL CHI TIẾT GIAO DỊCH & SẢN PHẨM KHI CLICK VÀO TÊN */}
+      {isOpenDetailModal && selectedTransactionDetail && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: "rgba(0, 0, 0, 0.5)",
+            backdropFilter: "blur(5px)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 9999,
+          }}
+        >
+          <div
+            style={{
+              background: "#fff",
+              width: "100%",
+              maxWidth: "580px",
+              borderRadius: "16px",
+              padding: "32px",
+              boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
+              boxSizing: "border-box",
+              maxHeight: "90vh",
+              overflowY: "auto",
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                marginBottom: "20px",
+                borderBottom: "1px solid #eae6df",
+                paddingBottom: "14px",
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                <Info size={20} color="#2563eb" />
+                <h3
+                  style={{
+                    margin: 0,
+                    fontSize: "1.2rem",
+                    fontWeight: 600,
+                    color: "#1a1a1a",
+                  }}
+                >
+                  Chi Tiết Giao Dịch & Sản Phẩm
+                </h3>
+              </div>
+              <button
+                onClick={() => setIsOpenDetailModal(false)}
+                style={{
+                  background: "#f4f1ea",
+                  border: "none",
+                  cursor: "pointer",
+                  padding: "6px",
+                  borderRadius: "50%",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  transition: "background 0.2s",
+                }}
+              >
+                <X size={18} color="#444" />
+              </button>
+            </div>
+
+            <div style={{ display: "flex", flexDirection: "column", gap: "14px", fontSize: "14px" }}>
+              {/* Thông tin sản phẩm */}
+              <div>
+                <span style={{ fontSize: "11px", fontWeight: 700, color: "#78716c", letterSpacing: "0.05em", display: "block", marginBottom: "4px" }}>TÊN SẢN PHẨM</span>
+                <strong style={{ fontSize: "16px", color: "#111827" }}>
+                  {selectedTransactionDetail.variantId?.productId?.name || selectedTransactionDetail.variantId?.name || "Sản phẩm nội thất"}
+                </strong>
+              </div>
+
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+                <div style={{ background: "#f9fafb", padding: "12px", borderRadius: "8px", border: "1px solid #f3f4f6" }}>
+                  <span style={{ fontSize: "11px", fontWeight: 700, color: "#78716c", display: "block", marginBottom: "2px" }}>MÃ SKU</span>
+                  <span style={{ fontFamily: "monospace", fontWeight: 600, color: "#2563eb" }}>{selectedTransactionDetail.variantId?.sku || "N/A"}</span>
+                </div>
+                <div style={{ background: "#f9fafb", padding: "12px", borderRadius: "8px", border: "1px solid #f3f4f6" }}>
+                  <span style={{ fontSize: "11px", fontWeight: 700, color: "#78716c", display: "block", marginBottom: "2px" }}>MÀU SẮC</span>
+                  <span style={{ fontWeight: 600, color: "#374151" }}>{selectedTransactionDetail.variantId?.color || "N/A"}</span>
+                </div>
+              </div>
+
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+                <div style={{ background: "#f9fafb", padding: "12px", borderRadius: "8px", border: "1px solid #f3f4f6" }}>
+                  <span style={{ fontSize: "11px", fontWeight: 700, color: "#78716c", display: "block", marginBottom: "2px" }}>KÍCH THƯỚC</span>
+                  <span style={{ fontWeight: 600, color: "#374151" }}>{selectedTransactionDetail.variantId?.size || "N/A"}</span>
+                </div>
+                <div style={{ background: "#f9fafb", padding: "12px", borderRadius: "8px", border: "1px solid #f3f4f6" }}>
+                  <span style={{ fontSize: "11px", fontWeight: 700, color: "#78716c", display: "block", marginBottom: "2px" }}>CHẤT LIỆU</span>
+                  <span style={{ fontWeight: 600, color: "#374151" }}>{selectedTransactionDetail.variantId?.material || "N/A"} </span>
+                </div>
+              </div>
+
+              <hr style={{ border: "none", borderTop: "1px dashed #eae6df", margin: "4px 0" }} />
+
+              {/* Thông tin chi tiết dòng chảy kho (Quantity, Before, After) */}
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "8px" }}>
+                <div style={{ background: "#fef3c7", padding: "10px", borderRadius: "8px", border: "1px solid #fde68a", textAlign: "center" }}>
+                  <span style={{ fontSize: "10px", fontWeight: 700, color: "#92400e", display: "block", marginBottom: "2px" }}>TỒN TRƯỚC</span>
+                  <span style={{ fontSize: "15px", fontWeight: 700, color: "#b45309" }}>{selectedTransactionDetail.beforeQuantity ?? 0}</span>
+                </div>
+                <div style={{ background: "#e0f2fe", padding: "10px", borderRadius: "8px", border: "1px solid #bae6fd", textAlign: "center" }}>
+                  <span style={{ fontSize: "10px", fontWeight: 700, color: "#0369a1", display: "block", marginBottom: "2px" }}>SỐ LƯỢNG GIAO DỊCH</span>
+                  <span style={{ fontSize: "15px", fontWeight: 700, color: "#0284c7" }}>{selectedTransactionDetail.quantity ?? 0}</span>
+                </div>
+                <div style={{ background: "#dcfce7", padding: "10px", borderRadius: "8px", border: "1px solid #bbf7d0", textAlign: "center" }}>
+                  <span style={{ fontSize: "10px", fontWeight: 700, color: "#166534", display: "block", marginBottom: "2px" }}>TỒN SAU</span>
+                  <span style={{ fontSize: "15px", fontWeight: 700, color: "#15803d" }}>{selectedTransactionDetail.afterQuantity ?? 0}</span>
+                </div>
+              </div>
+
+              {/* Người tạo & Thời gian & Ghi chú */}
+              <div style={{ background: "#f9fafb", padding: "12px", borderRadius: "8px", border: "1px solid #f3f4f6", display: "flex", flexDirection: "column", gap: "8px" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <span style={{ fontSize: "11px", fontWeight: 700, color: "#78716c", display: "flex", alignItems: "center", gap: "4px" }}>
+                    <User size={13} /> NGƯỜI THỰC HIỆN:
+                  </span>
+                  <span style={{ fontWeight: 600, color: "#111827", fontSize: "13px" }}>
+                    {selectedTransactionDetail.createdBy?.fullName || "Hệ thống"}
+                  </span>
+                </div>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <span style={{ fontSize: "11px", fontWeight: 700, color: "#78716c", display: "flex", alignItems: "center", gap: "4px" }}>
+                    <Calendar size={13} /> THỜI GIAN:
+                  </span>
+                  <span style={{ fontWeight: 600, color: "#374151", fontSize: "13px" }}>
+                    {selectedTransactionDetail.createdAt ? new Date(selectedTransactionDetail.createdAt).toLocaleString() : "N/A"}
+                  </span>
+                </div>
+              </div>
+
+              <div style={{ background: "#f9fafb", padding: "12px", borderRadius: "8px", border: "1px solid #f3f4f6" }}>
+                <span style={{ fontSize: "11px", fontWeight: 700, color: "#78716c", display: "block", marginBottom: "4px" }}>GHI CHÚ GIAO DỊCH</span>
+                <p style={{ margin: 0, fontSize: "13px", color: "#374151", fontStyle: selectedTransactionDetail.note ? "normal" : "italic" }}>
+                  {selectedTransactionDetail.note || "Không có ghi chú"}
+                </p>
+              </div>
+
+              <div style={{ background: "#f9fafb", padding: "12px", borderRadius: "8px", border: "1px solid #f3f4f6", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <span style={{ fontSize: "11px", fontWeight: 700, color: "#78716c" }}>TRẠNG THÁI SẢN PHẨM</span>
+                {selectedTransactionDetail.variantId?.isActive !== false && selectedTransactionDetail.variantId?.productId?.isActive !== false ? (
+                  <span style={{ display: "flex", alignItems: "center", gap: "6px", color: "#16a34a", fontWeight: "700", fontSize: "13px" }}>
+                    <CheckCircle size={16} /> Đang hoạt động
+                  </span>
+                ) : (
+                  <span style={{ display: "flex", alignItems: "center", gap: "6px", color: "#dc2626", fontWeight: "700", fontSize: "13px" }}>
+                    <XCircle size={16} /> Ngừng hoạt động
+                  </span>
+                )}
+              </div>
+            </div>
+
+            <div style={{ marginTop: "24px", textAlign: "right", borderTop: "1px solid #eae6df", paddingTop: "16px" }}>
+              <button
+                onClick={() => setIsOpenDetailModal(false)}
+                style={{
+                  padding: "10px 20px",
+                  borderRadius: "8px",
+                  background: "#1c1c1c",
+                  color: "#fff",
+                  border: "none",
+                  cursor: "pointer",
+                  fontWeight: 600,
+                  fontSize: "13px",
+                }}
+              >
+                Đóng
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* MODAL TẠO PHIẾU MỚI */}
       {isOpenModal && (

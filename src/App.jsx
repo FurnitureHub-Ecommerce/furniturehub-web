@@ -49,7 +49,7 @@ const InventoryHistory = lazy(() => import("./pages/storage/InventoryHistory"));
 const InventoryStatistics = lazy(
   () => import("./pages/storage/InventoryStatistics"),
 );
-
+import StorageProfile from './pages/storage/StorageProfile'; 
 // =========== STAFF PAGES (Lazy load) ===========
 const StaffLayout = lazy(() => import("./pages/staff/StaffLayout"));
 const StaffOrders = lazy(() => import("./pages/staff/StaffOrders"));
@@ -316,6 +316,7 @@ function App() {
                 <Route path="adjustment" element={<StockAdjustment />} />
                 <Route path="history" element={<InventoryHistory />} />
                 <Route path="statistics" element={<InventoryStatistics />} />
+                <Route path="profile" element={<StorageProfile />} />
               </Route>
             </Route>
 
