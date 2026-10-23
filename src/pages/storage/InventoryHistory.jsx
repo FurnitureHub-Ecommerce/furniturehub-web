@@ -62,7 +62,6 @@ const InventoryHistory = () => {
           }
 
           return {
-            id: item.code || `TX-${item._id?.slice(-4) || index}`,
             rawDate: item.createdAt || new Date(),
             time: item.createdAt ? new Date(item.createdAt).toLocaleString('vi-VN') : 'Hôm nay',
             sku: skuVal,
@@ -100,7 +99,7 @@ const InventoryHistory = () => {
       return false;
     }
 
-    // 3. Lọc theo thời gian
+   // 3. Lọc theo thời gian
     if (boLocThoiGian !== 'ALL') {
       const logDate = new Date(log.rawDate);
       const now = new Date();
@@ -115,6 +114,15 @@ const InventoryHistory = () => {
         if (logDate.getMonth() !== now.getMonth() || logDate.getFullYear() !== now.getFullYear()) {
           return false;
         }
+      } else if (boLocThoiGian === 'LAST_MONTH') {
+        const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        if (logDate.getMonth() !== lastMonth.getMonth() || logDate.getFullYear() !== lastMonth.getFullYear()) {
+          return false;
+        }
+      } else if (boLocThoiGian === 'THIS_YEAR') {
+        if (logDate.getFullYear() !== now.getFullYear()) {
+          return false;
+        }
       }
     }
 
@@ -122,52 +130,86 @@ const InventoryHistory = () => {
   });
 
   return (
-    <div className="dashboard-main" style={{ width: "100%", padding: "0 28px 48px 28px", maxWidth: "1500px", margin: "0 auto", fontFamily: "'Inter', sans-serif" }}>
+    <div className="dashboard-main" style={{ fontFamily: "'Inter', sans-serif", paddingBottom: "60px" }}>
       <style>{`
         .filter-tab {
-          padding: 9px 16px;
+          padding: 9px 18px;
           border-radius: 8px;
           font-size: 13px;
           font-weight: 600;
           cursor: pointer;
-          transition: all 0.2s ease;
-          border: 1px solid #dcd6cd;
+          transition: all 0.25s ease;
+          border: 1px solid #e2ded8;
           background: #fff;
-          color: #555;
+          color: #666;
           display: flex;
           align-items: center;
-          gap: 6px;
+          gap: 8px;
         }
         .filter-tab:hover {
-          background: #faf8f5;
+          background: #f7f5f0;
           color: #111;
-          border-color: #b8b0a2;
+          border-color: #d1cbc1;
         }
         .filter-tab.active {
           background: #1c1c1c;
           color: #fff;
           border-color: #1c1c1c;
-          box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+        .custom-table {
+          width: 100%;
+          border-collapse: separate;
+          border-spacing: 0;
+          background: #fff;
+          border-radius: 12px;
+          overflow: hidden;
+          border: 1px solid #eae6df;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+        }
+        .custom-table th {
+          background: #faf8f5;
+          color: #78716c;
+          font-weight: 700;
+          font-size: 11px;
+          letter-spacing: 0.05em;
+          padding: 14px 16px;
+          text-align: left;
+          border-bottom: 1px solid #eae6df;
+          white-space: nowrap;
+        }
+        .custom-table td {
+          padding: 16px;
+          font-size: 13px;
+          color: #292524;
+          border-bottom: 1px solid #f2efeb;
+          vertical-align: middle;
+        }
+        .custom-table tbody tr:last-child td {
+          border-bottom: none;
+        }
+        .custom-table tbody tr:hover {
+          background: #fcfbfa;
         }
       `}</style>
 
       {/* HEADER */}
-      <header style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: "28px", borderBottom: "1px solid #eae6df", paddingBottom: "20px" }}>
+      <header className="dash-header" style={{ marginBottom: "24px" }}>
         <div>
-          <span style={{ fontSize: "11px", fontWeight: 700, color: "#78716c", letterSpacing: "0.05em" }}>
+          <span className="subtitle" style={{ fontSize: "12px", fontWeight: 700, color: "#6b7280", letterSpacing: "0.05em" }}>
             NHẬT KÝ KIỂM SOÁT KHO
           </span>
-          <h1 style={{ fontFamily: "Bodoni Moda", fontSize: "2.6rem", fontWeight: 600, color: "#1a1a1a", margin: "4px 0 0 0" }}>
+          <h2 style={{ fontFamily: "Bodoni Moda", fontSize: "clamp(2rem, 2.5vw, 2.7rem)", fontWeight: 600, color: "#1a1a1a", margin: "4px 0 8px 0", letterSpacing: "-0.02em" }}>
             Lịch Sử Biến Động Kho
-          </h1>
-          <p style={{ margin: "4px 0 0 0", color: "#666", fontSize: "13px" }}>
-            Nhật ký chi tiết các giao dịch nhập xuất kho lấy trực tiếp từ Database hệ thống.
+          </h2>
+          <p style={{ margin: 0, color: "#666", fontSize: "14px" }}>
+            Nhật ký chi tiết các giao dịch nhập xuất kho lấy trực tiếp từ dữ liệu.
           </p>
         </div>
       </header>
 
-      {/* THANH CÔNG CỤ BỘ LỌC (LOẠI, NHÂN VIÊN, THỜI GIAN) */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', background: '#fff', padding: '18px 24px', borderRadius: '14px', border: '1px solid #eae6df', flexWrap: 'wrap', gap: '16px', boxShadow: '0 2px 6px rgba(0,0,0,0.01)' }}>
+      {/* THANH CÔNG CỤ BỘ LỌC */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', background: '#fff', padding: '20px 24px', borderRadius: '12px', border: '1px solid #eae6df', flexWrap: 'wrap', gap: '16px', boxShadow: '0 2px 8px rgba(0,0,0,0.02)' }}>
         <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
           <button 
             className={`filter-tab ${boLocLoai === 'ALL' ? 'active' : ''}`}
@@ -185,20 +227,20 @@ const InventoryHistory = () => {
             className={`filter-tab ${boLocLoai === 'EXPORT' ? 'active' : ''}`}
             onClick={() => setBoLocLoai('EXPORT')}
           >
-            <ArrowUpRight size={15} color={boLocLoai === 'EXPORT' ? '#fff' : '#2563eb'} /> Xuất Kho
+            <ArrowUpRight size={15} color={boLocLoai === 'EXPORT' ? '#fff' : '#dc2626'} /> Xuất Kho
           </button>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '14px', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
           {/* Bộ lọc theo Nhân viên */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', fontWeight: '700', color: '#555' }}>
-              <User size={16} /> NHÂN SỰ:
-            </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span style={{ fontSize: '11px', fontWeight: '700', color: '#78716c', letterSpacing: '0.05em' }}>
+              NHÂN SỰ:
+            </span>
             <select 
               value={boLocNhanVien} 
               onChange={(e) => setBoLocNhanVien(e.target.value)}
-              style={{ padding: '9px 14px', borderRadius: '8px', border: '1px solid #dcd6cd', background: '#faf8f5', fontSize: '13px', outline: 'none', cursor: 'pointer', fontWeight: '600', color: '#333' }}
+              style={{ padding: '10px 14px', borderRadius: '8px', border: '1px solid #dcd6cd', background: '#faf8f5', fontSize: '13px', outline: 'none', cursor: 'pointer', fontWeight: '500', color: '#1c1c1c' }}
             >
               <option value="ALL">Tất cả nhân sự</option>
               {danhSachNhanVien.map((nv, idx) => (
@@ -208,74 +250,109 @@ const InventoryHistory = () => {
           </div>
 
           {/* Bộ lọc theo Thời gian */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', fontWeight: '700', color: '#555' }}>
-              <Calendar size={16} /> THỜI GIAN:
-            </div>
-            <select 
-              value={boLocThoiGian} 
-              onChange={(e) => setBoLocThoiGian(e.target.value)}
-              style={{ padding: '9px 14px', borderRadius: '8px', border: '1px solid #dcd6cd', background: '#faf8f5', fontSize: '13px', outline: 'none', cursor: 'pointer', fontWeight: '600', color: '#333' }}
-            >
-              <option value="ALL">Toàn bộ thời gian</option>
-              <option value="TODAY">Hôm nay</option>
-              <option value="WEEK">Trong tuần này</option>
-              <option value="MONTH">Trong tháng này</option>
-            </select>
-          </div>
+<div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+  <span style={{ fontSize: '11px', fontWeight: '700', color: '#78716c', letterSpacing: '0.05em' }}>
+    THỜI GIAN:
+  </span>
+  <select 
+    value={boLocThoiGian} 
+    onChange={(e) => setBoLocThoiGian(e.target.value)}
+    style={{ padding: '10px 14px', borderRadius: '8px', border: '1px solid #dcd6cd', background: '#faf8f5', fontSize: '13px', outline: 'none', cursor: 'pointer', fontWeight: '500', color: '#1c1c1c' }}
+  >
+    <option value="ALL">Tất cả</option>
+    <option value="TODAY">Hôm nay</option>
+    <option value="WEEK">Trong tuần này</option>
+    <option value="MONTH">Trong tháng này</option>
+    <option value="LAST_MONTH">Tháng trước</option>
+    <option value="THIS_YEAR">Trong năm nay</option>
+  </select>
+</div>
         </div>
       </div>
 
       {/* BẢNG NHẬT KÝ */}
-      <section style={{ background: '#fff', border: '1px solid #eae6df', borderRadius: '14px', overflow: 'hidden', boxShadow: '0 4px 12px rgba(0,0,0,0.02)' }}>
-        <div style={{ padding: '20px 24px', borderBottom: '1px solid #eae6df', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <section style={{ background: 'transparent', padding: 0 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <History size={18} color="#1c1c1c" />
             <h3 style={{ fontSize: '1.1rem', fontWeight: 600, color: '#1c1c1c', margin: 0 }}>Nhật Ký Hoạt Động Kho Hàng</h3>
           </div>
-          <span style={{ fontSize: '12px', color: '#666', fontWeight: 600 }}>
+          <span style={{ fontSize: '13px', color: '#78716c' }}>
             Hiển thị <strong>{filteredNhatKy.length}</strong> bản ghi phù hợp
           </span>
         </div>
 
         <div style={{ overflowX: 'auto' }}>
-          <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left", fontSize: "13px" }}>
+          <table className="custom-table">
             <thead>
-              <tr style={{ background: "#5c4033", color: "#fff", fontSize: "11px", fontWeight: 700, letterSpacing: "0.05em" }}>
-                <th style={{ padding: "16px 24px", whiteSpace: "nowrap" }}>MÃ GIAO DỊCH</th>
-                <th style={{ padding: "16px 20px", whiteSpace: "nowrap" }}>THỜI GIAN</th>
-                <th style={{ padding: "16px 20px", whiteSpace: "nowrap" }}>MÃ SKU & SẢN PHẨM</th>
-                <th style={{ padding: "16px 20px", whiteSpace: "nowrap" }}>LOẠI BIẾN ĐỘNG</th>
-                <th style={{ padding: "16px 20px", whiteSpace: "nowrap" }}>SỐ LƯỢNG</th>
-                <th style={{ padding: "16px 20px", whiteSpace: "nowrap" }}>NHÂN SỰ</th>
-                <th style={{ padding: "16px 24px", whiteSpace: "nowrap" }}>GHI CHÚ</th>
+              <tr>
+                <th style={{ width: '70px', textAlign: 'center' }}>STT</th>
+                <th style={{ width: '170px' }}>THỜI GIAN</th>
+                <th>MÃ SKU & SẢN PHẨM</th>
+                <th style={{ width: '130px', textAlign: 'center' }}>LOẠI BIẾN ĐỘNG</th>
+                <th style={{ width: '100px', textAlign: 'center' }}>SỐ LƯỢNG</th>
+                <th style={{ width: '140px' }}>NHÂN SỰ</th>
+                <th style={{ width: '180px' }}>GHI CHÚ</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan="7" style={{ textAlign: 'center', padding: '40px', color: '#666' }}>Đang tải lịch sử từ cơ sở dữ liệu…</td></tr>
+                <tr><td colSpan="7" style={{ textAlign: 'center', padding: '50px', color: '#888' }}>Đang tải lịch sử từ cơ sở dữ liệu…</td></tr>
               ) : filteredNhatKy.length === 0 ? (
-                <tr><td colSpan="7" style={{ textAlign: 'center', padding: '40px', color: '#666' }}>Không tìm thấy giao dịch nào phù hợp với bộ lọc.</td></tr>
+                <tr><td colSpan="7" style={{ textAlign: 'center', padding: '50px', color: '#8c857b' }}>Không tìm thấy giao dịch nào phù hợp với bộ lọc.</td></tr>
               ) : filteredNhatKy.map((log, index) => (
-                <tr key={log.id || index} style={{ borderBottom: '1px solid #f2efeb', background: index % 2 === 0 ? '#fff' : '#fcfbfa' }}>
-                  <td style={{ padding: '16px 24px', fontWeight: 600, color: '#1c1c1c', whiteSpace: 'nowrap' }}>{log.id}</td>
-                  <td style={{ padding: '16px 20px', color: '#666', whiteSpace: 'nowrap' }}>{log.time}</td>
-                  <td style={{ padding: '16px 20px', minWidth: '260px' }}>
-                    <span style={{ background: '#f2efeb', padding: '3px 8px', borderRadius: '4px', fontSize: '11px', fontWeight: '700', color: '#1c1c1c', display: 'inline-block', whiteSpace: 'nowrap' }}>{log.sku}</span>
-                    <div style={{ fontWeight: '600', marginTop: '6px', fontSize: '13px', color: '#333', lineHeight: '1.4' }}>{log.productName}</div>
+                <tr key={index}>
+                  <td style={{ textAlign: 'center' }}>
+                    <span style={{ 
+                      fontWeight: 700, 
+                      color: "#78716c",
+                      background: "#f4f1ea",
+                      padding: "4px 8px",
+                      borderRadius: "4px",
+                      fontSize: "12px"
+                    }}>
+                      {index + 1}
+                    </span>
                   </td>
-                  <td style={{ padding: '16px 20px', whiteSpace: 'nowrap' }}>
-                    <span style={{ fontWeight: '600', color: log.type === 'Nhập Kho' ? '#16a34a' : '#2563eb' }}>
+                  <td>
+                    <span style={{ color: '#57534e', fontSize: '12px', whiteSpace: 'nowrap' }}>{log.time}</span>
+                  </td>
+                  <td>
+                    <span style={{ fontFamily: 'monospace', fontSize: '11px', color: '#78716c', background: '#f4f1ea', padding: '2px 6px', borderRadius: '4px', display: 'inline-block', marginBottom: '4px' }}>
+                      {log.sku}
+                    </span>
+                    <div style={{ fontWeight: 600, color: '#1c1c1c', fontSize: '13px', lineHeight: '1.4' }}>
+                      {log.productName}
+                    </div>
+                  </td>
+                  <td style={{ textAlign: 'center' }}>
+                    <span style={{
+                      background: log.type === 'Nhập Kho' ? '#f0fdf4' : '#fef2f2',
+                      color: log.type === 'Nhập Kho' ? '#16a34a' : '#dc2626',
+                      padding: '4px 10px',
+                      borderRadius: '20px',
+                      fontSize: '11px',
+                      fontWeight: '700',
+                      border: `1px solid ${log.type === 'Nhập Kho' ? '#bbf7d0' : '#fecaca'}`,
+                      display: 'inline-block',
+                      whiteSpace: 'nowrap'
+                    }}>
                       {log.type}
                     </span>
                   </td>
-                  <td style={{ padding: '16px 20px', whiteSpace: 'nowrap' }}>
-                    <strong style={{ color: log.type === 'Nhập Kho' ? '#16a34a' : '#dc2626' }}>
+                  <td style={{ textAlign: 'center' }}>
+                    <strong style={{ fontSize: '14px', color: log.type === 'Nhập Kho' ? '#16a34a' : '#dc2626' }}>
                       {log.change}
                     </strong>
                   </td>
-                  <td style={{ padding: '16px 20px', fontWeight: 500, color: '#444', whiteSpace: 'nowrap' }}>{log.staff}</td>
-                  <td style={{ padding: '16px 24px', color: '#666', whiteSpace: 'nowrap' }}><small>{log.note}</small></td>
+                  <td>
+                    <span style={{ fontWeight: 500, color: '#444', fontSize: '13px' }}>{log.staff}</span>
+                  </td>
+                  <td>
+                    <span style={{ color: '#78716c', fontSize: '12px', fontStyle: log.note ? 'normal' : 'italic' }}>
+                      {log.note}
+                    </span>
+                  </td>
                 </tr>
               ))}
             </tbody>
