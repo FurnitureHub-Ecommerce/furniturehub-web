@@ -5,8 +5,8 @@ import {
   LockKeyhole, Package, Ruler, ShieldCheck, Warehouse,
 } from "lucide-react";
 import { getInventoryDetail } from "../../../services/admin/inventoryDetail.service.js";
-import { TransactionHistoryPanel } from "./InventoryReadSections.jsx";
 import "./AdminInventoryDetail.css";
+import { TransactionHistoryPanel } from "../inventory/InventoryReadSections.jsx";
 
 const hasValue = (value) =>
   value !== undefined && value !== null && String(value).trim() !== "";
@@ -94,7 +94,7 @@ export default function AdminInventoryDetail() {
     <div className="lid-page">
       <div className="lid-top">
         <p className="lid-eyebrow">GIÁM SÁT HỆ THỐNG / TỒN KHO / CHI TIẾT SKU</p>
-        <Link to="/admin/variants"><ArrowLeft size={15} />Quay lại danh sách SKU</Link>
+        <Link to={TransactionHistoryPanel} ><ArrowLeft size={15} />Quay lại danh sách SKU</Link>
       </div>
 
       {loading ? (
@@ -159,17 +159,6 @@ export default function AdminInventoryDetail() {
               </div>
             </section>
           </div>
-
-          <section className="lid-policy">
-            <ShieldCheck size={25} />
-            <div>
-              <h3>Nguyên Tắc Bảo Vệ Dữ Liệu Chuỗi Cung Ứng</h3>
-              <p>Admin chỉ giám sát; không nhập, xuất, điều chuyển hoặc điều chỉnh tồn kho.</p>
-            </div>
-            <span className="lid-tag">CHỈ ĐỌC</span>
-          </section>
-
-          <TransactionHistoryPanel key={variantId} variantId={variantId} compact />
 
         </>
       )}

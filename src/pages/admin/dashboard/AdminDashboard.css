@@ -1,19 +1,16 @@
-/* --- GIAO DIỆN ADMIN DASHBOARD (CHUẨN FONT SANS-SERIF GỌN GÀNG, HIỆN ĐẠI) --- */
+/* --- GIAO DIỆN ADMIN DASHBOARD (HIỆN ĐẠI, GỌN GÀNG, CHUẨN MẪU) --- */
 .la-dashboard {
   display: flex;
   flex-direction: column;
   gap: 24px;
   font-family: var(--font-sans, "Be Vietnam Pro", "Segoe UI", sans-serif);
   padding: 20px 0;
+ 
 }
 
-/* Ép tất cả các tiêu đề và số liệu về font không chân (Sans-serif) */
 .la-dashboard h1,
 .la-dashboard h2,
-.la-dashboard h3,
-.la-dashboard .la-kpi-value,
-.la-dashboard .la-status-card-metric strong,
-.la-dashboard .la-dashboard-titles h1 {
+.la-dashboard h3 {
   font-family: var(--font-sans, "Be Vietnam Pro", "Segoe UI", sans-serif) !important;
   font-weight: 700 !important;
   font-style: normal !important;
@@ -51,6 +48,7 @@
   line-height: 1.3;
   margin: 0 0 8px 0;
   color: #fff;
+   font-family: var(--font-serif) !important;
 }
 
 .la-dashboard-titles h1 em {
@@ -78,13 +76,11 @@
   font-size: 12.5px;
   font-weight: 600;
   cursor: pointer;
-  backdrop-filter: blur(8px);
   transition: all 0.2s ease;
 }
 
 .la-refresh-btn:hover {
   background: rgba(255, 255, 255, 0.22);
-  border-color: rgba(255, 255, 255, 0.4);
 }
 
 /* Section Headings */
@@ -97,10 +93,11 @@
   padding-bottom: 12px;
 }
 
-.la-dashboard-section-heading h2 {
-  font-size: 18px;
+.la-dashboard-section-heading h1 {
+  font-size: 31px;
   color: #2c2824;
   margin: 2px 0 0 0;
+  
 }
 
 .la-eyebrow {
@@ -113,76 +110,203 @@
   margin-bottom: 4px;
 }
 
-.la-sub-note {
-  font-size: 11px;
-  color: #8c8275;
-}
-
-/* KPI Cards Grid */
-.la-kpis {
+/* Bố cục lưới cân đối (Grid Layout) */
+.la-dashboard-grid-layout {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 16px;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
 }
 
-.la-kpi {
-  background: #fffdfa;
-  border: 1px solid #e2d8cb;
-  border-radius: 14px;
-  padding: 18px 20px;
+@media (max-width: 1024px) {
+  .la-dashboard-grid-layout {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .la-revenue-main-box {
+    grid-column: span 2 !important;
+  }
+}
+
+@media (max-width: 640px) {
+  .la-dashboard-grid-layout {
+    grid-template-columns: 1fr;
+  }
+  .la-revenue-main-box {
+    grid-column: span 1 !important;
+  }
+}
+
+/* Card chung */
+.la-card-box {
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 22px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+  border: 1px solid rgba(138, 106, 72, 0.12);
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.02);
   transition: transform 0.2s, box-shadow 0.2s;
 }
 
-.la-kpi:hover {
+.la-card-box:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.05);
-  border-color: #c4b4a0;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.06);
 }
 
-.la-kpi-top {
+/* Riêng ô Tổng Doanh Thu chiếm 2 cột, tạo điểm nhấn lớn */
+.la-revenue-main-box {
+  grid-column: span 2;
+  background: #ffffff;
+}
+
+.la-box-header {
   display: flex;
-  align-items: center;
   justify-content: space-between;
+  align-items: flex-start;
   margin-bottom: 12px;
 }
 
-.la-kpi-icon {
+.la-box-subtitle {
+  font-size: 0.75rem;
+  color: #777;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 600;
+}
+
+.la-revenue-header-row {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin-top: 4px;
+}
+
+.la-revenue-header-row h2 {
+  font-size: 1.9rem;
+  font-weight: 700;
+  color: #2c2824;
+  margin: 0;
+}
+
+.la-growth-pill {
+  font-size: 0.75rem;
+  background: rgba(46, 90, 136, 0.1);
+  color: #2E5A88;
+  padding: 3px 8px;
+  border-radius: 20px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
+/* Biểu đồ Line Chart & Gradient */
+.la-line-chart-container {
+  margin-top: 10px;
+  position: relative;
+}
+
+.la-svg-chart {
+  width: 100%;
+  height: 110px;
+  overflow: visible;
+}
+
+.la-chart-x-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.75rem;
+  color: #888;
+  margin-top: 6px;
+  padding: 0 4px;
+}
+
+/* Các card chỉ số nhỏ bên cạnh */
+.la-card-box h3 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #2c2824;
+  margin: 4px 0 0 0;
+}
+
+.la-icon-wrap {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: #f4efe7;
   display: grid;
   place-items: center;
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
-  background: #f4efe7;
-  color: #8a6a48;
 }
 
-.la-kpi-index {
-  font-size: 10px;
+.la-metric-desc {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.8rem;
+  color: #666;
+  margin: 12px 0 6px 0;
+}
+
+.la-metric-desc strong {
   font-weight: 600;
-  color: #a89f91;
 }
 
-.la-kpi-label {
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.8px;
-  color: #756d64;
-  display: block;
-  margin-bottom: 4px;
+.la-progress-bar-wrap {
+  width: 100%;
+  height: 6px;
+  background: #eee7dc;
+  border-radius: 3px;
+  overflow: hidden;
+  margin-bottom: 12px;
 }
 
-.la-kpi-value {
-  font-size: 24px;
-  color: #2c2824;
+.la-progress-bar-fill {
+  height: 100%;
+  background: #2E5A88;
+  border-radius: 3px;
 }
 
-.la-api-missing {
-  font-size: 14px;
-  color: #8c8275;
+.la-box-footer {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.75rem;
+  color: #888;
+  border-top: 1px solid #f4efe7;
+  padding-top: 8px;
+}
+
+.la-mini-dots-wrap {
+  display: flex;
+  gap: 6px;
+  margin: 14px 0;
+}
+
+.la-mini-dot {
+  flex: 1;
+  height: 6px;
+  background: #eee7dc;
+  border-radius: 3px;
+}
+
+.la-mini-dot.active {
+  background: #487C59;
+}
+
+.la-mini-bars-wrap {
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+  height: 24px;
+  margin: 14px 0;
+  background: #fbf9f4;
+  padding: 4px 8px;
+  border-radius: 6px;
+}
+
+.la-mini-bars-wrap span {
+  flex: 1;
+  background: #B98436;
+  border-radius: 2px;
 }
 
 /* Analytics Panel & Status Grid */
@@ -207,19 +331,24 @@
   padding-bottom: 14px;
 }
 
-.la-panel-heading h2 {
-  font-size: 18px;
+.la-panel-heading h1 {
+  font-size: 35px;
   color: #2c2824;
   margin: 2px 0 0 0;
 }
 
-.la-panel-index {
-  font-size: 11px;
-  font-weight: 700;
-  color: #a89f91;
+.la-panel-icon-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #2E5A88;
+  background: rgba(46, 90, 136, 0.08);
+  padding: 6px 12px;
+  border-radius: 20px;
 }
 
-/* Biểu đồ trạng thái đơn hàng dạng Grid Cards */
 .la-status-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -255,7 +384,6 @@
   height: 8px;
   border-radius: 50%;
   background: var(--status-color, #8a6a48);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--status-color, #8a6a48) 20%, transparent);
 }
 
 .la-status-name {
@@ -294,7 +422,6 @@
 .la-progress-fill {
   height: 100%;
   border-radius: 3px;
-  transition: width 0.6s cubic-bezier(0.1, 0.8, 0.3, 1);
 }
 
 .la-api-empty {
@@ -304,7 +431,6 @@
   font-size: 13px;
 }
 
-/* Loading & Error States */
 .la-data-state {
   display: flex;
   align-items: center;
@@ -339,4 +465,24 @@
 @keyframes fa-spin {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
+}
+/* Chia lưới trạng thái đơn hàng thành đúng 3 cột (3 ô trên, 3 ô dưới) */
+.la-status-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 16px;
+  margin-top: 6px;
+}
+
+/* Responsive cho màn hình nhỏ (tablet / mobile) sẽ tự co lại 1 hoặc 2 cột cho dễ nhìn */
+@media (max-width: 1024px) {
+  .la-status-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+
+@media (max-width: 640px) {
+  .la-status-grid {
+    grid-template-columns: 1fr !important;
+  }
 }
