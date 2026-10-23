@@ -404,7 +404,7 @@ const StaffOrders = () => {
                 <>
                   {/* 🕒 Order Status Timeline (Dòng thời gian trạng thái đơn hàng) */}
                   <div style={{ background: '#F8FAFC', padding: '16px', borderRadius: '10px', border: '1px solid #E2E8F0' }}>
-                    <div style={{ fontSize: '12px', fontWeight: 700, color: '#5B21B6', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                    <div style={{ fontSize: '12px', fontWeight: 700, color: '#5B21B8', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                       Tiến trình xử lý đơn hàng
                     </div>
                     {renderOrderStatusTimeline(selectedOrder.status)}
@@ -421,7 +421,7 @@ const StaffOrders = () => {
                           <div>
                             <div style={{ fontSize: '13px', fontWeight: 600, color: '#111827' }}>{item.productName}</div>
                             <div style={{ fontSize: '11px', color: '#6B7280', fontFamily: 'monospace' }}>
-                              SKU: {item.sku} · SL: {item.quantity} {item.color ? `· ${item.color}` : ''}
+                              SKU: {item.sku} · <strong>Số Lượng: {item.quantity}</strong> {item.color ? `· ${item.color}` : ''}
                             </div>
                           </div>
                           <div style={{ fontSize: '14px', fontWeight: 700, color: '#111827' }}>
