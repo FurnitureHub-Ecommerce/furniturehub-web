@@ -186,10 +186,9 @@
 .la-nav-group:last-child { border-bottom: 0; }
 .la-nav-group > p,
 .la-nav-caption {
-  font-size: 12px;
-  letter-spacing: 1px;
-  color: var(--la-muted);
+  font-size: 15px;
   margin-bottom: 9px;
+  
 }
 .la-nav-group button {
   display: flex;
@@ -397,9 +396,10 @@
   min-height: 44px;
   padding: 7px 9px 7px 7px;
   border-radius: 6px;
-  color: #69635a;
-  font-size: 14px;
+  font-size: 15px;
   position: relative;
+  font-family: var(--leo-font-small-semibold);
+  margin-left: 10px;
 }
 .la-nav-group .la-nav-link svg {
   flex-shrink: 0;
@@ -919,12 +919,9 @@
 
 
 .la-nav-group-title {
-  font-size: 9.5px;
   font-weight: 700;
-  letter-spacing: 1px;
-  color: #8c8275;
-  margin-bottom: 6px;
-  padding-left: 6px;
+  color: #975712;
+  padding-left: 4px;
 }
 
 .la-nav-items {
@@ -939,7 +936,7 @@
   gap: 10px;
   padding: 8px 10px;
   border-radius: 6px;
-  color: #595249;
+  color: #312f2c;
   font-size: 13px;
   font-weight: 500;
   transition: all 0.2s ease;
@@ -1080,8 +1077,12 @@
 
 .la-nav-container {
   flex: 1;
-  overflow-y: auto;
+  overflow-x: hidden;
+  overflow-y: hidden;
   padding-bottom: 10px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
  
 }
 
