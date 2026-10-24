@@ -1,14 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { Heart, ShoppingBag, Eye, Check, AlertCircle, RefreshCw, PackageX, ArrowRight } from 'lucide-react';
+import { Heart, ShoppingBag, Eye, Check, AlertCircle, RefreshCw, PackageX, ArrowRight, Sparkles } from 'lucide-react';
 import { useShop } from '../../../context/ShopContext';
-import Rating from '../../common/Rating/Rating';
 import { ProductCardSkeleton } from '../../common/Skeleton/Skeleton';
-import { 
-  formatCurrency, 
-  PRODUCT_IMAGE_OVERRIDES, 
-  getProductMetrics 
-} from '../../../utils/formatters';
+import { formatCurrency } from '../../../utils/formatters';
+import { productAPI, getApiErrorMessage } from '../../../services/api';
 import './ProductShowcase.css';
 
 const TABS = [
@@ -18,55 +14,70 @@ const TABS = [
 ];
 
 export function ProductShowcase({
-  isLoading = false,
-  error = null,
-  products = null,
+  products: initialProducts = null,
+  isLoading: initialLoading = false,
+  error: initialError = null,
   onRetry = null,
 }) {
+  const [products, setProducts] = useState(initialProducts || []);
+  const [isLoading, setIsLoading] = useState(initialLoading);
+  const [error, setError] = useState(initialError);
   const [activeTab, setActiveTab] = useState('featured');
   const [addedItem, setAddedItem] = useState(null);
   const [currentIndex, setCurrentIndex] = useState(0);
 
   const { wishlist, toggleWishlist, addToCart, setQuickViewProduct } = useShop();
 
-  // Lấy dữ liệu thuần từ Backend (loại bỏ hoàn toàn MOCK_PRODUCTS)
-  const rawProducts = Array.isArray(products)
-    ? products
-    : products?.data || products?.items || [];
+  const fetchProducts = async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      const res = await productAPI.getProducts();
+      const rawList = res?.data?.products || res?.data || [];
+      setProducts(rawList);
+    } catch (err) {
+      setError(getApiErrorMessage(err, 'Không thể tải danh sách sản phẩm từ API.'));
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-  const allProducts = rawProducts;
+  useEffect(() => {
+    if (initialProducts === null) {
+      fetchProducts();
+    } else {
+      const rawList = initialProducts?.products || initialProducts?.data || initialProducts || [];
+      setProducts(rawList);
+      setIsLoading(initialLoading);
+      setError(initialError);
+    }
+  }, [initialProducts, initialLoading, initialError]);
 
-  // Lọc và sắp xếp sản phẩm theo tab (nếu sản phẩm từ BE có phân loại tab thì lọc, hoặc sắp xếp theo tiêu chí)
-  const filteredProducts = [...allProducts]
-    .filter((p) => {
-      if (p.tab) return p.tab === activeTab;
-      return true;
-    })
-    .sort((a, b) => {
-      if (activeTab === 'new-arrivals') {
-        if (a.isNew && !b.isNew) return -1;
-        if (!a.isNew && b.isNew) return 1;
-        return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
-      }
-      if (activeTab === 'best-sellers') {
-        const scoreA = (a.soldCount || 0) * 10 + (a.rating || 0);
-        const scoreB = (b.soldCount || 0) * 10 + (b.rating || 0);
-        return scoreB - scoreA;
-      }
-      return 0;
-    });
+  // Logic lọc dữ liệu thực từ API Backend
+  const filteredProducts = useMemo(() => {
+    if (!Array.isArray(products) || products.length === 0) return [];
 
-  // Tự động xoay vòng sản phẩm mỗi 4.5 giây
+    const listCopy = [...products];
+
+    if (activeTab === 'new-arrivals') {
+      // Sắp xếp theo thời gian tạo createdAt mới nhất
+      return listCopy.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+    }
+
+    if (activeTab === 'best-sellers') {
+      // Ưu tiên sản phẩm có số lượng bán soldCount cao hơn hoặc minPrice
+      return listCopy.sort((a, b) => (b.soldCount || 0) - (a.soldCount || 0));
+    }
+
+    // Tab 'featured': Giữ nguyên danh sách nổi bật mặc định từ API
+    return listCopy;
+  }, [products, activeTab]);
+
   useEffect(() => {
     if (filteredProducts.length <= 4 || isLoading) return;
-
     const interval = setInterval(() => {
-      setCurrentIndex((prevIndex) => {
-        const nextIndex = prevIndex + 4;
-        return nextIndex >= filteredProducts.length ? 0 : nextIndex;
-      });
+      setCurrentIndex((prev) => (prev + 4 >= filteredProducts.length ? 0 : prev + 4));
     }, 4500);
-
     return () => clearInterval(interval);
   }, [filteredProducts.length, isLoading]);
 
@@ -75,10 +86,8 @@ export function ProductShowcase({
 
   const handleAddToCart = (product) => {
     addToCart(product);
-    setAddedItem(product.id || product._id);
-    setTimeout(() => {
-      setAddedItem(null);
-    }, 2000);
+    setAddedItem(product._id || product.id);
+    setTimeout(() => setAddedItem(null), 2000);
   };
 
   return (
@@ -86,23 +95,22 @@ export function ProductShowcase({
       <div className="container">
         {/* Section Header */}
         <div className="section-heading">
-          <span className="section-heading__badge">Chế tác kiệt tác</span>
-          <h2 className="section-heading__title">Những món nội thất vượt thời gian</h2>
+          <span className="section-heading__badge">
+            <Sparkles size={11} style={{ display: 'inline', marginRight: 6 }} />
+            Chế tác kiệt tác
+          </span>
+          <h2 className="section-heading__title">Những Món Nội Thất Vượt Thời Gian</h2>
           <p className="section-heading__subtitle">
-            Được chế tạo tỉ mỉ từ gỗ đạt chứng nhận FSC, vải lanh tự nhiên và đồng mạ tay.
+            Được chế tạo tỉ mỉ từ gỗ tự nhiên, vải lanh cao cấp và đường nét thiết kế hiện đại.
           </p>
         </div>
 
         {/* Tab Filters */}
-        <div className="product-showcase__tabs" role="tablist" aria-label="Product showcase tabs">
+        <div className="product-showcase__tabs" role="tablist">
           {TABS.map((tab) => (
             <button
               key={tab.id}
-              role="tab"
-              aria-selected={activeTab === tab.id}
-              className={`product-showcase__tab ${
-                activeTab === tab.id ? 'product-showcase__tab--active' : ''
-              }`}
+              className={`product-showcase__tab ${activeTab === tab.id ? 'product-showcase__tab--active' : ''}`}
               onClick={() => {
                 setActiveTab(tab.id);
                 setCurrentIndex(0);
@@ -114,104 +122,66 @@ export function ProductShowcase({
           ))}
         </div>
 
-        {/* UI States: Error / Empty / Data Grid */}
+        {/* UI States */}
         {error ? (
-          <div className="ui-state-card ui-state-card--error" style={{ textAlign: 'center', padding: '48px 20px', border: '1px solid var(--lumora-border)', borderRadius: 'var(--radius-lg)', backgroundColor: '#FFFBFB' }}>
-            <AlertCircle size={40} color="#D93838" style={{ marginBottom: '12px' }} />
-            <h3 style={{ fontSize: '1.3rem', fontFamily: 'var(--font-serif)', marginBottom: '8px' }}>Không thể kết nối danh sách sản phẩm API</h3>
-            <p style={{ color: 'var(--lumora-text-muted)', fontSize: '0.95rem', marginBottom: '20px' }}>{error}</p>
-            {onRetry && (
-              <button onClick={onRetry} style={{ padding: '12px 24px', backgroundColor: 'var(--lumora-text-main)', color: '#FFF', borderRadius: 'var(--radius-md)', gap: '8px', cursor: 'pointer', display: 'inline-flex', alignItems: 'center' }}>
-                <RefreshCw size={18} />
-                <span>Thử Lại Lấy Dữ Liệu API</span>
-              </button>
-            )}
+          <div className="ui-state-card ui-state-card--error">
+            <AlertCircle size={38} color="#D93838" style={{ marginBottom: '12px' }} />
+            <h3 style={{ fontSize: '1.2rem', fontWeight: 600, marginBottom: '8px', color: '#1A1615' }}>
+              Không thể kết nối danh sách sản phẩm API
+            </h3>
+            <p style={{ color: '#6E615B', fontSize: '0.9rem', marginBottom: '20px' }}>{error}</p>
+            <button onClick={onRetry || fetchProducts} className="ui-state-retry-btn" type="button">
+              <RefreshCw size={16} />
+              <span>Thử Lại Kết Nối API</span>
+            </button>
           </div>
         ) : filteredProducts.length === 0 && !isLoading ? (
-          <div className="ui-state-card ui-state-card--empty" style={{ textAlign: 'center', padding: '48px 20px', border: '1px solid var(--lumora-border)', borderRadius: 'var(--radius-lg)' }}>
-            <PackageX size={40} color="var(--lumora-text-light)" style={{ marginBottom: '12px' }} />
-            <h3 style={{ fontSize: '1.3rem', fontFamily: 'var(--font-serif)', marginBottom: '6px' }}>Danh sách sản phẩm API hiện đang rỗng</h3>
-            <p style={{ color: 'var(--lumora-text-muted)', fontSize: '0.95rem' }}>Hiện chưa có sản phẩm nào từ máy chủ Backend.</p>
+          <div className="ui-state-card ui-state-card--empty">
+            <PackageX size={38} color="#A3968C" style={{ marginBottom: '12px' }} />
+            <h3 style={{ fontSize: '1.2rem', fontWeight: 600, marginBottom: '6px', color: '#1A1615' }}>
+              Không tìm thấy sản phẩm phù hợp
+            </h3>
+            <p style={{ color: '#6E615B', fontSize: '0.9rem' }}>Hiện chưa có sản phẩm nào cho mục này.</p>
           </div>
         ) : (
-          <div className="product-showcase__grid" key={currentIndex}>
+          <div className="product-showcase__grid" key={`${activeTab}-${currentIndex}`}>
             {isLoading
               ? Array.from({ length: 4 }).map((_, idx) => <ProductCardSkeleton key={idx} />)
               : displayedProducts.map((product) => {
-                    const prodId = String(product.id || product._id);
+                    const prodId = String(product._id || product.id);
                     const isWishlisted = wishlist.includes(prodId);
                     const isJustAdded = addedItem === prodId;
 
-                    const overrideImages = PRODUCT_IMAGE_OVERRIDES[product.name];
-                    const primaryImg = overrideImages?.[0] || product.images?.[0] || product.image || product.imageUrl || 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=800&q=80';
-                    const hoverImg = overrideImages?.[1] || product.images?.[1] || product.hoverImage || primaryImg;
-                    const metrics = getProductMetrics(product.name, product.rating, product.reviewCount);
-                    const currentPrice = product.minPrice ?? product.price ?? 0;
+                    const primaryImg = Array.isArray(product.images) && product.images.length > 0 
+                      ? product.images[0] 
+                      : 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=800&q=80';
+                    const hoverImg = Array.isArray(product.images) && product.images.length > 1 
+                      ? product.images[1] 
+                      : primaryImg;
+                    const currentPrice = product.minPrice ?? 0;
 
                     return (
-                      <article key={prodId} className="product-card group">
+                      <article key={prodId} className="product-card">
                         <div className="product-card__image-container">
-                          <img
-                            src={primaryImg}
-                            alt={product.name}
-                            className="product-card__image product-card__image--primary"
-                            loading="lazy"
-                            onError={(e) => {
-                              e.currentTarget.onerror = null;
-                              e.currentTarget.src = 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=800&q=80';
-                            }}
-                          />
-                          <img
-                            src={hoverImg}
-                            alt={`${product.name} lifestyle angle`}
-                            className="product-card__image product-card__image--hover"
-                            loading="lazy"
-                            onError={(e) => {
-                              e.currentTarget.onerror = null;
-                              e.currentTarget.src = primaryImg;
-                            }}
-                          />
-
-                          <div className="product-card__badges">
-                            {product.isNew && <span className="product-badge product-badge--new">Mới</span>}
-                            {product.oldPrice && product.oldPrice > currentPrice && (
-                              <span className="product-badge product-badge--sale">
-                                -{Math.round(((product.oldPrice - currentPrice) / product.oldPrice) * 100)}%
-                              </span>
-                            )}
-                          </div>
+                          <img src={primaryImg} alt={product.name} className="product-card__image product-card__image--primary" loading="lazy" />
+                          <img src={hoverImg} alt={product.name} className="product-card__image product-card__image--hover" loading="lazy" />
 
                           <button
-                            className={`product-card__wishlist-btn ${
-                              isWishlisted ? 'product-card__wishlist-btn--active' : ''
-                            }`}
+                            className={`product-card__wishlist-btn ${isWishlisted ? 'product-card__wishlist-btn--active' : ''}`}
                             onClick={(e) => {
                               e.preventDefault();
                               e.stopPropagation();
                               toggleWishlist(prodId);
                             }}
-                            aria-label={
-                              isWishlisted
-                                ? `Xóa ${product.name} khỏi yêu thích`
-                                : `Thêm ${product.name} vào yêu thích`
-                            }
                             type="button"
+                            aria-label="Thêm vào yêu thích"
                           >
-                            <Heart
-                              size={18}
-                              fill={isWishlisted ? '#92400E' : 'none'}
-                              color={isWishlisted ? '#92400E' : 'currentColor'}
-                            />
+                            <Heart size={17} fill={isWishlisted ? '#C29A62' : 'none'} color={isWishlisted ? '#C29A62' : '#1A1615'} />
                           </button>
 
                           <div className="product-card__quick-actions">
-                            <button
-                              className="product-card__quick-view-btn"
-                              onClick={() => setQuickViewProduct(product)}
-                              aria-label={`Xem nhanh ${product.name}`}
-                              type="button"
-                            >
-                              <Eye size={16} />
+                            <button className="product-card__quick-view-btn" onClick={() => setQuickViewProduct(product)} type="button">
+                              <Eye size={15} />
                               <span>Xem nhanh</span>
                             </button>
                           </div>
@@ -219,7 +189,9 @@ export function ProductShowcase({
 
                         <div className="product-card__details">
                           <div className="product-card__meta">
-                            <span className="product-card__variant">{product.variantLabel || 'Gỗ sồi Bắc Âu / Tinh xảo'}</span>
+                            <span className="product-card__category">
+                              {product.categoryId?.name || product.brandId?.name || 'Nội thất cao cấp'}
+                            </span>
                           </div>
 
                           <h3 className="product-card__title">
@@ -228,33 +200,23 @@ export function ProductShowcase({
 
                           <div className="product-card__footer">
                             <div className="product-card__pricing">
-                              <span className="product-card__price">
-                                {formatCurrency(currentPrice)}
-                              </span>
-                              {product.oldPrice && (
-                                <span className="product-card__old-price">
-                                  {formatCurrency(product.oldPrice)}
-                                </span>
-                              )}
+                              <span className="product-card__price">{formatCurrency(currentPrice)}</span>
                             </div>
 
                             <button
-                              className={`product-card__cart-btn ${
-                                isJustAdded ? 'product-card__cart-btn--added' : ''
-                              }`}
+                              className={`product-card__cart-btn ${isJustAdded ? 'product-card__cart-btn--added' : ''}`}
                               onClick={() => handleAddToCart(product)}
-                              aria-label={`Thêm ${product.name} vào giỏ hàng`}
                               type="button"
                             >
                               {isJustAdded ? (
                                 <>
-                                  <Check size={16} />
+                                  <Check size={15} />
                                   <span>Đã thêm</span>
                                 </>
                               ) : (
                                 <>
-                                  <ShoppingBag size={16} />
-                                  <span>Thêm vào giỏ</span>
+                                  <ShoppingBag size={15} />
+                                  <span>Thêm giỏ</span>
                                 </>
                               )}
                             </button>
@@ -266,36 +228,10 @@ export function ProductShowcase({
           </div>
         )}
 
-        {/* Nút Khám Phá Toàn Bộ Sản Phẩm */}
-        <div style={{ display: 'flex', justifyContent: 'center', marginTop: '48px' }}>
-          <Link
-            to="/products"
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '10px',
-              padding: '14px 32px',
-              backgroundColor: '#1E1E1E',
-              color: '#FFFFFF',
-              borderRadius: '9999px',
-              fontSize: '0.9rem',
-              fontWeight: '600',
-              letterSpacing: '0.04em',
-              textDecoration: 'none',
-              boxShadow: '0 4px 14px rgba(0, 0, 0, 0.1)',
-              transition: 'all 0.25s ease',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = 'var(--lumora-accent-wood, #C29A62)';
-              e.currentTarget.style.transform = 'translateY(-2px)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = '#1E1E1E';
-              e.currentTarget.style.transform = 'translateY(0)';
-            }}
-          >
+        <div className="product-showcase__view-all-wrapper">
+          <Link to="/products" className="product-showcase__view-all-btn">
             <span>XEM TẤT CẢ SẢN PHẨM</span>
-            <ArrowRight size={18} />
+            <ArrowRight size={17} />
           </Link>
         </div>
       </div>
