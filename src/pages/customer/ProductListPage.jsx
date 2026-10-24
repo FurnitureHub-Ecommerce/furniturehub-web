@@ -327,7 +327,6 @@ export function ProductListPage() {
                 color: "#FFFFFF",
                 margin: "0 0 12px 0",
                 lineHeight: 1.2,
-                fontStyle: "Google Sans Flex, Google Sans, Helvetica Neue, sans-serif"
               }}
             >
               {currentCategoryName}
@@ -407,7 +406,7 @@ export function ProductListPage() {
               className="lg:hidden inline-flex items-center gap-2 px-3.5 py-2 bg-stone-100 hover:bg-stone-200 text-stone-800 text-xs font-medium rounded-lg transition-colors"
             >
               <SlidersHorizontal className="w-4 h-4" />
-              <span>
+              <span style={{fontFamily: "math"}}>
                 Bộ lọc ({selectedCategories.length + selectedBrands.length})
               </span>
             </button>
@@ -542,7 +541,7 @@ export function ProductListPage() {
               padding: "20px",
               boxSizing: "border-box",
               fontFamily:
-                "serif" /* Đồng bộ toàn bộ font trong sidebar sang serif */,
+                "math" /* Đồng bộ toàn bộ font trong sidebar sang serif */,
             }}
           >
             <div
@@ -586,8 +585,7 @@ export function ProductListPage() {
                 style={{
                   margin: "0 0 10px 0",
                   fontSize: "16px",
-
-                  fontFamily: '"Bodoni Moda", serif',
+                  fontFamily: 'math',
                 }}
               >
                 Danh Mục
@@ -666,7 +664,7 @@ export function ProductListPage() {
                   margin: "0 0 10px 0",
                   fontSize: "16px",
 
-                  fontFamily: '"Bodoni Moda", serif',
+                  fontFamily: 'math',
                 }}
               >
                 Thương Hiệu
@@ -729,7 +727,7 @@ export function ProductListPage() {
                   margin: "0 0 8px 0",
                   fontSize: "16px",
 
-                  fontFamily: '"Bodoni Moda", serif',
+                  fontFamily: 'math',
                 }}
               >
                 Khoảng Giá

@@ -13,7 +13,7 @@
   font-family: 'Playfair Display', serif;
   font-size: clamp(2.2rem, 3.5vw, 3.2rem);
   font-weight: 600;
-  color: var(--lumora-text-main, #1a1a1a);
+  color: #2f1b16;
   letter-spacing: -0.02em;
   line-height: 1.15;
   margin-block: 8px 12px;
@@ -132,11 +132,11 @@
 }
 
 .editorial-spotlight__spot-tag {
-  font-size: 0.72rem;
+  font-size: 0.92rem;
   font-weight: 700;
-  letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: #8c7355;
+  color: #391811;
+  font-family: 'Playfair Display', serif;
 }
 /* Thẻ sản phẩm nổi bật ở trên */
 .hotspot-featured-card {
@@ -247,10 +247,8 @@
 
 .hotspot-list-title {
   font-size: 0.95rem;
-  font-weight: 600;
- 
-  
-  color: var(--lumora-text-main, #1a1a1a);
+  font-weight: 600;  
+  color: var(--lumora-text-main, #441f1f);
   margin-bottom: 8px;
   font-family: Arial, Helvetica, sans-serif, Geneva, Tahoma, sans-serif;
 }

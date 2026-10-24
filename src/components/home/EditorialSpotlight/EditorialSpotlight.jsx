@@ -6,14 +6,13 @@ import { Skeleton } from '../../common/Skeleton/Skeleton';
 import { formatCurrency } from '../../../utils/formatters';
 import { productAPI, getApiErrorMessage } from '../../../services/api';
 import './EditorialSpotlight.css';
-import  lookbookImage from '../../../assets/lookbook.png';
+import lookbookImage from '../../../assets/lookbook.png';
 
 export function EditorialSpotlight() {
   const [products, setProducts] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   
-  // State lưu ID sản phẩm đang được chọn hiển thị ở cột bên phải
   const [activeProductId, setActiveProductId] = useState(null);
   const [addedItem, setAddedItem] = useState(null);
 
@@ -26,22 +25,13 @@ export function EditorialSpotlight() {
 
       const response = await productAPI.getProducts();
       
-      let actualData = [];
-      if (Array.isArray(response)) {
-        actualData = response;
-      } else if (Array.isArray(response?.data)) {
-        actualData = response.data;
-      } else if (Array.isArray(response?.data?.data)) {
-        actualData = response.data.data;
-      } else if (Array.isArray(response?.data?.products)) {
-        actualData = response.data.products;
-      }
+      // Bóc tách chính xác thuộc tính products từ Backend
+      const actualData = response?.data?.products || response?.data || [];
 
       setProducts(actualData);
       
-      // Mặc định chọn sản phẩm đầu tiên làm active nếu có dữ liệu
       if (actualData.length > 0) {
-        setActiveProductId(actualData[0].id || actualData[0]._id);
+        setActiveProductId(actualData[0]._id || actualData[0].id);
       }
     } catch (err) {
       const errorMsg = getApiErrorMessage(err, 'Không thể tải dữ liệu lookbook từ máy chủ.');
@@ -56,30 +46,29 @@ export function EditorialSpotlight() {
     fetchProductsForLookbook();
   }, []);
 
-  // Định nghĩa tọa độ chuẩn xác cho từng điểm cộng (hotspot) trên bức ảnh phòng khách bên trái
-  // (Tính bằng phần trăm % theo chiều ngang X và chiều dọc Y của ảnh)
   const hotspotCoordinates = [
-    { x: 15, y: 39 }, // Điểm 1: Cái đèn
-    { x: 36, y: 32 }, // Điểm 2: Kệ ti vi
-    { x: 72, y: 48 }, // Điểm 3: Kệ sách
-    { x: 90, y: 60 }, // Điểm 4: Bàn trà
+    { x: 90, y: 60 },
+    { x: 15, y: 39 },
+ 
+    { x: 36, y: 32 },
+    { x: 72, y: 48 },
   ];
 
-  // Gắn tọa độ và thông tin hiển thị vào danh sách sản phẩm lấy từ API
+  // Map dữ liệu thực từ thuộc tính Backend trong ảnh
   const lookbookItems = products.slice(0, 4).map((item, index) => {
     const coord = hotspotCoordinates[index] || { x: 50, y: 50 };
     return {
       ...item,
-      id: item.id || item._id,
+      id: item._id || item.id,
       x: coord.x,
       y: coord.y,
-      name: item.name || 'Sản phẩm nội thất cao cấp',
-      price: item.minPrice ?? item.price ?? 3500000,
-      material: item.description || 'Gỗ tự nhiên & vải cao cấp',
+      name: item.name,
+      price: item.minPrice ?? 0,
+      material: item.description || 'Chất liệu cao cấp',
       image: Array.isArray(item.images) && item.images.length > 0 
         ? item.images[0] 
-        : (item.image || item.imageUrl || 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=800&q=80'),
-      category: item.categoryId?.name || 'Nội thất phòng khách'
+        : 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=800&q=80',
+      category: item.categoryId?.name || 'Nội thất cao cấp'
     };
   });
 
@@ -96,7 +85,6 @@ export function EditorialSpotlight() {
   return (
     <section className="section editorial-spotlight" aria-label="Điểm nhấn lookbook được tuyển chọn">
       <div className="container">
-        {/* Section Header */}
         <div className="editorial-spotlight__header">
           <span className="section-heading__badge">
             <Sparkles size={12} style={{ display: 'inline', marginRight: 4 }} />
@@ -108,7 +96,6 @@ export function EditorialSpotlight() {
           </p>
         </div>
 
-        {/* UI States */}
         {error ? (
           <div className="ui-state-card ui-state-card--error" style={{ textAlign: 'center', padding: '48px', backgroundColor: '#FFF', borderRadius: '16px', border: '1px solid #eae5e0' }}>
             <AlertCircle size={36} color="#D93838" style={{ marginBottom: '12px' }} />
@@ -126,9 +113,7 @@ export function EditorialSpotlight() {
             <p style={{ color: '#666' }}>Không tìm thấy sản phẩm nào từ máy chủ.</p>
           </div>
         ) : (
-          /* Split View Container */
           <div className="editorial-spotlight__split">
-            {/* Left: Large Interactive Room Image */}
             <div className="editorial-spotlight__image-box">
               <img
                 src={lookbookImage}
@@ -138,7 +123,6 @@ export function EditorialSpotlight() {
               />
               <div className="editorial-spotlight__overlay" />
 
-              {/* Hotspot Pulse Pins chuẩn xác từng vị trí đồ vật */}
               {isLoading ? null : lookbookItems.map((spot) => {
                 const isActive = spot.id === activeProductId;
                 return (
@@ -159,14 +143,12 @@ export function EditorialSpotlight() {
               })}
             </div>
 
-            {/* Right: Active Item Details & Hotspot Items List */}
             <div className="editorial-spotlight__sidebar">
               <span className="editorial-spotlight__spot-tag">Sản phẩm nổi bật</span>
 
               {isLoading ? (
                 <Skeleton height="180px" borderRadius="14px" />
               ) : activeItem ? (
-                /* Active Highlighted Product Card */
                 <div className="hotspot-featured-card">
                   <div className="hotspot-featured-card__image-wrap">
                     <img
@@ -209,7 +191,6 @@ export function EditorialSpotlight() {
                 </div>
               ) : null}
 
-              {/* All Room Items List */}
               <div className="hotspot-list-section">
                 <h4 className="hotspot-list-title">Tất cả sản phẩm trong phòng ({lookbookItems.length})</h4>
                 <ul className="hotspot-list">
