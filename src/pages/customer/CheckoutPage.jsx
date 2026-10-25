@@ -57,8 +57,8 @@ export default function CheckoutPage() {
   const [createdOrder, setCreatedOrder] = useState(null);
   const [copiedField, setCopiedField] = useState(null);
 
-  // 1. Fetch addresses
-  const loadAddresses = useCallback(async () => {
+// 1. Fetch addresses chuẩn xác không bị mất lựa chọn hiện tại
+  const loadAddresses = useCallback(async (preferId = null) => {
     if (!token) return;
     setIsAddressLoading(true);
     try {
@@ -67,10 +67,19 @@ export default function CheckoutPage() {
       const safeList = Array.isArray(list) ? list : [];
       setAddresses(safeList);
 
-      // Default selection
       if (safeList.length > 0) {
-        const def = safeList.find((a) => a.isDefault);
-        setSelectedAddressId((prev) => prev || (def ? def._id || def.id : safeList[0]._id || safeList[0].id));
+        setSelectedAddressId((currentId) => {
+          // Nếu có ID ưu tiên vừa thêm/sửa, chọn luôn ID đó
+          if (preferId && safeList.some(a => (a._id || a.id) === preferId)) {
+            return preferId;
+          }
+          // Nếu hiện tại chưa có selection, chọn địa chỉ mặc định hoặc cái đầu tiên
+          if (!currentId || !safeList.some(a => (a._id || a.id) === currentId)) {
+            const def = safeList.find((a) => a.isDefault);
+            return def ? def._id || def.id : safeList[0]._id || safeList[0].id;
+          }
+          return currentId;
+        });
       }
     } catch (err) {
       console.warn("Could not load addresses:", err.message);
@@ -352,32 +361,66 @@ export default function CheckoutPage() {
 
                 return (
                   <div key={item.itemId || prod.id} className="checkout-item-card">
-                    <img
-                      src={prod.image}
-                      alt={prod.name}
-                      className="checkout-item-card__img"
-                      onError={(e) => {
-                        e.currentTarget.onerror = null;
-                        e.currentTarget.src =
-                          "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=300&q=80";
-                      }}
-                    />
+                    <div className="checkout-item-card__img-wrapper">
+                      <img
+                        src={prod.image || prod.images?.[0]}
+                        alt={prod.name}
+                        className="checkout-item-card__img"
+                        onError={(e) => {
+                          e.currentTarget.onerror = null;
+                          e.currentTarget.src =
+                            "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=300&q=80";
+                        }}
+                      />
+                      <span className="checkout-item-card__badge-qty">x{item.quantity}</span>
+                    </div>
+
                     <div className="checkout-item-card__details">
+                      <span className="checkout-item-card__brand">
+                        {prod.brand?.name || prod.categoryName || "LUMORA DESIGN"}
+                      </span>
                       <h4 className="checkout-item-card__name">{prod.name}</h4>
-                      <p className="checkout-item-card__variant">
-                        Phiên bản: {prod.variantLabel || "Tiêu chuẩn nghệ nhân"}
-                      </p>
-                      <div className="checkout-item-card__meta">
-                        <span className="checkout-item-card__unit-price">
-                          {formatVND(itemPrice)}
-                        </span>
-                        <span className="checkout-item-card__qty">
-                          Số lượng: <strong>x{item.quantity}</strong>
-                        </span>
+                      
+                     
+                      {/* Hiển thị chi tiết phiên bản tách dòng rõ ràng */}
+                      <div className="checkout-item-card__variants-stack">
+                        {prod.variantLabel ? (
+                          // Nếu chuỗi phân loại có chứa dấu gạch chéo '/', ta tự động tách thành các dòng riêng biệt
+                          prod.variantLabel.split("/").map((part, idx) => {
+                            const trimmed = part.trim();
+                            if (!trimmed) return null;
+                            
+                            // Gắn nhãn thông minh dựa vào nội dung hoặc vị trí
+                            let label = "Chi tiết";
+                            if (idx === 0) label = "Màu sắc";
+                            else if (idx === 1 && /[\d–xXmm]+/.test(trimmed)) label = "Kích thước";
+                            else if (idx >= 2 || /mặt|khung|gỗ|đá|chất liệu/i.test(trimmed)) label = "Chất liệu";
+
+                            return (
+                              <div key={idx} className="checkout-variant-row">
+                                <span className="checkout-variant-label">{label}:</span> 
+                                <strong className="checkout-variant-val">{trimmed}</strong>
+                              </div>
+                            );
+                          })
+                        ) : (
+                          <div className="checkout-variant-row">
+                            <span className="checkout-variant-label">Phiên bản:</span> 
+                            <strong className="checkout-variant-val">Tiêu chuẩn nghệ nhân thủ công</strong>
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="checkout-item-card__unit-price">
+                        Đơn giá: <strong>{formatVND(itemPrice)} / sản phẩm</strong>
                       </div>
                     </div>
-                    <div className="checkout-item-card__subtotal">
-                      {formatVND(subtotal)}
+
+                    <div className="checkout-item-card__right">
+                      <span className="checkout-item-card__subtotal-label">Thành tiền</span>
+                      <div className="checkout-item-card__subtotal">
+                        {formatVND(subtotal)}
+                      </div>
                     </div>
                   </div>
                 );
@@ -400,7 +443,7 @@ export default function CheckoutPage() {
             </div>
           </section>
 
-          {/* STEP 3: Payment Method Selection (Task 8) */}
+          {/* STEP 3: Payment Method Selection */}
           <section className="checkout-section">
             <div className="checkout-section__header">
               <span className="checkout-step-number">3</span>
@@ -568,6 +611,7 @@ export default function CheckoutPage() {
       {showBankModal && createdOrder && (
         <div className="vietqr-modal-overlay">
           <div className="vietqr-modal">
+            <img src={`https://img.vietqr.io/image/MB-0912345678-compact2.png?amount=...`} />
             <div className="vietqr-modal__header">
               <div className="vietqr-modal__badge">THANH TOÁN VIETQR 24/7</div>
               <h2 className="vietqr-modal__title">Thông Tin Chuyển Khoản Ngân Hàng</h2>

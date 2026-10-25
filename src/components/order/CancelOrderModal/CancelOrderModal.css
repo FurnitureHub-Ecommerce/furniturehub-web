@@ -47,7 +47,7 @@
 }
 
 .cancel-modal__title {
-  font-family: var(--font-serif, "Cormorant Garamond", serif);
+  font-family: 'Montserrat', sans-serif;
   font-size: 1.5rem;
   font-weight: 600;
   color: var(--lumora-text-main, #252525);
@@ -130,7 +130,7 @@
 .cancel-modal__summary-total {
   color: var(--lumora-accent-wood, #8A6A48) !important;
   font-weight: 700;
-  font-family: var(--font-serif, "Cormorant Garamond", serif);
+  font-family: 'Montserrat', sans-serif;
   font-size: 1.05rem;
 }
 

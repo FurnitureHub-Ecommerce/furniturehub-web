@@ -14,16 +14,13 @@ import {
   Eye,
 } from "lucide-react";
 import { orderAPI, getApiErrorMessage } from "../../services/api";
-import { formatCurrency, PRODUCT_IMAGE_OVERRIDES } from "../../utils/formatters";
+import { formatCurrency } from "../../utils/formatters";
 import OrderStatusBadge from "../../components/order/OrderStatusbadge/OrderStatusBadge";
 import OrderDetailModal from "../../components/order/OrderDetailModal/OrderDetailModal";
 import CancelOrderModal from "../../components/order/CancelOrderModal/CancelOrderModal";
 import OrderTrackingTimeline from "../../components/customer/OrderTrackingTimeline";
 import OrderTrackingModal from "../../components/customer/OrderTrackingModal";
 import "./CustomerOrders.css";
-
-const FALLBACK_PRODUCT_IMAGE =
-  "https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?auto=format&fit=crop&w=600&q=80";
 
 export default function CustomerOrdersPage() {
   const navigate = useNavigate();
@@ -68,7 +65,6 @@ export default function CustomerOrdersPage() {
         const orderArray = Array.isArray(list) ? list : [];
         setOrders(orderArray);
 
-        // Nếu có query param ?orderId=xxx hoặc URL /orders/:orderId
         if (targetOrderId) {
           const matched = orderArray.find(
             (o) => (o._id || o.id) === targetOrderId,
@@ -77,7 +73,6 @@ export default function CustomerOrdersPage() {
             setDetailOrder(matched);
             setIsDetailOpen(true);
           } else {
-            // Trường hợp đơn hàng không có trong mảng (hoặc pagination), mở modal và fetch trực tiếp
             setDetailOrder({ _id: targetOrderId });
             setIsDetailOpen(true);
           }
@@ -119,7 +114,6 @@ export default function CustomerOrdersPage() {
     setTimeout(() => setCopiedId(null), 1800);
   };
 
-  // Mở modal chi tiết
   const handleOpenDetail = (order) => {
     setDetailOrder(order);
     setIsDetailOpen(true);
@@ -127,7 +121,6 @@ export default function CustomerOrdersPage() {
 
   const handleCloseDetail = () => {
     setIsDetailOpen(false);
-    // Xóa param trên URL nếu có
     if (searchParams.get("orderId")) {
       searchParams.delete("orderId");
       setSearchParams(searchParams, { replace: true });
@@ -136,7 +129,6 @@ export default function CustomerOrdersPage() {
     }
   };
 
-  // Mở modal theo dõi vận đơn White-Glove
   const handleOpenTracking = (order) => {
     setTrackingOrder(order);
     setIsTrackingOpen(true);
@@ -147,7 +139,6 @@ export default function CustomerOrdersPage() {
     setTrackingOrder(null);
   };
 
-  // Mở modal xác nhận hủy đơn
   const handleOpenCancelModal = (order) => {
     setCancellingOrder(order);
     setIsCancelModalOpen(true);
@@ -158,11 +149,9 @@ export default function CustomerOrdersPage() {
     setCancellingOrder(null);
   };
 
-  // Callback sau khi hủy đơn thành công
   const handleOrderCancelledSuccess = (updatedOrder) => {
     const updatedId = updatedOrder._id || updatedOrder.id;
 
-    // Cập nhật danh sách đơn hàng
     setOrders((prev) =>
       prev.map((ord) => {
         const ordId = ord._id || ord.id;
@@ -177,7 +166,6 @@ export default function CustomerOrdersPage() {
       }),
     );
 
-    // Cập nhật lại detailOrder nếu đang mở
     if (detailOrder && (detailOrder._id || detailOrder.id) === updatedId) {
       setDetailOrder((prev) => ({
         ...prev,
@@ -190,7 +178,6 @@ export default function CustomerOrdersPage() {
     handleCloseCancelModal();
   };
 
-  // Lọc theo tabs
   const tabCounts = useMemo(() => {
     return {
       all: orders.length,
@@ -247,7 +234,7 @@ export default function CustomerOrdersPage() {
 
       {/* Header */}
       <div className="orders-header">
-        <span className="orders-header__badge">THEO DÕI ĐƠN HÀNG</span>
+        <span className="orders-header__badge">Theo dõi đơn hàng</span>
         <h1 className="orders-header__title">Đơn Hàng Của Tôi</h1>
         <p className="orders-header__subtitle">
           Theo dõi tiến độ chế tác, đóng gói và dịch vụ giao hàng White-Glove
@@ -266,7 +253,6 @@ export default function CustomerOrdersPage() {
           marginBottom: "24px",
         }}
       >
-        {/* Tabs Filter */}
         <div className="orders-tabs" role="tablist" style={{ margin: 0 }}>
           <button
             type="button"
@@ -324,7 +310,6 @@ export default function CustomerOrdersPage() {
           </button>
         </div>
 
-        {/* Time Filter Select */}
         <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
           <span style={{ fontSize: "0.85rem", color: "var(--lumora-text-muted)", fontWeight: 500 }}>
             Thời gian:
@@ -352,7 +337,6 @@ export default function CustomerOrdersPage() {
         </div>
       </div>
 
-      {/* Error alert with retry */}
       {error && (
         <div className="orders-error">
           <AlertCircle size={20} className="shrink-0" />
@@ -367,7 +351,6 @@ export default function CustomerOrdersPage() {
         </div>
       )}
 
-      {/* Loading Skeleton mượt mà */}
       {isLoading ? (
         <div className="orders-skeleton-list">
           {[1, 2, 3].map((sk) => (
@@ -394,7 +377,6 @@ export default function CustomerOrdersPage() {
           ))}
         </div>
       ) : filteredOrders.length === 0 ? (
-        /* Empty state sang trọng */
         <div className="orders-empty">
           <Package size={52} className="orders-empty__icon" />
           <h3 className="orders-empty__title">Chưa có đơn hàng nào</h3>
@@ -408,7 +390,6 @@ export default function CustomerOrdersPage() {
           </Link>
         </div>
       ) : (
-        /* Danh sách đơn hàng */
         <div className="orders-list">
           {filteredOrders.map((ord) => {
             const ordId = ord._id || ord.id;
@@ -419,7 +400,7 @@ export default function CustomerOrdersPage() {
 
             return (
               <div key={ordId} className="order-item-card">
-                {/* Card Top: Mã đơn, ngày giờ & Status badge */}
+                {/* Card Top */}
                 <div className="order-item-card__top">
                   <div className="order-item-card__identifiers">
                     <span className="order-item-card__id">
@@ -460,12 +441,11 @@ export default function CustomerOrdersPage() {
                   </div>
 
                   <div className="order-item-card__status-group">
-                    {/* Task 18: Phân màu badge đồng bộ Modern Luxury LUMORA */}
                     <OrderStatusBadge status={ord.status} />
                   </div>
                 </div>
 
-                {/* Task 6: Stepper Progress Timeline (Compact preview) */}
+                {/* Stepper Timeline */}
                 <div className="order-item-card__stepper-wrap">
                   <OrderTrackingTimeline
                     status={ord.status}
@@ -475,17 +455,9 @@ export default function CustomerOrdersPage() {
                   />
                 </div>
 
-                {/* Items preview */}
+                {/* Items Preview (Thay ảnh bằng icon hàng hóa và bố cục thông số phẳng) */}
                 <div className="order-item-card__items">
                   {items.map((it, idx) => {
-                    const fallbackImg =
-                      PRODUCT_IMAGE_OVERRIDES[it.productName]?.[0] ||
-                      FALLBACK_PRODUCT_IMAGE;
-                    const itemImage =
-                      it.image ||
-                      it.productImage ||
-                      it.product?.images?.[0] ||
-                      fallbackImg;
                     const unitPrice = it.unitPrice || 0;
                     const qty = it.quantity || 1;
                     const lineTotal = it.itemSubtotal || unitPrice * qty;
@@ -496,38 +468,56 @@ export default function CustomerOrdersPage() {
                         className="order-line-item-preview"
                       >
                         <div className="order-line-item-preview__thumb">
-                          <img
-                            src={itemImage}
-                            alt={it.productName || "Sản phẩm"}
-                            onError={(e) => {
-                              e.currentTarget.src = FALLBACK_PRODUCT_IMAGE;
-                            }}
-                          />
+                          <div className="order-line-item-icon-wrap">
+                            <Package size={24} strokeWidth={1.5} />
+                          </div>
                         </div>
 
                         <div className="order-line-item-preview__info">
                           <span className="order-line-item-preview__title">
-                            {it.productName || "Nội thất cao cấp LUMORA"}
+                            {it.productName || "Sản phẩm nội thất"}
                           </span>
-                          <div className="order-line-item-preview__meta">
-                            <span className="order-line-item-preview__sku">
-                              SKU: {it.sku || it.variantId || "LUMORA-ART"}
-                            </span>
-                            <span className="order-line-item-preview__qty">
-                              Số lượng: <strong>x{qty}</strong>
-                            </span>
+                          <div className="order-line-item-preview__sku">
+                            SKU: {it.sku || it.variantId || "N/A"}
                           </div>
+                          
+                          {/* Thông số chi tiết phẳng, trực quan */}
+                          {/* <div className="order-line-item-specs">
+                            {it.color && (
+                              <div className="order-line-spec-row">
+                                <span className="spec-label">Màu sắc:</span>
+                                <span className="spec-value">{it.color}</span>
+                              </div>
+                            )}
+                            {it.size && (
+                              <div className="order-line-spec-row">
+                                <span className="spec-label">Kích thước:</span>
+                                <span className="spec-value">{it.size}</span>
+                              </div>
+                            )}
+                            {it.material && (
+                              <div className="order-line-spec-row">
+                                <span className="spec-label">Chất liệu:</span>
+                                <span className="spec-value">{it.material}</span>
+                              </div>
+                            )}
+                          </div> */}
                         </div>
 
-                        <div className="order-line-item-preview__price">
-                          {formatCurrency(lineTotal)}
+                        <div className="order-line-item-preview__price-block">
+                          <div className="order-line-item-preview__price">
+                            {formatCurrency(unitPrice)}
+                          </div>
+                          <div className="order-line-item-preview__qty">
+                            Số lượng: <strong>x{qty}</strong>
+                          </div>
                         </div>
                       </div>
                     );
                   })}
                 </div>
 
-                {/* Card Bottom / Summary */}
+                {/* Card Bottom */}
                 <div className="order-item-card__bottom">
                   <div className="order-item-card__shipping-preview">
                     <MapPin size={15} className="shrink-0 order-pin-icon" />
@@ -551,7 +541,6 @@ export default function CustomerOrdersPage() {
                     </div>
 
                     <div className="order-item-card__actions">
-                      {/* Task 17: Nút 'Hủy đơn hàng' CHỈ hiển thị khi đơn PENDING */}
                       {canCancel && (
                         <button
                           type="button"
@@ -562,7 +551,6 @@ export default function CustomerOrdersPage() {
                         </button>
                       )}
 
-                      {/* Task 6: Theo dõi timeline nhanh & chi tiết bằng OrderTrackingModal riêng biệt */}
                       <button
                         type="button"
                         className="order-btn-view"
@@ -578,7 +566,6 @@ export default function CustomerOrdersPage() {
                         <Truck size={14} /> Theo Dõi
                       </button>
 
-                      {/* Task 16: Xem chi tiết mở OrderDetailModal */}
                       <button
                         type="button"
                         className="order-btn-view"
@@ -595,7 +582,7 @@ export default function CustomerOrdersPage() {
         </div>
       )}
 
-      {/* Task 16 + 18 + 17: Modal Chi Tiết Đơn Hàng (Sản phẩm, Hóa đơn, Thanh toán VietQR) */}
+      {/* Modals */}
       <OrderDetailModal
         isOpen={isDetailOpen}
         onClose={handleCloseDetail}
@@ -605,7 +592,6 @@ export default function CustomerOrdersPage() {
         }}
       />
 
-      {/* Task 6: Modal Theo Dõi Vận Đơn White-Glove (Tiến trình 5 bước, địa chỉ giao nhận) */}
       <OrderTrackingModal
         isOpen={isTrackingOpen}
         onClose={handleCloseTracking}
@@ -620,7 +606,6 @@ export default function CustomerOrdersPage() {
         }}
       />
 
-      {/* Task 17: Modal Xác Nhận Hủy Đơn */}
       <CancelOrderModal
         isOpen={isCancelModalOpen}
         onClose={handleCloseCancelModal}
