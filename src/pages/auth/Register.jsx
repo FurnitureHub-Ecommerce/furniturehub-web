@@ -109,8 +109,8 @@ const Register = () => {
               <ArrowLeft size={20} />
             </Link>
             <div className="auth-header">
-              <h2 style={{ fontFamily: "Bodoni Moda", fontSize: 'clamp(2rem, 2.5vw, 2.7rem)', color: '#1a1a1a', letterSpacing: '-0.02em', fontWeight: 600 }}>
-                Đăng Ký Tài Khoản
+              <h2 style={{  fontSize: 'clamp(2rem, 2.5vw, 2.7rem)', color: '#1a1a1a', letterSpacing: '-0.02em', fontWeight: 600 }}>
+                Đăng Ký 
               </h2>
             
             </div>
@@ -139,7 +139,7 @@ const Register = () => {
 
             <form onSubmit={handleSubmit}>
               <div className="form-group">
-                <label>Họ và Tên</label>
+                <label>Họ và tên</label>
                 <input
                   type="text"
                   name="fullName"
@@ -165,7 +165,7 @@ const Register = () => {
               </div>
 
               <div className="form-group">
-                <label>Số Điện Thoại (Tùy chọn)</label>
+                <label>Số điện thoại</label>
                 <input
                   type="tel"
                   name="phone"
@@ -177,7 +177,7 @@ const Register = () => {
               </div>
 
               <div className="form-group">
-                <label>Mật Khẩu</label>
+                <label>Mật khẩu</label>
                 <div style={{ position: "relative" }}>
                   <input
                     type={showPassword ? "text" : "password"}
@@ -211,7 +211,7 @@ const Register = () => {
               </div>
 
               <div className="form-group">
-                <label>Nhập Lại Mật Khẩu</label>
+                <label>Nhập lại mật khẩu</label>
                 <div style={{ position: "relative" }}>
                   <input
                     type={showConfirmPassword ? "text" : "password"}
@@ -245,7 +245,7 @@ const Register = () => {
               </div>
 
               <button type="submit" className="btn-submit" disabled={loading}>
-                {loading ? "Đang xử lý..." : "Đăng Ký Tài Khoản"}
+                {loading ? "Đang xử lý..." : "Đăng Ký "}
               </button>
             </form>
 

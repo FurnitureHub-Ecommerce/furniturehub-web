@@ -227,10 +227,7 @@ export function EditorialSpotlight() {
                 </ul>
               </div>
 
-              <Link to="/products" className="editorial-spotlight__full-link">
-                <span>Xem toàn bộ Lookbook Kyoto Residency</span>
-                <ArrowRight size={16} />
-              </Link>
+             
             </div>
           </div>
         )}

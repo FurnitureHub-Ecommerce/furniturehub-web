@@ -15,11 +15,7 @@ import {
 import { orderAPI, getApiErrorMessage } from "../../services/api";
 import OrderStatusBadge from "../order/OrderStatusbadge/OrderStatusBadge";
 import OrderTrackingTimeline from "./OrderTrackingTimeline";
-import { PRODUCT_IMAGE_OVERRIDES } from "../../utils/formatters";
 import "./OrderTrackingModal.css";
-
-const FALLBACK_PRODUCT_IMAGE =
-  "https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?auto=format&fit=crop&w=600&q=80";
 
 export default function OrderTrackingModal({
   isOpen,
@@ -49,13 +45,12 @@ export default function OrderTrackingModal({
     };
   }, [isOpen]);
 
-  // Fetch dữ liệu nếu cần
+  // Fetch dữ liệu từ API thực tế của Backend
   useEffect(() => {
     if (!isOpen || !activeOrderId) return;
 
     let isMounted = true;
     async function fetchOrderInfo() {
-      // Nếu đã có đủ thông tin order và shippingAddress thì không cần fetch lại
       if (order?.shippingAddress && order?.items) return;
 
       setIsLoading(true);
@@ -122,8 +117,8 @@ export default function OrderTrackingModal({
         <div className="lumora-track-modal__header">
           <div className="lumora-track-modal__header-left">
             <span className="lumora-track-modal__badge">
-              <Truck size={13} className="text-amber-800 shrink-0" />
-              THEO DÕI VẬN ĐƠN WHITE-GLOVE
+              <Truck size={18} className="text-amber-800 shrink-0" />
+              Theo dõi đơn hàng 
             </span>
             <div className="lumora-track-modal__id-row">
               <h2 className="lumora-track-modal__title">
@@ -172,7 +167,7 @@ export default function OrderTrackingModal({
           {isLoading && !order ? (
             <div className="lumora-track-modal__loading">
               <div className="lumora-track-modal__spinner" />
-              <span>Đang kết nối hệ thống định vị vận đơn LUMORA...</span>
+              <span>Đang kết nối hệ thống định vị vận đơn...</span>
             </div>
           ) : loadError && !order ? (
             <div className="lumora-track-modal__alert lumora-track-modal__alert--error">
@@ -220,12 +215,12 @@ export default function OrderTrackingModal({
                     </p>
                     <div className="lumora-track-modal__perk-badge">
                       <ShieldCheck size={13} className="text-amber-800" />
-                      <span>Dịch vụ giao nhận White-Glove chuẩn Châu Âu</span>
+                      <span>Dịch vụ giao nhận tiêu chuẩn</span>
                     </div>
                   </div>
                 </div>
 
-                {/* Danh mục sản phẩm đang vận chuyển */}
+                {/* Danh mục sản phẩm đang vận chuyển (Dùng Icon Package thay vì ảnh giả) */}
                 <div className="lumora-track-modal__card">
                   <div className="lumora-track-modal__card-head">
                     <Package size={16} className="text-amber-800 shrink-0" />
@@ -233,40 +228,27 @@ export default function OrderTrackingModal({
                   </div>
                   <div className="lumora-track-modal__card-body">
                     <div className="lumora-track-modal__items-preview">
-                      {items.map((it, idx) => {
-                        const fallbackImg =
-                          PRODUCT_IMAGE_OVERRIDES[it.productName]?.[0] ||
-                          FALLBACK_PRODUCT_IMAGE;
-                        const itemImg =
-                          it.image ||
-                          it.productImage ||
-                          it.product?.images?.[0] ||
-                          fallbackImg;
-
-                        return (
-                          <div
-                            key={it._id || idx}
-                            className="lumora-track-modal__item-row"
-                          >
-                            <img
-                              src={itemImg}
-                              alt={it.productName || "Sản phẩm"}
-                              className="lumora-track-modal__item-thumb"
-                              onError={(e) => {
-                                e.currentTarget.src = FALLBACK_PRODUCT_IMAGE;
-                              }}
-                            />
-                            <div className="lumora-track-modal__item-info">
-                              <span className="lumora-track-modal__item-title">
-                                {it.productName || "Nội thất cao cấp LUMORA"}
-                              </span>
-                              <span className="lumora-track-modal__item-qty">
-                                Số lượng: <strong>x{it.quantity || 1}</strong>
-                              </span>
-                            </div>
+                      {items.map((it, idx) => (
+                        <div
+                          key={it._id || idx}
+                          className="lumora-track-modal__item-row"
+                        >
+                          <div className="lumora-track-modal__item-thumb">
+                            <Package size={24} strokeWidth={1.5} className="text-amber-800" />
                           </div>
-                        );
-                      })}
+                          <div className="lumora-track-modal__item-info">
+                            <span className="lumora-track-modal__item-title">
+                              {it.productName || "Sản phẩm nội thất"}
+                            </span>
+                            <div className="lumora-track-modal__item-sku">
+                              SKU: {it.sku || it.variantId || "N/A"}
+                            </div>
+                            <span className="lumora-track-modal__item-qty">
+                              Số lượng: <strong>x{it.quantity || 1}</strong>
+                            </span>
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   </div>
                 </div>

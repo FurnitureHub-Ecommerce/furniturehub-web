@@ -101,7 +101,7 @@
 }
 
 .quickview-title {
-  font-family: var(--font-serif);
+  font-family: 'Montserrat', sans-serif;
   font-size: 1.8rem;
   font-weight: 600;
   color: var(--lumora-text-main);
@@ -123,10 +123,10 @@
 }
 
 .quickview-price {
-  font-family: var(--font-serif);
+  font-family: 'Montserrat', sans-serif;
   font-size: 1.6rem;
   font-weight: 700;
-  color: var(--lumora-text-main);
+  color: rgb(182, 96, 5);
 }
 
 .quickview-old-price {
@@ -173,10 +173,12 @@
   background-color: var(--lumora-text-main);
   color: #FFFFFF;
   border-radius: var(--radius-md);
-  font-size: 0.85rem;
+  font-size: 0.75rem;
   font-weight: 600;
   letter-spacing: 0.08em;
-  text-transform: uppercase;
+  font-family: 'Montserrat', sans-serif;
+  display: flex;
+  align-items: center;
   justify-content: center;
   gap: 8px;
   transition: background-color var(--transition-fast);

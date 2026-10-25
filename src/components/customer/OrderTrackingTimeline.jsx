@@ -21,31 +21,31 @@ const TRACKING_STEPS = [
   {
     key: "pending",
     title: "Đặt hàng",
-    description: "Hệ thống LUMORA đã tiếp nhận đơn hàng",
+    description: "Tiếp nhận đơn hàng",
     icon: ShoppingBag,
   },
   {
     key: "confirmed",
     title: "Đã xác nhận",
-    description: "Xác thực thanh toán & duyệt lệnh xuất kho",
+    description: "Xác nhận đơn hàng",
     icon: CheckCircle2,
   },
   {
     key: "processing",
     title: "Đang đóng gói",
-    description: "Kiểm định nghệ nhân & đóng kiện an toàn",
+    description: "Kiểm kê và đóng gói",
     icon: Package,
   },
   {
     key: "shipping",
     title: "Đang giao",
-    description: "Chuyên xe dịch vụ White-Glove đang vận chuyển",
+    description: "Đang vận chuyển",
     icon: Truck,
   },
   {
     key: "delivered",
     title: "Hoàn thành",
-    description: "Đã bàn giao không gian và nghiệm thu hoàn tất",
+    description: "Đã bàn giao ",
     icon: PackageCheck,
   },
 ];
@@ -450,11 +450,11 @@ export default function OrderTrackingTimeline({
                   {isCompleted ? <Check size={18} strokeWidth={2.5} /> : <StepIcon size={18} />}
                 </div>
 
-                {isCurrent && (
+                {/* {isCurrent && (
                   <span className="lumora-tracking-step__badge-current">
                     Đang xử lý
                   </span>
-                )}
+                )} */}
 
                 <h4 className="lumora-tracking-step__title">{s.title}</h4>
                 <p className="lumora-tracking-step__desc">{s.description}</p>

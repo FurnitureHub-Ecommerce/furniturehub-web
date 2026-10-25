@@ -143,7 +143,7 @@ export default function CancelOrderModal({
             </div>
             <div className="cancel-modal__summary-row">
               <span>Số lượng sản phẩm:</span>
-              <strong>{order.items?.length || 0} mục</strong>
+              <strong>{order.items?.length || 0} sản phẩm</strong>
             </div>
             <div className="cancel-modal__summary-row">
               <span>Tổng giá trị đơn:</span>

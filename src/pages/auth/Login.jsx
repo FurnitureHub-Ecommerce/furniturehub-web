@@ -109,7 +109,7 @@ const Login = () => {
             <div className="auth-header">
               <h2
                 style={{
-                  fontFamily: "Bodoni Moda " ,
+                  fontFamily: "'Montserrat', sans-serif " ,
                   fontSize: "clamp(2rem, 2.5vw, 2.7rem)",
                   color: "#1a1a1a",
                   letterSpacing: "-0.02em",
@@ -205,7 +205,7 @@ const Login = () => {
             </form>
 
             <div className="auth-footer">
-              Chưa có tài khoản Customer? <Link to="/register">Đăng ký ngay</Link>
+              Chưa có tài khoản ? <Link to="/register">Đăng ký ngay</Link>
             </div>
           </div>
         </div>

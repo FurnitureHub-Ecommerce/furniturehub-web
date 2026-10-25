@@ -1,5 +1,15 @@
 import { useState } from "react";
-import { X, MapPin, User, Phone, Home, Check, AlertCircle } from "lucide-react";
+import {
+  X,
+  MapPin,
+  User,
+  Phone,
+  Home,
+  Check,
+  AlertCircle,
+  Trash2,
+  HelpCircle,
+} from "lucide-react";
 import { addressAPI, getApiErrorMessage } from "../../services/api";
 import "./AddressModal.css";
 
@@ -59,7 +69,6 @@ export default function AddressModal({
   };
 
   const validatePhone = (phone) => {
-    // VN Phone: 0xxx or +84xxx, 10-11 digits
     const phoneRegex = /^(0|\+84)(3|5|7|8|9)[0-9]{8}$/;
     return phoneRegex.test(phone.trim().replace(/\s+/g, ""));
   };
@@ -68,7 +77,6 @@ export default function AddressModal({
     e.preventDefault();
     setError(null);
 
-    // Frontend validations
     if (!formData.receiverName.trim()) {
       setError("Vui lòng nhập họ và tên người nhận");
       return;
@@ -76,7 +84,9 @@ export default function AddressModal({
 
     const cleanPhone = formData.phone.trim().replace(/\s+/g, "");
     if (!validatePhone(cleanPhone)) {
-      setError("Số điện thoại không đúng định dạng Việt Nam (ví dụ: 0912345678)");
+      setError(
+        "Số điện thoại không đúng định dạng Việt Nam (ví dụ: 0912345678)",
+      );
       return;
     }
 
@@ -111,7 +121,8 @@ export default function AddressModal({
       if (addressToEdit?._id || addressToEdit?.id) {
         const id = addressToEdit._id || addressToEdit.id;
         const res = await addressAPI.updateAddress(id, payload);
-        resultAddress = res.data?.address || res.data || { ...payload, _id: id };
+        resultAddress = res.data?.address ||
+          res.data || { ...payload, _id: id };
 
         if (formData.isDefault && !addressToEdit.isDefault) {
           await addressAPI.setDefaultAddress(id);
@@ -125,7 +136,7 @@ export default function AddressModal({
           try {
             await addressAPI.setDefaultAddress(createdId);
           } catch {
-            // Non-blocking if setting default fails
+            // Non-blocking
           }
         }
       }
@@ -146,16 +157,26 @@ export default function AddressModal({
   };
 
   return (
-    <div className="address-modal__overlay" onClick={onClose} role="dialog" aria-modal="true">
+    <div
+      className="address-modal__overlay"
+      onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+    >
       <div
-        className="address-modal__container"
+        className="address-modal__container animate-in fade-in zoom-in-95 duration-200"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="address-modal__header">
           <div className="address-modal__title-wrap">
             <span className="address-modal__badge">SỔ ĐỊA CHỈ LUMORA</span>
-            <h2 className="address-modal__title">
-              {addressToEdit ? "Cập Nhật Địa Chỉ Nhận Hàng" : "Thêm Địa Chỉ Giao Hàng Mới"}
+            <h2
+              className="address-modal__title"
+              style={{ fontFamily: "'Playfair Display', serif" }}
+            >
+              {addressToEdit
+                ? "Cập Nhật Địa Chỉ Nhận Hàng"
+                : "Thêm Địa Chỉ Giao Hàng Mới"}
             </h2>
           </div>
           <button
@@ -278,7 +299,7 @@ export default function AddressModal({
               value={formData.addressLine}
               onChange={handleChange}
               required
-              className="w-full px-4 py-2.5 text-sm bg-white border border-[#E2DBD0] rounded-lg text-[#252525] focus:outline-none focus:border-[#8A6A48] focus:ring-2 focus:ring-[#8A6A48]/20 transition-all box-border resize-y min-h-[75px]"
+              className="w-full px-4 py-2.5 text-sm bg-white border border-[#E2DBD0] rounded-lg text-[#252525] focus:outline-none focus:border-[#8A6A48] focus:ring-2 focus:ring-[#8A6A48]/20 transition-all box-border resize-y min-h-18.75"
             />
           </div>
 
@@ -317,6 +338,149 @@ export default function AddressModal({
             </button>
           </div>
         </form>
+      </div>
+    </div>
+  );
+}
+
+// ========================================================
+// COMPONENT XÁC NHẬN XÓA ĐỊA CHỈ (CUSTOM CONFIRM MODAL)
+// ========================================================
+// ========================================================
+// COMPONENT XÁC NHẬN XÓA ĐỊA CHỈ (CUSTOM CONFIRM MODAL)
+// ========================================================
+export function DeleteConfirmModal({
+  isOpen,
+  title,
+  message,
+  onConfirm,
+  onClose,
+  isLoading,
+}) {
+  if (!isOpen) return null;
+
+  return (
+    <div
+      style={{
+        position: "fixed",
+        inset: 0,
+        zIndex: 9999,
+        backgroundColor: "rgba(0, 0, 0, 0.6)",
+        backdropFilter: "blur(4px)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: "16px",
+      }}
+      onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+    >
+      <div
+        style={{
+          backgroundColor: "#ffffff",
+          borderRadius: "16px",
+          maxWidth: "420px",
+          width: "100%",
+          padding: "32px 24px",
+          boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
+          border: "1px solid #e5e7eb",
+          textAlign: "center",
+          position: "relative",
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div 
+          style={{
+            width: "48px",
+            height: "48px",
+            backgroundColor: "#fef2f2",
+            color: "#dc2626",
+            borderRadius: "50%",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            margin: "0 auto 16px auto",
+          }}
+        >
+          <Trash2 size={24} />
+        </div>
+
+        <h3
+          style={{
+            fontFamily: "'Playfair Display', serif",
+            fontSize: "1.25rem",
+            fontWeight: "bold",
+            color: "#1c1c1c",
+            marginBottom: "8px",
+          }}
+        >
+          {title || "Xác nhận xóa"}
+        </h3>
+
+        <p 
+          style={{
+            fontFamily: "'Montserrat', sans-serif",
+            fontSize: "0.85rem",
+            color: "#6b7280",
+            marginBottom: "24px",
+            lineHeight: "1.5",
+          }}
+        >
+          {message ||
+            "Bạn có chắc chắn muốn xóa địa chỉ này không? Hành động này không thể hoàn tác."}
+        </p>
+
+        <div style={{ display: "flex", gap: "12px", justifyContent: "center" }}>
+          {/* Nút Hủy bỏ */}
+          <button
+            type="button"
+            onClick={onClose}
+            disabled={isLoading}
+            style={{
+              flex: 1,
+              padding: "12px 20px",
+              backgroundColor: "#f3f4f6",
+              color: "#374151",
+              fontSize: "0.82rem",
+              fontWeight: 600,
+              fontFamily: "'Montserrat', sans-serif",
+              borderRadius: "10px",
+              border: "1px solid #d1d5db",
+              cursor: "pointer",
+              transition: "all 0.2s ease",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            Hủy bỏ
+          </button>
+
+          {/* Nút Xác nhận xóa */}
+          <button
+            type="button"
+            onClick={onConfirm}
+            disabled={isLoading}
+            style={{
+              flex: 1,
+              padding: "12px 20px",
+              backgroundColor: "#dc2626",
+              color: "#ffffff",
+              fontSize: "0.82rem",
+              fontWeight: 600,
+              fontFamily: "'Montserrat', sans-serif",
+              borderRadius: "10px",
+              border: "none",
+              boxShadow: "0 4px 12px rgba(220, 38, 38, 0.3)",
+              cursor: "pointer",
+              transition: "all 0.2s ease",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            {isLoading ? "Đang xóa..." : "Xác nhận xóa"}
+          </button>
+        </div>
       </div>
     </div>
   );
