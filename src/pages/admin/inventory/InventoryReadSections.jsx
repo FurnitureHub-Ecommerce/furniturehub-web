@@ -120,6 +120,7 @@ export function LowStockPanel() {
   });
   const [revision, setRevision] = useState(0);
   const [state, setState] = useState({ loading: true, data: null, error: "" });
+
   useEffect(() => {
     let cancelled = false;
     getAdminLowStock(query)
@@ -138,31 +139,24 @@ export function LowStockPanel() {
       cancelled = true;
     };
   }, [query, revision]);
+
   function retry() {
     setState((current) => ({ ...current, loading: true, error: "" }));
     setRevision((value) => value + 1);
   }
+
+  // Đã sửa lại hàm apply chuẩn xác cho bộ lọc Tồn kho chạm ngưỡng thấp
   function apply(event) {
     event.preventDefault();
-    const selectedId = variantId || draft.variantId.trim();
-    try {
-      const from = isoLocal(draft.from);
-      const to = isoLocal(draft.to);
-      if (from && to && Date.parse(from) > Date.parse(to))
-        throw new Error("Mốc bắt đầu phải trước hoặc bằng mốc kết thúc.");
-      setState((current) => ({ ...current, loading: true, error: "" }));
-      setQuery((current) => ({
-        ...current,
-        page: 1,
-        variantId: selectedId,
-        type: draft.type, // <--- Thêm dòng này để truyền loại biến động lên API
-        from,
-        to,
-      }));
-    } catch (error) {
-      setState((current) => ({ ...current, error: error.message }));
-    }
+    setState((current) => ({ ...current, loading: true, error: "" }));
+    setQuery((current) => ({
+      ...current,
+      page: 1,
+      variantId: draft.variantId.trim(),
+      sku: draft.sku.trim(),
+    }));
   }
+
   const rows = state.data?.rows ?? [];
   return (
     <section
@@ -195,6 +189,7 @@ export function LowStockPanel() {
               setDraft((current) => ({ ...current, sku: event.target.value }))
             }
             maxLength={200}
+            placeholder="Nhập mã SKU"
           />
         </label>
         <button type="submit" disabled={state.loading}>
@@ -216,7 +211,7 @@ export function LowStockPanel() {
           <table>
             <thead>
               <tr>
-                <th>Sản phẩm</th>
+                <th>SKU / Mã biến thể</th>
                 <th>SẢN PHẨM</th>
                 <th>SỐ LƯỢNG</th>
                 <th>NGƯỠNG</th>
@@ -623,7 +618,7 @@ export function TransactionHistoryPanel({ variantId = "", compact = false }) {
                         ? selectedTransaction.orderId._id
                         : selectedTransaction.orderId}
                     </code>
-                    <Link
+                    {/* <Link
                       to={`/admin/orders`}
                       style={{
                         fontSize: "12px",
@@ -634,7 +629,7 @@ export function TransactionHistoryPanel({ variantId = "", compact = false }) {
                       onClick={() => setSelectedTransaction(null)}
                     >
                       Xem danh sách đơn hàng →
-                    </Link>
+                    </Link> */}
                   </div>
                 </div>
               )}
