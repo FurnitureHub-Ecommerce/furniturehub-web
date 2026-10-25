@@ -420,7 +420,7 @@
 .lid-summary { position: relative; align-items: center; padding: clamp(24px, 3.5vw, 46px); border-color: #5b493a; border-radius: 15px; background: var(--lm-hero-operations); color: var(--lm-hero-text); animation: lid-enter .44s cubic-bezier(.22,.8,.24,1) 55ms both; }
 .lid-summary::after { position: absolute; inset: 0; border-radius: inherit; background: linear-gradient(135deg, transparent 58%, #e4ba9129 58.15%, transparent 58.3%), linear-gradient(135deg, transparent 68%, #e4ba9118 68.15%, transparent 68.3%); pointer-events: none; content: ""; }
 .lid-summary > * { position: relative; z-index: 1; }
-.lid-summary h1 { max-width: 760px; margin-top: 14px; color: #fff8ee; font-size: clamp(36px, 3.4vw, 54px); overflow-wrap: anywhere; }
+.lid-summary h1 { max-width: 790px; margin-top: 14px; color: #fff8ee; font-size: clamp(36px, 3.4vw, 54px); overflow-wrap: anywhere; }
 .lid-summary .lid-readonly, .lid-summary .lid-attributes, .lid-summary small { color: #e3d7c9; }
 .lid-summary .lid-demo { color: #e4ba91; }
 .lid-summary .lid-dark { border-color: #e4ba91; background: #e4ba91; color: #302c29; }
