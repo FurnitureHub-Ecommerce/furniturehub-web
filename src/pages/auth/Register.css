@@ -1,56 +1,51 @@
 /* Tận dụng lại các biến và style chung từ Login.css */
 @import './Login.css';
 
-/* Tối ưu riêng chiều cao khung card cho trang Đăng Ký (vì có nhiều input hơn) */
+/* Tối ưu riêng chiều cao khung card cho trang Đăng Ký (vừa đủ các trường input) */
 .auth-main-card {
-  height: auto;
-  min-height: 680px;
+  height: 560px; /* Thu gọn vừa phải, có thanh cuộn nhỏ bên trong nếu màn hình thấp */
 }
 
 /* Tối ưu hóa padding và khoảng cách bên trong form đăng ký */
 .auth-form-container {
-  padding: 30px 40px;
+  padding: 16px 28px;
 }
 
 .register-card {
-  max-width: 380px;
+  max-width: 350px;
 }
 
 .register-card .auth-header {
-  margin-bottom: 16px;
+  margin-bottom: 10px;
 }
 
 .register-card .auth-header h2 {
-  font-size: 46px;
+  font-size: 32px;
+  font-family: 'Montserrat', sans-serif;
 }
 
 .register-card .form-group {
-  margin-bottom: 12px;
+  margin-bottom: 8px; /* Thu nhỏ khoảng cách giữa các ô input */
 }
 
 .register-card .form-group label {
-  font-size: 11px;
-  margin-bottom: 4px;
+  font-size: 12px;
+  margin-bottom: 2px;
+  font-family: 'Montserrat', sans-serif;
 }
 
 .register-card .form-input {
-  padding: 10px 14px;
-  font-size: 13px;
-}
-
-.register-card .error-badge {
-  padding: 8px 12px;
+  padding: 7px 10px;
   font-size: 12px;
-  margin-bottom: 12px;
 }
 
 .register-card .btn-submit {
-  margin-top: 4px;
-  padding: 11px;
-  font-size: 14px;
+  margin-top: 2px;
+  padding: 9px;
+  font-size: 13px;
 }
 
 .register-card .auth-footer {
-  margin-top: 16px;
-  font-size: 13px;
+  margin-top: 10px;
+  font-size: 12px;
 }

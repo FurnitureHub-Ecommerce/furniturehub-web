@@ -13,19 +13,41 @@ import {
   Heart,
   ShoppingBag,
   Eye,
-  Star,
 } from "lucide-react";
 import { productAPI, categoryAPI, brandAPI } from "../../services/api";
 import { useShop } from "../../context/ShopContext";
-import {
-  formatCurrency,
-  formatCategoryName,
-  PRODUCT_IMAGE_OVERRIDES,
-  getProductMetrics,
-} from "../../utils/formatters";
 
-const DEFAULT_FALLBACK_IMAGE =
-  "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=800&q=80";
+// Hàm định dạng tiền tệ trực tiếp tại file
+const formatCurrency = (amount) => {
+  if (typeof amount !== "number") amount = Number(amount) || 0;
+  return new Intl.NumberFormat("vi-VN", {
+    style: "currency",
+    currency: "VND",
+  }).format(amount);
+};
+
+// Từ điển dịch tên danh mục sang tiếng Việt
+const CATEGORY_TRANSLATIONS = {
+  "home decor & lighting": "Trang trí nhà cửa & Đèn chiếu sáng",
+  "tv units & media": "Kệ TV & Thiết bị truyền thông",
+  "bookshelves & shelving": "Kệ sách & Hệ thống giá kệ",
+  "coffee & side tables": "Bàn trà & Bàn phụ",
+  "wardrobes & cabinets": "Tủ quần áo & Tủ lưu trữ",
+  "office desks & chairs": "Bàn làm việc & Ghế văn phòng",
+  "dining tables & chairs": "Bàn ăn & Ghế ăn",
+  "beds & mattresses": "Giường & Nệm",
+  "sofa & armchair": "Ghế sofa & Ghế bành",
+};
+
+// Hàm định dạng và dịch tên danh mục trực tiếp tại file
+const formatCategoryName = (name) => {
+  if (!name) return "Nội thất";
+  const lowerName = name.trim().toLowerCase();
+  if (CATEGORY_TRANSLATIONS[lowerName]) {
+    return CATEGORY_TRANSLATIONS[lowerName];
+  }
+  return name.charAt(0).toUpperCase() + name.slice(1);
+};
 
 export function ProductListPage() {
   const { id: categoryIdFromUrl } = useParams();
@@ -41,9 +63,12 @@ export function ProductListPage() {
   const [brandsData, setBrandsData] = useState([]);
 
   // Filter States
-  const targetCategory = categoryIdFromUrl || searchParams.get('category') || null;
+  const targetCategory =
+    categoryIdFromUrl || searchParams.get("category") || null;
   const [prevCategoryParam, setPrevCategoryParam] = useState(targetCategory);
-  const [selectedCategories, setSelectedCategories] = useState(() => targetCategory ? [targetCategory] : []);
+  const [selectedCategories, setSelectedCategories] = useState(() =>
+    targetCategory ? [targetCategory] : [],
+  );
 
   if (targetCategory !== prevCategoryParam) {
     setPrevCategoryParam(targetCategory);
@@ -55,11 +80,11 @@ export function ProductListPage() {
   const [searchQuery, setSearchQuery] = useState("");
 
   // Toolbar & View States
-  const [sortBy, setSortBy] = useState("newest"); // newest | price-asc | price-desc | rating
-  const [viewMode, setViewMode] = useState("grid"); // grid | list
+  const [sortBy, setSortBy] = useState("newest");
+  const [viewMode, setViewMode] = useState("grid");
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
 
-  // Normalize product helper for real backend product objects
+  // Chuẩn hóa sản phẩm từ API thật (Lấy chính xác ảnh từ backend, không dùng ảnh giả)
   const normalizeProduct = (p, idx = 0) => {
     const categoryObj =
       typeof p.categoryId === "object" && p.categoryId !== null
@@ -69,14 +94,12 @@ export function ProductListPage() {
       typeof p.brandId === "object" && p.brandId !== null ? p.brandId : null;
     const price = p.minPrice ?? p.price ?? p.basePrice ?? 0;
 
-    const overrideImages = PRODUCT_IMAGE_OVERRIDES[p.name];
-    let images =
-      overrideImages ||
-      (Array.isArray(p.images) && p.images.length > 0
-        ? [...p.images]
-        : [p.image || DEFAULT_FALLBACK_IMAGE]);
-
-    const metrics = getProductMetrics(p.name, p.rating, p.reviewCount);
+    let images = [];
+    if (Array.isArray(p.images) && p.images.length > 0) {
+      images = [...p.images];
+    } else if (p.image) {
+      images = [p.image];
+    }
 
     return {
       id: p._id || p.id || `prod-${idx}`,
@@ -89,8 +112,6 @@ export function ProductListPage() {
       brandName: brandObj?.name || "LUMORA Studio",
       basePrice: price,
       oldPrice: p.oldPrice || null,
-      rating: metrics.rating,
-      reviewCount: metrics.reviewCount,
       isNew: p.isNew !== undefined ? p.isNew : true,
       isBestSeller: p.isBestSeller || false,
       inStock:
@@ -107,7 +128,7 @@ export function ProductListPage() {
         p.description ||
         "Chế tác từ chất liệu cao cấp, đường nét tối giản tinh tế.",
       images,
-      image: images[0],
+      image: images[0] || "",
       gallery: images,
     };
   };
@@ -278,7 +299,6 @@ export function ProductListPage() {
       .sort((a, b) => {
         if (sortBy === "price-asc") return a.basePrice - b.basePrice;
         if (sortBy === "price-desc") return b.basePrice - a.basePrice;
-        if (sortBy === "rating") return (b.rating || 0) - (a.rating || 0);
         return 0;
       });
   }, [
@@ -292,13 +312,14 @@ export function ProductListPage() {
   ]);
 
   return (
-    <div className="min-h-screen bg-[#FAF8F5] py-8 px-4 sm:px-6 lg:px-8 font-sans">
+    <div
+      className="min-h-screen bg-[#FAF8F5] py-8 px-4 sm:px-6 lg:px-8"
+      style={{ fontFamily: "'Montserrat', sans-serif" }}
+    >
       <div className="max-w-360 mx-auto">
-        {/* Đã gỡ bỏ thanh điều hướng Trang chủ / Tất cả sản phẩm theo yêu cầu */}
-
-        {/* Khối Banner (Trên cùng): Đồng bộ font chữ Bodoni Moda/Serif sang trọng */}
+        {/* Banner */}
         <div
-          className="w-full bg-[#2A1810] text-white rounded-2xl p-8 mb-8 shadow-sm overflow-hidden"
+          className="w-full text-white rounded-2xl p-8 mb-8 shadow-sm overflow-hidden"
           style={{
             backgroundColor: "#5C4033",
             color: "#FFFFFF",
@@ -311,34 +332,36 @@ export function ProductListPage() {
         >
           <div className="max-w-6xl">
             <span
-              className="text-xs font-bold uppercase tracking-widest text-[#D4AF37] mb-2 block font-sans"
+              className="text-xs font-bold uppercase tracking-widest text-[#D4AF37] mb-2 block"
               style={{
                 color: "#D4AF37",
                 letterSpacing: "0.12em",
                 marginBottom: "8px",
                 display: "block",
+                fontFamily: "'Montserrat', sans-serif",
               }}
             >
               BỘ SƯU TẬP ĐỘC QUYỀN LUMORA
             </span>
             <h1
-              className="font-sans text-3xl sm:text-4xl lg:text-5xl font-semibold text-white mb-3 tracking-tight leading-snug"
+              className="text-3xl sm:text-4xl lg:text-5xl font-semibold text-white mb-3 tracking-tight leading-snug"
               style={{
+                fontFamily: "'Montserrat', sans-serif",
                 color: "#FFFFFF",
                 margin: "0 0 12px 0",
                 lineHeight: 1.2,
-                fontStyle: "Google Sans Flex, Google Sans, Helvetica Neue, sans-serif"
               }}
             >
               {currentCategoryName}
             </h1>
             <p
-              className="text-stone-400 text-sm sm:text-base leading-relaxed font-sans italic"
+              className="text-stone-300 text-sm sm:text-base leading-relaxed italic"
               style={{
                 color: "#D1D5DB",
                 margin: 0,
                 lineHeight: 1.6,
                 fontStyle: "italic",
+                fontFamily: "'Montserrat', sans-serif",
               }}
             >
               Khám phá không gian sống sang trọng với nghệ thuật thiết kế tối
@@ -350,7 +373,7 @@ export function ProductListPage() {
 
         {/* Error Alert Banner */}
         {apiError && (
-          <div className="mb-8 p-4 bg-rose-50 border border-rose-200 rounded-xl flex items-center justify-between gap-4 font-sans">
+          <div className="mb-8 p-4 bg-rose-50 border border-rose-200 rounded-xl flex items-center justify-between gap-4">
             <div className="flex items-center gap-3 text-rose-800 text-sm">
               <AlertTriangle size={20} className="text-rose-600 shrink-0" />
               <span className="leading-normal">{apiError}</span>
@@ -365,9 +388,9 @@ export function ProductListPage() {
           </div>
         )}
 
-        {/* Thanh Toolbar & Search */}
+        {/* Toolbar & Search */}
         <div
-          className="flex flex-col md:flex-row items-center justify-between gap-4 mb-8 bg-white p-4 rounded-xl border border-gray-100 shadow-sm font-sans"
+          className="flex flex-col md:flex-row items-center justify-between gap-4 mb-8 bg-white p-4 rounded-xl border border-gray-100 shadow-sm"
           style={{
             backgroundColor: "#FFFFFF",
             padding: "16px",
@@ -376,7 +399,6 @@ export function ProductListPage() {
             marginBottom: "32px",
           }}
         >
-          {/* Ô Tìm kiếm */}
           <div className="relative w-full md:w-96">
             <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
               <Search className="h-4 w-4 text-gray-400" />
@@ -395,11 +417,11 @@ export function ProductListPage() {
                 borderRadius: "8px",
                 border: "1px solid #E5E7EB",
                 outline: "none",
+                fontFamily: "'Montserrat', sans-serif",
               }}
             />
           </div>
 
-          {/* Cụm Sắp xếp & Chế độ xem */}
           <div className="flex items-center gap-3 flex-wrap justify-end w-full md:w-auto">
             <button
               type="button"
@@ -433,12 +455,14 @@ export function ProductListPage() {
                   borderRadius: "6px",
                   border: "1px solid #E5E7EB",
                   backgroundColor: "#F9FAFB",
+                  fontFamily: "'Montserrat', sans-serif",
                 }}
               >
                 <option value="newest">Mới nhất</option>
-                <option value="price-asc">Giá: Thấp đến Cao</option>
+                <option value="price-asc">
+                  Giá: Thấp đến Cao (Nhỏ đến Lớn)
+                </option>
                 <option value="price-desc">Giá: Cao đến Thấp</option>
-                <option value="rating">Đánh giá cao nhất</option>
               </select>
             </div>
 
@@ -452,7 +476,6 @@ export function ProductListPage() {
                     : "text-stone-500 hover:text-stone-800 hover:bg-white"
                 }`}
                 title="Chế độ xem lưới"
-                aria-label="Chế độ xem lưới"
               >
                 <Grid3X3 className="w-4 h-4" />
               </button>
@@ -465,7 +488,6 @@ export function ProductListPage() {
                     : "text-stone-500 hover:text-stone-800 hover:bg-white"
                 }`}
                 title="Chế độ xem danh sách"
-                aria-label="Chế độ xem danh sách"
               >
                 <List className="w-4 h-4" />
               </button>
@@ -477,7 +499,7 @@ export function ProductListPage() {
         {(selectedCategories.length > 0 ||
           selectedBrands.length > 0 ||
           onlyInStock) && (
-          <div className="flex items-center gap-2 flex-wrap mb-6 font-sans">
+          <div className="flex items-center gap-2 flex-wrap mb-6">
             <span className="text-xs text-stone-500 font-medium">
               Đang lọc:
             </span>
@@ -488,7 +510,7 @@ export function ProductListPage() {
                   key={catId}
                   className="inline-flex items-center gap-1 py-1 px-2.5 bg-amber-100 text-amber-900 text-xs font-medium rounded-full"
                 >
-                  {cat?.name || catId}
+                  {cat ? formatCategoryName(cat.name) : catId}
                   <button type="button" onClick={() => toggleCategory(catId)}>
                     <X size={12} />
                   </button>
@@ -530,9 +552,9 @@ export function ProductListPage() {
           </div>
         )}
 
-        {/* Bố cục Thân trang */}
-        <div className="flex flex-col lg:flex-row gap-8 items-start font-sans">
-          {/* Sidebar Bộ lọc */}
+        {/* Main Layout */}
+        <div className="flex flex-col lg:flex-row gap-8 items-start">
+          {/* Sidebar */}
           <aside
             className={`w-full lg:w-64 shrink-0 bg-white p-5 rounded-xl border border-gray-100 shadow-sm space-y-6 ${isMobileFilterOpen ? "block" : "hidden lg:block"}`}
             style={{
@@ -541,8 +563,6 @@ export function ProductListPage() {
               border: "1px solid #EAE5E0",
               padding: "20px",
               boxSizing: "border-box",
-              fontFamily:
-                "serif" /* Đồng bộ toàn bộ font trong sidebar sang serif */,
             }}
           >
             <div
@@ -553,11 +573,15 @@ export function ProductListPage() {
               }}
             >
               <h2
-                className="font-serif text-base font-bold text-stone-900 flex items-center gap-2"
                 style={{
-                  fontFamily: '"Bodoni Moda", serif',
+                  fontFamily: "'Montserrat', sans-serif",
+                  fontSize: "16px",
+                  fontWeight: 700,
                   margin: 0,
-                  letterSpacing: "0.04em",
+                  color: "#1C1917",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "8px",
                 }}
               >
                 <Filter className="w-4 h-4 text-amber-800" />
@@ -571,7 +595,7 @@ export function ProductListPage() {
                   background: "none",
                   border: "none",
                   cursor: "pointer",
-                  fontFamily: "sans-serif",
+                  fontFamily: "'Montserrat', sans-serif",
                 }}
               >
                 <RotateCcw className="w-3 h-3" />
@@ -579,15 +603,15 @@ export function ProductListPage() {
               </button>
             </div>
 
-            {/* Category Filter Group */}
+            {/* Category Filter */}
             <div>
               <h3
-                className="text-xs font-bold uppercase tracking-wider text-stone-800 mb-2.5"
                 style={{
+                  fontFamily: "'Montserrat', sans-serif",
+                  fontSize: "14px",
+                  fontWeight: 700,
                   margin: "0 0 10px 0",
-                  fontSize: "16px",
-
-                  fontFamily: '"Bodoni Moda", serif',
+                  color: "#1C1917",
                 }}
               >
                 Danh Mục
@@ -598,17 +622,16 @@ export function ProductListPage() {
                   return (
                     <label
                       key={cat.id}
-                      className="flex items-center justify-between py-1.5 text-sm text-stone-700 cursor-pointer hover:text-amber-800 transition-colors"
                       style={{
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "space-between",
                         padding: "6px 0",
-                        fontSize: "15px",
+                        fontSize: "14px",
+                        cursor: "pointer",
                       }}
                     >
                       <div
-                        className="flex items-center gap-2.5 min-w-0 pr-2"
                         style={{
                           display: "flex",
                           alignItems: "center",
@@ -623,7 +646,7 @@ export function ProductListPage() {
                           className="w-4 h-4 rounded border-gray-300 text-amber-800 focus:ring-amber-800 cursor-pointer shrink-0"
                         />
                         <span
-                          className={`truncate ${isChecked ? "font-bold text-amber-900" : ""}`}
+                          className={`truncate ${isChecked ? "font-bold text-amber-900" : "text-stone-700"}`}
                           style={{
                             overflow: "hidden",
                             textOverflow: "ellipsis",
@@ -635,7 +658,6 @@ export function ProductListPage() {
                       </div>
                       {cat.count > 0 && (
                         <span
-                          className="text-xs text-stone-500 bg-stone-100 px-2 py-0.5 rounded-full shrink-0"
                           style={{
                             fontSize: "11px",
                             padding: "2px 8px",
@@ -643,7 +665,6 @@ export function ProductListPage() {
                             backgroundColor: "#F3F4F6",
                             color: "#6B7280",
                             flexShrink: 0,
-                            fontFamily: "sans-serif",
                           }}
                         >
                           {cat.count}
@@ -655,18 +676,15 @@ export function ProductListPage() {
               </div>
             </div>
 
-            {/* Brand Filter Group */}
-            <div
-              className="border-t border-gray-100 pt-4"
-              style={{ borderTop: "1px solid #F3F4F6", paddingTop: "16px" }}
-            >
+            {/* Brand Filter */}
+            <div style={{ borderTop: "1px solid #F3F4F6", paddingTop: "16px" }}>
               <h3
-                className="text-xs font-bold uppercase tracking-wider text-stone-800 mb-2.5"
                 style={{
+                  fontFamily: "'Montserrat', sans-serif",
+                  fontSize: "14px",
+                  fontWeight: 700,
                   margin: "0 0 10px 0",
-                  fontSize: "16px",
-
-                  fontFamily: '"Bodoni Moda", serif',
+                  color: "#1C1917",
                 }}
               >
                 Thương Hiệu
@@ -677,17 +695,16 @@ export function ProductListPage() {
                   return (
                     <label
                       key={b.id}
-                      className="flex items-center justify-between py-1.5 text-sm text-stone-700 cursor-pointer hover:text-amber-800 transition-colors"
                       style={{
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "space-between",
                         padding: "6px 0",
-                        fontSize: "13px",
+                        fontSize: "14px",
+                        cursor: "pointer",
                       }}
                     >
                       <div
-                        className="flex items-center gap-2.5 min-w-0"
                         style={{
                           display: "flex",
                           alignItems: "center",
@@ -702,7 +719,7 @@ export function ProductListPage() {
                           className="w-4 h-4 rounded border-gray-300 text-amber-800 focus:ring-amber-800 cursor-pointer shrink-0"
                         />
                         <span
-                          className={`truncate ${isChecked ? "font-bold text-amber-900" : ""}`}
+                          className={`truncate ${isChecked ? "font-bold text-amber-900" : "text-stone-700"}`}
                           style={{
                             overflow: "hidden",
                             textOverflow: "ellipsis",
@@ -718,21 +735,21 @@ export function ProductListPage() {
               </div>
             </div>
 
-            {/* Price Range Filter Group */}
+            {/* Price Range Filter */}
             <div
-              className="border-t border-gray-100 pt-4 space-y-3"
               style={{ borderTop: "1px solid #F3F4F6", paddingTop: "16px" }}
+              className="space-y-3"
             >
               <h3
-                className="text-xs font-bold uppercase tracking-wider text-stone-800"
                 style={{
+                  fontFamily: "'Montserrat', sans-serif",
+                  fontSize: "14px",
+                  fontWeight: 700,
                   margin: "0 0 8px 0",
-                  fontSize: "16px",
-
-                  fontFamily: '"Bodoni Moda", serif',
+                  color: "#1C1917",
                 }}
               >
-                Khoảng Giá
+                Khoảng Giá (Từ nhỏ đến lớn)
               </h3>
               <input
                 type="range"
@@ -747,70 +764,23 @@ export function ProductListPage() {
                 style={{ width: "100%" }}
               />
               <div
-                className="grid grid-cols-2 gap-2 text-xs"
                 style={{
-                  display: "grid",
-                  gridTemplateColumns: "1fr 1fr",
-                  gap: "8px",
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
                   fontSize: "12px",
-                  fontFamily: "sans-serif",
+                  color: "#6B7280",
                 }}
               >
-                <div>
-                  <span
-                    className="text-stone-400 block mb-1"
-                    style={{
-                      display: "block",
-                      marginBottom: "4px",
-                      color: "#9CA3AF",
-                    }}
-                  >
-                    Từ (Min)
-                  </span>
-                  <div
-                    className="p-2 bg-stone-50 border border-gray-200 rounded text-stone-800 font-medium"
-                    style={{
-                      padding: "6px 8px",
-                      backgroundColor: "#F9FAFB",
-                      border: "1px solid #E5E7EB",
-                      borderRadius: "4px",
-                    }}
-                  >
-                    0 ₫
-                  </div>
-                </div>
-                <div>
-                  <span
-                    className="text-stone-400 block mb-1"
-                    style={{
-                      display: "block",
-                      marginBottom: "4px",
-                      color: "#9CA3AF",
-                    }}
-                  >
-                    Đến (Max)
-                  </span>
-                  <div
-                    className="p-2 bg-amber-50 border border-amber-200 rounded text-amber-900 font-bold truncate"
-                    style={{
-                      padding: "6px 8px",
-                      backgroundColor: "#FEF3C7",
-                      border: "1px solid #FDE68A",
-                      borderRadius: "4px",
-                      color: "#78350F",
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
-                      whiteSpace: "nowrap",
-                    }}
-                  >
-                    {formatCurrency(priceRange.max)}
-                  </div>
-                </div>
+                <span>{formatCurrency(priceRange.min)}</span>
+                <span style={{ fontWeight: 600, color: "#92400E" }}>
+                  Đến: {formatCurrency(priceRange.max)}
+                </span>
               </div>
             </div>
           </aside>
 
-          {/* Lưới Sản phẩm (Bên phải) */}
+          {/* Product Grid Area */}
           <div
             className="flex-1 w-full"
             style={{ flex: 1, width: "100%", minWidth: 0 }}
@@ -832,7 +802,6 @@ export function ProductListPage() {
               </div>
             ) : filteredProducts.length === 0 ? (
               <div
-                className="bg-white p-12 rounded-2xl border border-gray-100 text-center shadow-sm"
                 style={{
                   backgroundColor: "#FFFFFF",
                   padding: "48px",
@@ -842,17 +811,17 @@ export function ProductListPage() {
                 }}
               >
                 <p
-                  className="font-serif text-xl font-bold text-stone-900 mb-2 leading-snug"
                   style={{
-                    fontFamily: '"Bodoni Moda", serif',
+                    fontFamily: "'Montserrat', sans-serif",
                     margin: "0 0 8px 0",
-                    fontSize: "20px",
+                    fontSize: "18px",
+                    fontWeight: 700,
+                    color: "#1C1917",
                   }}
                 >
                   Không tìm thấy sản phẩm nào
                 </p>
                 <p
-                  className="text-xs text-stone-500 max-w-md mx-auto mb-6 leading-relaxed"
                   style={{
                     margin: "0 auto 24px auto",
                     fontSize: "13px",
@@ -866,7 +835,6 @@ export function ProductListPage() {
                 <button
                   type="button"
                   onClick={handleResetFilters}
-                  className="px-4 py-2 bg-amber-800 hover:bg-amber-900 text-white text-xs font-semibold rounded-lg transition-colors inline-flex items-center gap-2"
                   style={{
                     padding: "8px 16px",
                     backgroundColor: "#92400E",
@@ -877,6 +845,7 @@ export function ProductListPage() {
                     display: "inline-flex",
                     alignItems: "center",
                     gap: "8px",
+                    fontSize: "13px",
                   }}
                 >
                   <RotateCcw className="w-4 h-4" />
@@ -892,40 +861,45 @@ export function ProductListPage() {
                   return (
                     <article
                       key={product.id}
-                      className="group bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-200 flex flex-col sm:flex-row"
                       style={{
                         backgroundColor: "#FFFFFF",
                         borderRadius: "12px",
                         border: "1px solid #EAE5E0",
                         overflow: "hidden",
                         display: "flex",
+                        flexDirection: "row",
                         boxSizing: "border-box",
                       }}
                     >
                       <div
-                        className="w-full sm:w-64 h-56 bg-gray-50 relative shrink-0"
-                        style={{ position: "relative" }}
+                        style={{
+                          width: "250px",
+                          height: "200px",
+                          backgroundColor: "#F9FAFB",
+                          position: "relative",
+                          flexShrink: 0,
+                        }}
                       >
                         <Link
                           to={`/product/${product.slug || product._id || product.id}`}
                           className="block w-full h-full"
                         >
-                          <img
-                            src={product.image}
-                            alt={product.name}
-                            onError={(e) => {
-                              e.currentTarget.onerror = null;
-                              e.currentTarget.src = DEFAULT_FALLBACK_IMAGE;
-                            }}
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                            style={{
-                              width: "100%",
-                              height: "100%",
-                              objectFit: "cover",
-                              display: "block",
-                            }}
-                            loading="lazy"
-                          />
+                          {product.image ? (
+                            <img
+                              src={product.image}
+                              alt={product.name}
+                              onError={(e) => {
+                                e.currentTarget.style.display = "none";
+                              }}
+                              style={{
+                                width: "100%",
+                                height: "100%",
+                                objectFit: "cover",
+                                display: "block",
+                              }}
+                              loading="lazy"
+                            />
+                          ) : null}
                         </Link>
                         <button
                           type="button"
@@ -933,11 +907,6 @@ export function ProductListPage() {
                             e.preventDefault();
                             toggleWishlist(String(product.id || product._id));
                           }}
-                          className={`absolute top-3 right-3 p-2 rounded-full shadow-sm transition-colors ${
-                            isWishlisted
-                              ? "bg-amber-800 text-white"
-                              : "bg-white/90 text-stone-700 hover:bg-white hover:text-amber-800"
-                          }`}
                           style={{
                             position: "absolute",
                             top: "12px",
@@ -952,11 +921,6 @@ export function ProductListPage() {
                             cursor: "pointer",
                             zIndex: 2,
                           }}
-                          aria-label={
-                            isWishlisted
-                              ? "Xóa khỏi yêu thích"
-                              : "Thêm vào yêu thích"
-                          }
                         >
                           <Heart
                             size={16}
@@ -966,7 +930,6 @@ export function ProductListPage() {
                       </div>
 
                       <div
-                        className="p-5 flex flex-col flex-1 justify-between gap-3"
                         style={{
                           padding: "20px",
                           display: "flex",
@@ -977,46 +940,25 @@ export function ProductListPage() {
                       >
                         <div>
                           <div
-                            className="flex items-center justify-between text-xs text-stone-500 mb-1.5"
                             style={{
                               display: "flex",
                               justifyContent: "space-between",
                               alignItems: "center",
                               marginBottom: "6px",
+                              fontSize: "12px",
                             }}
                           >
-                            <span
-                              className="font-semibold uppercase tracking-wider text-amber-800"
-                              style={{ color: "#92400E", fontWeight: 600 }}
-                            >
+                            <span style={{ color: "#92400E", fontWeight: 600 }}>
                               {product.categoryName}
                             </span>
-                            <div
-                              className="flex items-center gap-1 text-amber-600 font-semibold text-xs"
-                              style={{
-                                display: "flex",
-                                alignItems: "center",
-                                gap: "4px",
-                                color: "#D97706",
-                              }}
-                            >
-                              <Star size={13} fill="currentColor" />
-                              <span>{product.rating}</span>
-                              <span
-                                className="text-stone-400 font-normal"
-                                style={{ color: "#9CA3AF" }}
-                              >
-                                ({product.reviewCount})
-                              </span>
-                            </div>
                           </div>
 
                           <h3
-                            className="font-serif text-lg font-bold text-stone-900 group-hover:text-amber-800 transition-colors leading-snug mb-2"
                             style={{
-                              fontFamily: '"Bodoni Moda", serif',
+                              fontFamily: "'Montserrat', sans-serif",
                               margin: "0 0 8px 0",
-                              fontSize: "18px",
+                              fontSize: "16px",
+                              fontWeight: 700,
                               color: "#1C1917",
                             }}
                           >
@@ -1032,7 +974,6 @@ export function ProductListPage() {
                           </h3>
 
                           <p
-                            className="text-xs text-stone-500 line-clamp-2 leading-relaxed mb-3"
                             style={{
                               margin: "0 0 12px 0",
                               color: "#6B7280",
@@ -1043,7 +984,6 @@ export function ProductListPage() {
                           </p>
 
                           <div
-                            className="flex items-baseline gap-2"
                             style={{
                               display: "flex",
                               alignItems: "baseline",
@@ -1051,18 +991,16 @@ export function ProductListPage() {
                             }}
                           >
                             <span
-                              className="font-bold text-amber-900 text-xl"
                               style={{
                                 color: "#78350F",
                                 fontWeight: 700,
-                                fontSize: "20px",
+                                fontSize: "18px",
                               }}
                             >
                               {formatCurrency(product.basePrice)}
                             </span>
                             {product.oldPrice && (
                               <span
-                                className="text-xs text-stone-400 line-through"
                                 style={{
                                   textDecoration: "line-through",
                                   color: "#9CA3AF",
@@ -1076,7 +1014,6 @@ export function ProductListPage() {
                         </div>
 
                         <div
-                          className="flex items-center gap-3 pt-3 border-t border-gray-100"
                           style={{
                             display: "flex",
                             alignItems: "center",
@@ -1089,7 +1026,6 @@ export function ProductListPage() {
                             type="button"
                             onClick={() => addToCart(product)}
                             disabled={!product.inStock}
-                            className="flex-1 py-2.5 px-4 bg-stone-900 hover:bg-amber-800 text-white text-xs font-semibold rounded-lg flex items-center justify-center gap-2 transition-colors disabled:opacity-50"
                             style={{
                               flex: 1,
                               padding: "10px 16px",
@@ -1107,6 +1043,7 @@ export function ProductListPage() {
                               justifyContent: "center",
                               gap: "8px",
                               fontSize: "13px",
+                              fontFamily: "'Montserrat', sans-serif",
                             }}
                           >
                             <ShoppingBag size={14} />
@@ -1117,7 +1054,6 @@ export function ProductListPage() {
                           <button
                             type="button"
                             onClick={() => setQuickViewProduct(product)}
-                            className="p-2.5 bg-stone-100 hover:bg-stone-200 text-stone-700 rounded-lg transition-colors"
                             style={{
                               padding: "10px",
                               backgroundColor: "#F3F4F6",
@@ -1127,7 +1063,6 @@ export function ProductListPage() {
                               cursor: "pointer",
                             }}
                             title="Xem nhanh"
-                            aria-label="Xem nhanh"
                           >
                             <Eye size={16} />
                           </button>
@@ -1146,7 +1081,6 @@ export function ProductListPage() {
                   return (
                     <article
                       key={product.id}
-                      className="group bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-200 flex flex-col h-full"
                       style={{
                         backgroundColor: "#FFFFFF",
                         borderRadius: "12px",
@@ -1158,9 +1092,7 @@ export function ProductListPage() {
                         boxSizing: "border-box",
                       }}
                     >
-                      {/* Image Box */}
                       <div
-                        className="aspect-4/3 w-full overflow-hidden bg-gray-50 relative shrink-0 block"
                         style={{
                           width: "100%",
                           aspectRatio: "4/3",
@@ -1173,26 +1105,25 @@ export function ProductListPage() {
                           to={`/product/${product.slug || product._id || product.id}`}
                           className="block w-full h-full"
                         >
-                          <img
-                            src={product.image}
-                            alt={product.name}
-                            onError={(e) => {
-                              e.currentTarget.onerror = null;
-                              e.currentTarget.src = DEFAULT_FALLBACK_IMAGE;
-                            }}
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                            style={{
-                              width: "100%",
-                              height: "100%",
-                              objectFit: "cover",
-                              display: "block",
-                            }}
-                            loading="lazy"
-                          />
+                          {product.image ? (
+                            <img
+                              src={product.image}
+                              alt={product.name}
+                              onError={(e) => {
+                                e.currentTarget.style.display = "none";
+                              }}
+                              style={{
+                                width: "100%",
+                                height: "100%",
+                                objectFit: "cover",
+                                display: "block",
+                              }}
+                              loading="lazy"
+                            />
+                          ) : null}
                         </Link>
 
                         <div
-                          className="absolute top-3 left-3 flex flex-col gap-1 pointer-events-none"
                           style={{
                             position: "absolute",
                             top: "12px",
@@ -1205,7 +1136,6 @@ export function ProductListPage() {
                         >
                           {product.isNew && (
                             <span
-                              className="px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-stone-900 text-white rounded"
                               style={{
                                 padding: "2px 8px",
                                 fontSize: "10px",
@@ -1219,7 +1149,6 @@ export function ProductListPage() {
                           )}
                           {!product.inStock && (
                             <span
-                              className="px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-rose-600 text-white rounded"
                               style={{
                                 padding: "2px 8px",
                                 fontSize: "10px",
@@ -1239,11 +1168,6 @@ export function ProductListPage() {
                             e.preventDefault();
                             toggleWishlist(String(product.id || product._id));
                           }}
-                          className={`absolute top-3 right-3 p-2 rounded-full shadow-sm transition-colors ${
-                            isWishlisted
-                              ? "bg-amber-800 text-white"
-                              : "bg-white/90 text-stone-700 hover:bg-white hover:text-amber-800"
-                          }`}
                           style={{
                             position: "absolute",
                             top: "12px",
@@ -1259,11 +1183,6 @@ export function ProductListPage() {
                             zIndex: 2,
                             boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
                           }}
-                          aria-label={
-                            isWishlisted
-                              ? "Xóa khỏi yêu thích"
-                              : "Thêm vào yêu thích"
-                          }
                         >
                           <Heart
                             size={16}
@@ -1272,9 +1191,7 @@ export function ProductListPage() {
                         </button>
                       </div>
 
-                      {/* Content Box */}
                       <div
-                        className="p-4 flex flex-col flex-1 justify-between gap-3"
                         style={{
                           padding: "16px",
                           display: "flex",
@@ -1285,7 +1202,6 @@ export function ProductListPage() {
                       >
                         <div>
                           <div
-                            className="flex items-center justify-between text-xs text-stone-500 mb-1.5"
                             style={{
                               display: "flex",
                               justifyContent: "space-between",
@@ -1295,7 +1211,6 @@ export function ProductListPage() {
                             }}
                           >
                             <span
-                              className="font-semibold uppercase tracking-wider text-[11px] text-amber-800 truncate pr-2"
                               style={{
                                 color: "#92400E",
                                 fontWeight: 600,
@@ -1306,33 +1221,12 @@ export function ProductListPage() {
                             >
                               {product.categoryName}
                             </span>
-                            <div
-                              className="flex items-center gap-1 text-amber-600 font-semibold text-xs shrink-0"
-                              style={{
-                                display: "flex",
-                                alignItems: "center",
-                                gap: "4px",
-                                color: "#D97706",
-                                flexShrink: 0,
-                              }}
-                            >
-                              <Star size={13} fill="currentColor" />
-                              <span>{product.rating}</span>
-                              <span
-                                className="text-stone-400 font-normal"
-                                style={{ color: "#9CA3AF" }}
-                              >
-                                ({product.reviewCount})
-                              </span>
-                            </div>
                           </div>
 
-                          {/* Đồng bộ font tiêu đề sản phẩm sang serif */}
                           <h3
-                            className="font-serif text-base font-bold text-stone-900 group-hover:text-amber-800 transition-colors line-clamp-2 min-h-12 leading-snug mb-2"
                             style={{
-                              fontFamily: '"Bodoni Moda", serif',
-                              fontSize: "16px",
+                              fontFamily: "'Montserrat', sans-serif",
+                              fontSize: "15px",
                               fontWeight: 700,
                               color: "#1C1917",
                               margin: "0 0 8px 0",
@@ -1356,7 +1250,6 @@ export function ProductListPage() {
                           </h3>
 
                           <div
-                            className="flex items-baseline gap-2 mb-2"
                             style={{
                               display: "flex",
                               alignItems: "baseline",
@@ -1365,7 +1258,6 @@ export function ProductListPage() {
                             }}
                           >
                             <span
-                              className="font-bold text-amber-900 text-lg"
                               style={{
                                 color: "#78350F",
                                 fontWeight: 700,
@@ -1376,7 +1268,6 @@ export function ProductListPage() {
                             </span>
                             {product.oldPrice && (
                               <span
-                                className="text-xs text-stone-400 line-through"
                                 style={{
                                   textDecoration: "line-through",
                                   color: "#9CA3AF",
@@ -1390,7 +1281,6 @@ export function ProductListPage() {
                         </div>
 
                         <div
-                          className="flex items-center gap-2 pt-3 border-t border-gray-100"
                           style={{
                             display: "flex",
                             alignItems: "center",
@@ -1403,7 +1293,6 @@ export function ProductListPage() {
                             type="button"
                             onClick={() => addToCart(product)}
                             disabled={!product.inStock}
-                            className="flex-1 py-2 px-3 bg-stone-900 hover:bg-amber-800 text-white text-xs font-semibold rounded-lg flex items-center justify-center gap-1.5 transition-colors disabled:opacity-50"
                             style={{
                               flex: 1,
                               padding: "8px 12px",
@@ -1422,6 +1311,7 @@ export function ProductListPage() {
                               alignItems: "center",
                               justifyContent: "center",
                               gap: "6px",
+                              fontFamily: "'Montserrat', sans-serif",
                             }}
                           >
                             <ShoppingBag size={14} />
@@ -1432,10 +1322,9 @@ export function ProductListPage() {
                           <button
                             type="button"
                             onClick={() => setQuickViewProduct(product)}
-                            className="p-2 bg-stone-100 hover:bg-stone-200 text-stone-700 rounded-lg transition-colors"
                             style={{
                               padding: "8px",
-                              backgroundColor: "#F3F4F6",
+                              backgroundColor: "#F9FAFB",
                               color: "#374151",
                               borderRadius: "8px",
                               border: "none",
@@ -1445,7 +1334,6 @@ export function ProductListPage() {
                               justifyContent: "center",
                             }}
                             title="Xem nhanh"
-                            aria-label="Xem nhanh"
                           >
                             <Eye size={16} />
                           </button>

@@ -21,14 +21,14 @@
   align-items: center;
   font-size: 0.75rem;
   font-weight: 700;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--lumora-accent-wood, #8A6A48);
+  color: var(--lumora-accent-wood, #8a6a48);
   margin-bottom: 0.5rem;
 }
 
 .lumora-profile-header__title {
-  font-family: var(--font-serif, "Cormorant Garamond", Georgia, serif);
+  font-family: "Playfair Display", serif;
   font-size: 2.5rem;
   font-weight: 600;
   color: var(--lumora-text-main, #252525);
@@ -38,7 +38,7 @@
 
 .lumora-profile-header__subtitle {
   font-size: 0.9375rem;
-  color: var(--lumora-text-muted, #6E6860);
+  color: var(--lumora-text-muted, #6e6860);
   max-width: 640px;
   line-height: 1.5;
 }
@@ -48,7 +48,7 @@
   display: flex;
   align-items: center;
   gap: 1.5rem;
-  border-bottom: 1px solid var(--lumora-border, #E2DBD0);
+  border-bottom: 1px solid var(--lumora-border, #e2dbd0);
   margin-bottom: 2.5rem;
 }
 
@@ -59,10 +59,10 @@
   padding: 0.875rem 0.5rem;
   background: transparent;
   border: none;
-  font-family: var(--font-sans, sans-serif);
+  font-family: "Playfair Display", serif !important;
   font-size: 0.9375rem;
   font-weight: 600;
-  color: var(--lumora-text-muted, #6E6860);
+  color: var(--lumora-text-muted, #4a2d08);
   cursor: pointer;
   position: relative;
   transition: all 0.2s ease;
@@ -73,7 +73,7 @@
 }
 
 .lumora-profile-tab--active {
-  color: var(--lumora-accent-wood, #8A6A48);
+  color: var(--lumora-accent-wood, #8a6a48);
 }
 
 .lumora-profile-tab--active::after {
@@ -83,13 +83,13 @@
   left: 0;
   right: 0;
   height: 2px;
-  background-color: var(--lumora-accent-wood, #8A6A48);
+  background-color: var(--lumora-accent-wood, #8a6a48);
 }
 
 /* Card Container */
 .lumora-profile-card {
-  background-color: #FFFFFF;
-  border: 1px solid var(--lumora-border, #E2DBD0);
+  background-color: #ffffff;
+  border: 1px solid var(--lumora-border, #e2dbd0);
   border-radius: 1.25rem;
   box-shadow: 0 4px 20px rgba(37, 37, 37, 0.04);
   padding: 2rem 2.25rem;
@@ -105,7 +105,7 @@
   align-items: center;
   gap: 1.5rem;
   padding-bottom: 1.75rem;
-  border-bottom: 1px solid var(--lumora-border-subtle, #F0EAE1);
+  border-bottom: 1px solid var(--lumora-border-subtle, #f0eae1);
   margin-bottom: 2rem;
   flex-wrap: wrap;
 }
@@ -118,8 +118,8 @@
   width: 72px;
   height: 72px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #8A6A48 0%, #5B4028 100%);
-  color: #FFFFFF;
+  background: linear-gradient(135deg, #8a6a48 0%, #5b4028 100%);
+  color: #ffffff;
   font-family: var(--font-serif, "Cormorant Garamond", serif);
   font-size: 2rem;
   font-weight: 700;
@@ -127,7 +127,7 @@
   align-items: center;
   justify-content: center;
   box-shadow: 0 4px 14px rgba(138, 106, 72, 0.3);
-  border: 3px solid #FAF8F5;
+  border: 3px solid #faf8f5;
 }
 
 .lumora-profile-hero-info {
@@ -136,7 +136,7 @@
 }
 
 .lumora-profile-hero-name {
-  font-family: var(--font-serif, "Cormorant Garamond", serif);
+  font-family: 'Playfair Display', serif;
   font-size: 1.625rem;
   font-weight: 700;
   color: var(--lumora-text-main, #252525);
@@ -153,8 +153,8 @@
   letter-spacing: 0.06em;
   padding: 0.2rem 0.55rem;
   border-radius: 9999px;
-  background-color: var(--lumora-badge-bg, #E2D5C3);
-  color: #5B4028;
+  background-color: var(--lumora-badge-bg, #e2d5c3);
+  color: #5b4028;
 }
 
 .lumora-profile-hero-meta {
@@ -163,7 +163,7 @@
   gap: 1.5rem;
   margin-top: 0.4rem;
   font-size: 0.8125rem;
-  color: var(--lumora-text-muted, #6E6860);
+  color: var(--lumora-text-muted, #6e6860);
   flex-wrap: wrap;
 }
 
@@ -171,16 +171,16 @@
   padding: 0.625rem 1.25rem;
   font-size: 0.8125rem;
   font-weight: 600;
-  color: var(--lumora-accent-wood, #8A6A48);
-  background-color: #FAF8F5;
-  border: 1px solid var(--lumora-border, #E2DBD0);
+  color: var(--lumora-accent-wood, #8a6a48);
+  background-color: #faf8f5;
+  border: 1px solid var(--lumora-border, #e2dbd0);
   border-radius: 0.625rem;
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
 .lumora-profile-btn-edit:hover {
-  background-color: var(--lumora-bg-secondary, #E9E1D5);
+  background-color: var(--lumora-bg-secondary, #e9e1d5);
   color: var(--lumora-text-main, #252525);
 }
 
@@ -197,15 +197,15 @@
 }
 
 .lumora-profile-alert--success {
-  background-color: #ECFDF5;
-  border: 1px solid #A7F3D0;
-  color: #065F46;
+  background-color: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  color: #065f46;
 }
 
 .lumora-profile-alert--error {
-  background-color: #FEF2F2;
-  border: 1px solid #FECACA;
-  color: #991B1B;
+  background-color: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #991b1b;
 }
 
 /* Form Layout */
@@ -248,8 +248,8 @@
   align-items: center;
   gap: 0.3rem;
   font-size: 0.6875rem;
-  color: #8F887E;
-  background-color: #FAF8F5;
+  color: #8f887e;
+  background-color: #faf8f5;
   padding: 0.15rem 0.5rem;
   border-radius: 4px;
 }
@@ -267,7 +267,7 @@
   left: 1rem;
   top: 50%;
   transform: translateY(-50%);
-  color: var(--lumora-accent-wood, #8A6A48);
+  color: var(--lumora-accent-wood, #8a6a48);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -282,35 +282,35 @@
   padding-top: 0.85rem;
   padding-bottom: 0.85rem;
   border-radius: 0.75rem;
-  border: 1px solid var(--lumora-border, #E2DBD0);
+  border: 1px solid var(--lumora-border, #e2dbd0);
   font-size: 0.9375rem;
   color: var(--lumora-text-main, #252525);
-  background-color: #FFFFFF;
+  background-color: #ffffff;
   transition: all 0.2s ease;
   line-height: 1.4;
 }
 
 .lumora-profile-input:focus {
   outline: none;
-  border-color: var(--lumora-accent-wood, #8A6A48);
+  border-color: var(--lumora-accent-wood, #8a6a48);
   box-shadow: 0 0 0 3px rgba(138, 106, 72, 0.15);
 }
 
 .lumora-profile-input:disabled {
-  background-color: #FAF8F5;
-  color: #78716C;
+  background-color: #faf8f5;
+  color: #78716c;
   cursor: not-allowed;
-  border-color: #EFE9E0;
+  border-color: #efe9e0;
 }
 
 .lumora-profile-input--readonly {
-  background-color: #F8F6F2;
-  color: #78716C;
+  background-color: #f8f6f2;
+  color: #78716c;
 }
 
 .lumora-profile-input-hint {
   font-size: 0.75rem;
-  color: var(--lumora-text-light, #8F887E);
+  color: var(--lumora-text-light, #8f887e);
   margin-top: 0.1rem;
 }
 
@@ -322,7 +322,7 @@
   gap: 1rem;
   margin-top: 1rem;
   padding-top: 1.5rem;
-  border-top: 1px solid var(--lumora-border-subtle, #F0EAE1);
+  border-top: 1px solid var(--lumora-border-subtle, #f0eae1);
 }
 
 .lumora-profile-btn-cancel {
@@ -332,16 +332,16 @@
   padding: 0.75rem 1.5rem;
   font-size: 0.875rem;
   font-weight: 600;
-  color: var(--lumora-text-muted, #6E6860);
+  color: var(--lumora-text-muted, #6e6860);
   background-color: transparent;
-  border: 1px solid var(--lumora-border, #E2DBD0);
+  border: 1px solid var(--lumora-border, #e2dbd0);
   border-radius: 0.625rem;
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
 .lumora-profile-btn-cancel:hover:not(:disabled) {
-  background-color: #FAF8F5;
+  background-color: #faf8f5;
   color: var(--lumora-text-main, #252525);
 }
 
@@ -354,9 +354,9 @@
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: #FFFFFF;
-  background-color: var(--lumora-accent-wood, #8A6A48);
-  border: 1px solid var(--lumora-accent-wood, #8A6A48);
+  color: #ffffff;
+  background-color: var(--lumora-accent-wood, #8a6a48);
+  border: 1px solid var(--lumora-accent-wood, #8a6a48);
   border-radius: 0.625rem;
   cursor: pointer;
   box-shadow: 0 4px 12px rgba(138, 106, 72, 0.25);
@@ -384,7 +384,7 @@
   justify-content: center;
   gap: 0.75rem;
   padding: 3rem 0;
-  color: var(--lumora-text-muted, #6E6860);
+  color: var(--lumora-text-muted, #6e6860);
   font-size: 0.875rem;
 }
 
@@ -392,7 +392,7 @@
   width: 20px;
   height: 20px;
   border: 2px solid rgba(138, 106, 72, 0.25);
-  border-top-color: var(--lumora-accent-wood, #8A6A48);
+  border-top-color: var(--lumora-accent-wood, #8a6a48);
   border-radius: 50%;
   animation: profileSpin 0.7s linear infinite;
 }
@@ -401,9 +401,11 @@
   width: 14px;
   height: 14px;
   border-color: rgba(255, 255, 255, 0.3);
-  border-top-color: #FFFFFF;
+  border-top-color: #ffffff;
 }
 
 @keyframes profileSpin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }

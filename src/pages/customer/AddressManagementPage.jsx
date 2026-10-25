@@ -12,7 +12,7 @@ import {
   Check,
 } from "lucide-react";
 import { addressAPI, getApiErrorMessage } from "../../services/api";
-import AddressModal from "../../components/customer/AddressModal";
+import AddressModal, { DeleteConfirmModal } from "../../components/customer/AddressModal";
 import "./AddressManagement.css";
 
 export default function AddressManagementPage({ embedded = false }) {
@@ -25,6 +25,10 @@ export default function AddressManagementPage({ embedded = false }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [addressToEdit, setAddressToEdit] = useState(null);
   const [actionLoadingId, setActionLoadingId] = useState(null);
+
+  // State quản lý Modal xác nhận xóa tùy chỉnh
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [addressToDelete, setAddressToDelete] = useState(null);
 
   const fetchAddresses = useCallback(async () => {
     setIsLoading(true);
@@ -89,20 +93,23 @@ export default function AddressManagementPage({ embedded = false }) {
     setIsModalOpen(true);
   };
 
-  const handleDelete = async (addr) => {
-    const id = addr._id || addr.id;
-    if (
-      !window.confirm(
-        `Xác nhận xóa địa chỉ nhận hàng của "${addr.receiverName}"?`,
-      )
-    ) {
-      return;
-    }
+  // Mở modal xác nhận xóa thay vì window.confirm
+  const handleDeleteClick = (addr) => {
+    setAddressToDelete(addr);
+    setDeleteModalOpen(true);
+  };
+
+  // Thực hiện xóa khi bấm nút xác nhận trên Modal tùy chỉnh
+  const handleConfirmDelete = async () => {
+    if (!addressToDelete) return;
+    const id = addressToDelete._id || addressToDelete.id;
 
     setActionLoadingId(id);
     try {
       await addressAPI.deleteAddress(id);
       await fetchAddresses();
+      setDeleteModalOpen(false);
+      setAddressToDelete(null);
     } catch (err) {
       alert("Lỗi khi xóa: " + getApiErrorMessage(err, "Không thể xóa địa chỉ."));
     } finally {
@@ -256,7 +263,7 @@ export default function AddressManagementPage({ embedded = false }) {
                     <button
                       type="button"
                       className="address-card__btn-action address-card__btn-action--danger"
-                      onClick={() => handleDelete(addr)}
+                      onClick={() => handleDeleteClick(addr)}
                       disabled={isProcessing}
                     >
                       <Trash2 size={15} /> Xóa
@@ -275,6 +282,16 @@ export default function AddressManagementPage({ embedded = false }) {
         onClose={() => setIsModalOpen(false)}
         addressToEdit={addressToEdit}
         onSuccess={fetchAddresses}
+      />
+
+      {/* Custom Delete Confirmation Modal (Làm mờ màn hình phía sau, đặt giữa màn hình) */}
+      <DeleteConfirmModal
+        isOpen={deleteModalOpen}
+        onClose={() => setDeleteModalOpen(false)}
+        onConfirm={handleConfirmDelete}
+        isLoading={actionLoadingId !== null}
+        title="Xác nhận xóa địa chỉ"
+        message={`Bạn có chắc chắn muốn xóa địa chỉ nhận hàng của "${addressToDelete?.receiverName || ""}" không?`}
       />
     </div>
   );

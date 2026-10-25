@@ -202,7 +202,7 @@ export default function AddressSelector({
                         Thiết lập mặc định
                       </button>
                     )}
-                    <button
+                    {/* <button
                       type="button"
                       className="address-selector__text-btn"
                       onClick={(e) => handleOpenEdit(e, addr)}
@@ -216,20 +216,14 @@ export default function AddressSelector({
                       disabled={actionLoadingId === id}
                     >
                       <Trash2 size={13} /> Xóa
-                    </button>
+                    </button> */}
                   </div>
                 </div>
               </div>
             );
           })}
 
-          <button
-            type="button"
-            className="address-selector__add-btn address-selector__add-btn--full"
-            onClick={handleOpenCreate}
-          >
-            <Plus size={16} /> Thêm địa chỉ nhận hàng mới
-          </button>
+          
         </div>
       )}
 

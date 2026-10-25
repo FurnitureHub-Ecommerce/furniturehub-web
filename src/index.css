@@ -128,7 +128,7 @@ button {
   h4,
   h5,
   h6 {
-    font-family: var(--font-serif);
+    
     line-height: 1.25;
     letter-spacing: -0.02em;
     font-weight: 600;

@@ -9,50 +9,40 @@ import {
   ArrowRight,
   Sparkles,
   Compass,
+  Star,
 } from "lucide-react";
 import { useShop } from "../../context/ShopContext";
 import { categoryAPI, productAPI } from "../../services/api";
-import Rating from "../../components/common/Rating/Rating";
-import { 
-  formatCurrency, 
-  formatCategoryName, 
-  PRODUCT_IMAGE_OVERRIDES, 
-  getProductMetrics 
-} from "../../utils/formatters";
 import { EditorialSpotlight } from "../../components/home/EditorialSpotlight/EditorialSpotlight";
 import "./Wishlist.css";
 
-const formatVND = (price) => formatCurrency(price);
+// ==========================================
+// CÁC HÀM FORMATTER ĐỘC LẬP TẠI CHỖ
+// ==========================================
+const formatVND = (price) => {
+  if (price == null || isNaN(price)) return "0 đ";
+  return Number(price).toLocaleString("vi-VN") + " đ";
+};
 
-const PRESET_CATEGORIES = {
-  'living-room': {
-    name: 'Phòng khách',
-    description: 'Tuyển tập các thiết kế phòng khách sang trọng, phong cách tối giản và tinh tế từ LUMORA.',
-  },
-  'dining-room': {
-    name: 'Phòng ăn',
-    description: 'Không gian ẩm thực ấm cúng với bàn ăn và ghế chế tác thủ công đạt chuẩn bền vững.',
-  },
-  'bedroom': {
-    name: 'Phòng ngủ',
-    description: 'Không gian nghỉ ngơi thư thái với giường ngủ và tủ lưu trữ cao cấp.',
-  },
-  'lighting-decor': {
-    name: 'Đèn & Trang trí',
-    description: 'Ánh sáng kiến trúc và phụ kiện trang trí tạo điểm nhấn thẩm mỹ hoàn mỹ.',
-  },
-  'studio-office': {
-    name: 'Phòng làm việc',
-    description: 'Không gian làm việc sáng tạo với bàn ghế công thái học cao cấp.',
-  },
-  'outdoor-living': {
-    name: 'Ngoại thất & Sân vườn',
-    description: 'Bộ sưu tập nội ngoại thất bền bỉ với thời gian và hòa quyện cùng thiên nhiên.',
-  },
+// Từ điển dịch chuẩn xác tên các danh mục từ Backend sang Tiếng Việt
+const CATEGORY_TRANSLATIONS = {
+  "Home Decor & Lighting": "Trang Trí & Đèn",
+  "TV Units & Media": "Kệ Tivi & Giải Trí",
+  "Bookshelves & Shelving": "Kệ Sách & Tủ Kệ",
+  "Coffee & Side Tables": "Bàn Trà & Bàn Góc",
+  "Wardrobes & Cabinets": "Tủ Quần Áo & Tủ Lớn",
+  "Office Desks & Chairs": "Bàn Ghế Làm Việc",
+  "Dining Tables & Chairs": "Bàn Ghế Ăn",
+  "Beds & Mattresses": "Giường Ngủ & Nệm",
+  "Sofa & Armchair": "Sofa & Ghế Thư Giãn",
+};
+
+const getProductMetrics = () => {
+  return { rating: 5.0, reviewCount: 12 };
 };
 
 // ==========================================
-// 1. CATEGORY PAGE
+// 1. CATEGORY PAGE (Tối ưu hóa UI gọn gàng, chuyển trang tức thì)
 // ==========================================
 export function CategoryPage() {
   const { id } = useParams();
@@ -60,126 +50,137 @@ export function CategoryPage() {
 
   const [isLoading, setIsLoading] = useState(true);
   const [apiError, setApiError] = useState(null);
-  const [categoryInfo, setCategoryInfo] = useState(() => {
-    if (id && PRESET_CATEGORIES[id]) {
-      return PRESET_CATEGORIES[id];
-    }
-    const name = formatCategoryName(id);
-    return {
-      name: name || 'Bộ Sưu Tập Nội Thất',
-      description: 'Tuyển tập các thiết kế kiến trúc đương đại được tuyển chọn từ LUMORA.',
-    };
+  const [categoryInfo, setCategoryInfo] = useState({
+    name: 'Danh Mục Sản Phẩm',
+    description: 'Tuyển tập các thiết kế kiến trúc đương đại được tuyển chọn từ LUMORA.',
   });
   const [products, setProducts] = useState([]);
 
-  // Cập nhật ngay khi ID param thay đổi trên URL để không bao giờ bị giật route
-  useEffect(() => {
-    if (id && PRESET_CATEGORIES[id]) {
-      setCategoryInfo(PRESET_CATEGORIES[id]);
-    } else if (id) {
-      setCategoryInfo({
-        name: formatCategoryName(id) || id.replace(/-/g, ' ').toUpperCase(),
-        description: 'Tuyển tập các thiết kế kiến trúc đương đại được tuyển chọn từ LUMORA.',
-      });
-    }
-  }, [id]);
-
   useEffect(() => {
     let isMounted = true;
-    async function loadCategoryData() {
-      setIsLoading(true);
-      setApiError(null);
+    
+    // Cuộn mượt lên đầu trang ngay lập tức
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    setIsLoading(true);
+    setApiError(null);
 
+    async function fetchCategoryDataFast() {
       try {
-        const [catRes, prodRes] = await Promise.allSettled([
+        const [categoriesRes, productsRes] = await Promise.all([
           categoryAPI.getCategories(),
-          productAPI.getProducts(),
+          productAPI.getProducts()
         ]);
 
         if (!isMounted) return;
 
-        const allCats = catRes.status === 'fulfilled' && catRes.value?.data
-          ? (Array.isArray(catRes.value.data) ? catRes.value.data : catRes.value.data.categories || [])
-          : [];
+        const categoriesList = categoriesRes?.data?.categories || categoriesRes?.data || [];
+        const productsList = productsRes?.data?.products || productsRes?.data || [];
 
-        const allProds = prodRes.status === 'fulfilled' && prodRes.value?.data
-          ? (Array.isArray(prodRes.value.data) ? prodRes.value.data : prodRes.value.data.products || [])
-          : [];
-
-        // Find current category
-        const matchedCat = allCats.find((c) => c._id === id || c.id === id || c.name?.toLowerCase().includes(id?.toLowerCase())) || (
-          PRESET_CATEGORIES[id] ? { _id: id, ...PRESET_CATEGORIES[id] } : {
-            _id: id,
-            name: id ? (formatCategoryName(id) || id.replace(/-/g, ' ').toUpperCase()) : 'BỘ SƯU TẬP NỘI THẤT',
-            description: 'Tuyển tập các thiết kế kiến trúc đương đại được tuyển chọn từ LUMORA.',
-          }
-        );
-        setCategoryInfo(matchedCat);
-
-        // Filter products for this category
-        const filtered = allProds.filter((p) => {
-          if (!id) return true;
-          const pCatId = typeof p.categoryId === 'object' ? p.categoryId?._id : p.categoryId;
-          return pCatId === id || pCatId === matchedCat._id;
+        const matchedCategory = categoriesList.find((cat) => {
+          const catId = String(cat._id || cat.id || "");
+          const catSlug = cat.slug || "";
+          return catId === String(id) || catSlug === id || cat.name?.toLowerCase() === id?.toLowerCase();
         });
 
-        setProducts(filtered.length > 0 ? filtered : allProds);
+        if (matchedCategory) {
+          const rawName = matchedCategory.name || '';
+          const translatedName = CATEGORY_TRANSLATIONS[rawName] || rawName;
+
+          setCategoryInfo({
+            name: translatedName,
+            description: matchedCategory.description || 'Tuyển tập các thiết kế kiến trúc đương đại được tuyển chọn từ LUMORA.',
+          });
+        } else {
+          setCategoryInfo({
+            name: "Bộ Sưu Tập Nội Thất",
+            description: 'Tuyển tập các thiết kế kiến trúc đương đại được tuyển chọn từ LUMORA.',
+          });
+        }
+
+        const matchedCatId = String(matchedCategory?._id || matchedCategory?.id || id || "");
+        
+        // Lọc sản phẩm thuộc đúng danh mục một cách nhanh chóng
+        const filteredProducts = productsList.filter((product) => {
+          if (!id) return true;
+          const productCatId = typeof product.categoryId === 'object' 
+            ? String(product.categoryId?._id || product.categoryId?.id || "") 
+            : String(product.categoryId || "");
+          const productCategorySlug = product.categorySlug || "";
+
+          return productCatId === matchedCatId || productCatId === String(id) || productCategorySlug === id;
+        });
+
+        setProducts(filteredProducts);
       } catch (err) {
-        if (isMounted) setApiError(err.message || 'Lỗi khi tải danh mục');
+        console.error("Lỗi tải dữ liệu danh mục:", err);
+        if (isMounted) {
+          setApiError('Không thể tải dữ liệu sản phẩm từ hệ thống.');
+        }
       } finally {
         if (isMounted) setIsLoading(false);
       }
     }
 
-    loadCategoryData();
+    fetchCategoryDataFast();
+
+    return () => {
+      isMounted = false;
+    };
   }, [id]);
 
   return (
-    <div className="section container" style={{ paddingTop: "40px", paddingBottom: "80px" }}>
-      <div style={{ marginBottom: "40px", textAlign: "center" }}>
-        <span className="section-heading__badge" style={{ fontFamily: 'var(--font-serif)', fontSize: "0.8rem" }}>
-          Bộ Sưu Tập LUMORA
+    <div className="section container" style={{ paddingTop: "32px", paddingBottom: "64px", maxWidth: "1280px" }}>
+      {/* Tiêu đề danh mục gọn gàng */}
+      <div style={{ marginBottom: "32px", textAlign: "center" }}>
+        <span className="section-heading__badge" style={{ fontSize: "0.75rem", letterSpacing: "0.15em" }}>
+          BỘ SƯU TẬP LUMORA
         </span>
-        <h1 style={{ fontFamily: 'var(--font-serif)', fontSize: "3rem", textTransform: "capitalize", margin: "12px 0" }}>
-          {categoryInfo?.name || formatCategoryName(id) || 'Danh Mục Sản Phẩm'}
+        <h1 style={{ fontFamily: "'Playfair Display', serif", fontSize: "2.4rem", margin: "8px 0 10px" }}>
+          {categoryInfo?.name}
         </h1>
-        <p style={{ color: "var(--lumora-text-muted)", marginTop: "8px", maxWidth: "600px", marginInline: "auto" }}>
-          {categoryInfo?.description || 'Khám phá các thiết kế nội thất cao cấp chế tác tinh xảo.'}
+        <p style={{ color: "var(--lumora-text-muted)", fontSize: "0.9rem", maxWidth: "550px", marginInline: "auto", lineHeight: 1.5 }}>
+          {categoryInfo?.description}
         </p>
       </div>
 
       {isLoading ? (
-        <div style={{ textAlign: "center", padding: "60px", color: "var(--lumora-text-muted)" }}>
-          Đang tải sản phẩm từ hệ thống LUMORA...
+        <div style={{ textAlign: "center", padding: "60px 0", color: "var(--lumora-text-muted)", fontSize: "0.95rem" }}>
+          Đang tải sản phẩm...
         </div>
       ) : apiError ? (
-        <div style={{ textAlign: "center", padding: "40px", backgroundColor: "#fff5f5", borderRadius: "12px", border: "1px solid #feb2b2" }}>
-          <p style={{ color: "#c53030", fontWeight: "600" }}>{apiError}</p>
+        <div style={{ textAlign: "center", padding: "30px", backgroundColor: "#fff5f5", borderRadius: "10px", border: "1px solid #feb2b2" }}>
+          <p style={{ color: "#c53030", fontWeight: "600", fontSize: "0.9rem" }}>{apiError}</p>
         </div>
       ) : products.length === 0 ? (
-        <div style={{ textAlign: "center", padding: "60px 20px" }}>
-          <p style={{ fontSize: "1.1rem", color: "var(--lumora-text-muted)" }}>Chưa có sản phẩm nào trong danh mục này.</p>
-          <Link to="/products" className="wishlist-page__primary-btn" style={{ marginTop: "16px", display: "inline-flex" }}>
+        <div style={{ textAlign: "center", padding: "50px 20px" }}>
+          <p style={{ fontSize: "1rem", color: "var(--lumora-text-muted)" }}>Chưa có sản phẩm nào trong danh mục này.</p>
+          <Link to="/products" className="wishlist-page__primary-btn" style={{ marginTop: "14px", display: "inline-flex", fontSize: "0.85rem" }}>
             Khám phá tất cả sản phẩm
           </Link>
         </div>
       ) : (
-        <div className="product-showcase__grid">
+        /* Grid sản phẩm tối ưu cân đối 4 cột, không bị bự chảng */
+        <div style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))",
+          gap: "24px",
+        }}>
           {products.map((product) => {
             const prodId = String(product._id || product.id);
             const isWishlisted = wishlist.includes(prodId);
-            const price = product.minPrice ?? product.price ?? 0;
-            const overrideImages = PRODUCT_IMAGE_OVERRIDES[product.name];
-            const img = overrideImages?.[0] || product.images?.[0] || product.image || 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=600&q=80';
-            const metrics = getProductMetrics(product.name, product.rating, product.reviewCount);
+            const price = product.minPrice ?? product.price ?? product.unitPrice ?? 0;
+            const img = product.images?.[0] || product.image || 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=600&q=80';
+            const metrics = getProductMetrics();
 
             return (
-              <article key={prodId} className="product-card">
-                <div className="product-card__image-container">
+              <article key={prodId} className="product-card" style={{ borderRadius: "10px", overflow: "hidden", border: "1px solid var(--lumora-border, #E2DBD0)", backgroundColor: "#fff", display: "flex", flexDirection: "column" }}>
+                {/* Phần ảnh card gọn gàng vừa mắt */}
+                <div className="product-card__image-container" style={{ position: "relative", height: "220px", overflow: "hidden", backgroundColor: "#f9f8f6" }}>
                   <img 
                     src={img} 
                     alt={product.name} 
                     className="product-card__image product-card__image--primary"
+                    style={{ width: "100%", height: "100%", objectFit: "cover", transition: "transform 0.4s ease" }}
                     onError={(e) => {
                       e.currentTarget.onerror = null;
                       e.currentTarget.src = 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=600&q=80';
@@ -190,26 +191,32 @@ export function CategoryPage() {
                     onClick={() => toggleWishlist(prodId)}
                     type="button"
                     title={isWishlisted ? "Xóa khỏi yêu thích" : "Lưu yêu thích"}
+                    style={{ position: "absolute", top: "10px", right: "10px", background: "rgba(255,255,255,0.85)", border: "none", borderRadius: "50%", width: "32px", height: "32px", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", boxShadow: "0 2px 8px rgba(0,0,0,0.08)" }}
                   >
-                    <Heart size={18} fill={isWishlisted ? "#8A6A48" : "none"} color={isWishlisted ? "#8A6A48" : "currentColor"} />
+                    <Heart size={16} fill={isWishlisted ? "#8A6A48" : "none"} color={isWishlisted ? "#8A6A48" : "currentColor"} />
                   </button>
                 </div>
 
-                <div className="product-card__details">
-                  <div className="product-card__meta">
-                    <span className="product-card__variant">
-                      {product.brandId?.name || "LUMORA"}
-                    </span>
-                    <Rating score={metrics.rating} reviewCount={metrics.reviewCount} />
+                {/* Chi tiết thông tin sản phẩm */}
+                <div className="product-card__details" style={{ padding: "16px", display: "flex", flexDirection: "column", flex: 1, justifyContent: "space-between" }}>
+                  <div>
+                    <div className="product-card__meta" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "6px" }}>
+                      <span className="product-card__variant" style={{ fontSize: "0.72rem", textTransform: "uppercase", letterSpacing: "0.08em", color: "#888" }}>
+                        {typeof product.brandId === 'object' ? product.brandId?.name : "LUMORA"}
+                      </span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '3px', fontSize: '0.78rem', color: '#666' }}>
+                        <Star size={12} fill="#8A6A48" color="#8A6A48" /> {metrics.rating}
+                      </div>
+                    </div>
+
+                    <h3 className="product-card__title" style={{ fontSize: "0.92rem", fontWeight: "600", margin: "0 0 10px 0", lineHeight: 1.4, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
+                      <Link to={`/product/${product.slug || prodId}`} style={{ textDecoration: "none", color: "inherit" }}>{product.name}</Link>
+                    </h3>
                   </div>
 
-                  <h3 className="product-card__title">
-                    <Link to={`/product/${product.slug || prodId}`}>{product.name}</Link>
-                  </h3>
-
-                  <div className="product-card__footer">
+                  <div className="product-card__footer" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", paddingTop: "10px", borderTop: "1px solid #f0eee9" }}>
                     <div className="product-card__pricing">
-                      <span className="product-card__price">{formatVND(price)}</span>
+                      <span className="product-card__price" style={{ fontSize: "0.95rem", fontWeight: "700", color: "#8A6A48" }}>{formatVND(price)}</span>
                     </div>
 
                     <button
@@ -217,8 +224,9 @@ export function CategoryPage() {
                       onClick={() => addToCart(product)}
                       type="button"
                       aria-label={`Thêm ${product.name} vào giỏ`}
+                      style={{ background: "#1a1a1a", color: "#fff", border: "none", borderRadius: "6px", width: "32px", height: "32px", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", transition: "background 0.2s" }}
                     >
-                      <ShoppingBag size={18} />
+                      <ShoppingBag size={15} />
                     </button>
                   </div>
                 </div>
@@ -277,14 +285,14 @@ export function CartPage() {
           <ShoppingBag size={28} color="var(--lumora-accent-wood)" />
           <h1
             style={{
-              fontFamily: '"Bodoni Moda", serif',
+              fontFamily: "'Playfair Display', serif",
               fontSize: "2.2rem",
               margin: 0,
               color: "var(--lumora-text-main)",
             }}
           >
             Giỏ Hàng Của Bạn{" "}
-            <span style={{ fontSize: "1.3rem", color: "var(--lumora-text-muted)" }}>
+            <span style={{ fontSize: "1.3rem", fontFamily: "'Montserrat', sans-serif"}}>
               ({cartCount} sản phẩm)
             </span>
           </h1>
@@ -312,14 +320,12 @@ export function CartPage() {
         )}
       </div>
 
-      {/* Loading Indicator */}
       {isCartLoading && (
         <div style={{ padding: "12px 16px", backgroundColor: "#F3F4F6", borderRadius: "8px", marginBottom: "20px", fontSize: "0.85rem", color: "#4B5563" }}>
           Đang đồng bộ với hệ thống giỏ hàng Backend...
         </div>
       )}
 
-      {/* Cart Error */}
       {cartError && (
         <div style={{ padding: "12px 16px", backgroundColor: "#FEF2F2", border: "1px solid #FECACA", borderRadius: "8px", marginBottom: "20px", fontSize: "0.85rem", color: "#991B1B" }}>
           {cartError}
@@ -372,7 +378,6 @@ export function CartPage() {
             alignItems: "start",
           }}
         >
-          {/* Cột trái: Danh sách sản phẩm trong giỏ */}
           <div
             style={{
               backgroundColor: "#ffffff",
@@ -384,7 +389,7 @@ export function CartPage() {
           >
             {cart.map((item) => {
               const prod = item.product || {};
-              const itemPrice = item.unitPrice || prod.price || 0;
+              const itemPrice = item.unitPrice || prod.price || prod.minPrice || 0;
 
               return (
                 <div
@@ -416,10 +421,9 @@ export function CartPage() {
                   <div style={{ flex: 1 }}>
                     <h3
                       style={{
-                        fontFamily: '"Bodoni Moda", serif',
+                        fontFamily: "'Montserrat', sans-serif",
                         fontSize: "1.1rem",
                         marginBottom: "4px",
-                        color: "var(--lumora-text-main)",
                       }}
                     >
                       <Link to={`/product/${prod.slug || prod.id}`} style={{ textDecoration: "none", color: "inherit" }}>
@@ -446,7 +450,6 @@ export function CartPage() {
                     </p>
                   </div>
 
-                  {/* Quantity & Remove Buttons */}
                   <div
                     style={{
                       display: "flex",
@@ -528,7 +531,6 @@ export function CartPage() {
             })}
           </div>
 
-          {/* Cột phải: Tóm tắt đơn hàng thanh toán */}
           <div
             style={{
               padding: "28px",
@@ -541,7 +543,7 @@ export function CartPage() {
           >
             <h2
               style={{
-                fontFamily: '"Bodoni Moda", serif',
+                fontFamily: "'Playfair Display', serif",
                 fontSize: "1.4rem",
                 marginBottom: "20px",
                 paddingBottom: "12px",
@@ -633,10 +635,54 @@ export function WishlistPage() {
   const { wishlistProducts, toggleWishlist, addToCart, isWishlistLoading, wishlistError, fetchWishlist } = useShop();
   
   const [unselectedIds, setUnselectedIds] = useState(() => new Set());
+  const [variantPricesMap, setVariantPricesMap] = useState({});
 
   useEffect(() => {
     fetchWishlist();
   }, [fetchWishlist]);
+
+  useEffect(() => {
+    let isMounted = true;
+    async function fetchVariantPrices() {
+      if (!wishlistProducts || wishlistProducts.length === 0) return;
+
+      const newPricesMap = {};
+
+      await Promise.all(
+        wishlistProducts.map(async (item) => {
+          const prodId = String(item.id || item._id || item.productId || item.product?._id);
+          if (!prodId) return;
+
+          const directPrice = Number(item.price ?? item.minPrice ?? item.unitPrice ?? item.product?.price ?? item.product?.minPrice ?? 0);
+          if (directPrice > 0) {
+            newPricesMap[prodId] = directPrice;
+            return;
+          }
+
+          try {
+            const response = productAPI.getProductVariants 
+              ? await productAPI.getProductVariants(prodId) 
+              : await fetch(`/api/products/${prodId}/variants`).then(res => res.json());
+
+            const variantsList = response?.data?.variants || response?.data || response || [];
+            
+            if (Array.isArray(variantsList) && variantsList.length > 0) {
+              const firstVariantPrice = Number(variantsList[0].price || variantsList[0].unitPrice || 0);
+              newPricesMap[prodId] = firstVariantPrice;
+            }
+          } catch (err) {
+            console.warn(`Không thể lấy variants cho sản phẩm ${prodId}:`, err);
+          }
+        })
+      );
+
+      if (isMounted) {
+        setVariantPricesMap(newPricesMap);
+      }
+    }
+
+    fetchVariantPrices();
+  }, [wishlistProducts]);
 
   const toggleSelected = (productId) => {
     const target = String(productId);
@@ -648,10 +694,26 @@ export function WishlistPage() {
     });
   };
 
-  const selectedProducts = wishlistProducts.filter((p) => !unselectedIds.has(String(p.id || p._id)));
+  const getProductPrice = (item) => {
+    const prodId = String(item.id || item._id || item.productId || item.product?._id);
+    const directPrice = Number(
+      item.price ?? 
+      item.minPrice ?? 
+      item.unitPrice ?? 
+      item.product?.price ?? 
+      item.product?.minPrice ?? 
+      item.product?.basePrice ?? 
+      0
+    );
+
+    if (directPrice > 0) return directPrice;
+    return variantPricesMap[prodId] || 0;
+  };
+
+  const selectedProducts = wishlistProducts.filter((p) => !unselectedIds.has(String(p.id || p._id || p.product?._id || p.productId)));
+  
   const selectedTotal = selectedProducts.reduce((sum, p) => {
-    const price = p.product?.price || p.product?.minPrice || p.price || p.minPrice || 0;
-    return sum + (Number(price) || 0);
+    return sum + getProductPrice(p);
   }, 0);
 
   const handleCheckout = () => {
@@ -662,9 +724,9 @@ export function WishlistPage() {
   return (
     <div className="section container wishlist-page">
       <div className="wishlist-page__header">
-        <span className="section-heading__badge" style={{ fontFamily: 'var(--font-serif)' }}>LUMORA CURATED</span>
-        <h1 style={{ fontFamily: 'var(--font-serif)' }}>Danh Sách Yêu Thích</h1>
-        <p>Lưu lại những thiết kế bạn yêu thích và đồng bộ trực tiếp với tài khoản LUMORA.</p>
+        <span className="section-heading__badge" style={{ fontFamily: "'Playfair Display', serif" }}>LUMORA CURATED</span>
+        <h1 style={{ fontFamily: "'Playfair Display', serif" }}>Danh Sách Yêu Thích</h1>
+        <p style={{fontStyle: "italic", fontSize: "15px"}}>Lưu lại những thiết kế bạn yêu thích và đồng bộ trực tiếp với tài khoản LUMORA.</p>
       </div>
 
       {isWishlistLoading && (
@@ -682,7 +744,7 @@ export function WishlistPage() {
       {!isWishlistLoading && wishlistProducts.length === 0 ? (
         <div className="wishlist-empty">
           <Heart size={42} strokeWidth={1.4} />
-          <h2 style={{ fontFamily: 'var(--font-serif)' }}>Danh sách yêu thích đang trống</h2>
+          <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: "2.5rem" }}>Danh sách yêu thích đang trống</h2>
           <p>Hãy bấm biểu tượng trái tim trên sản phẩm để lưu lại thiết kế yêu thích.</p>
           <Link to="/products" className="wishlist-page__primary-btn">
             Khám phá bộ sưu tập <ArrowRight size={17} />
@@ -702,18 +764,20 @@ export function WishlistPage() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => setUnselectedIds(new Set(wishlistProducts.map((p) => String(p.id || p._id))))}
+                  onClick={() => setUnselectedIds(new Set(wishlistProducts.map((p) => String(p.id || p._id || p.product?._id || p.productId))))}
                 >
                   Bỏ chọn
                 </button>
               </div>
             </div>
 
-            {wishlistProducts.map((product) => {
-              const prodId = String(product.id || product._id);
+            {wishlistProducts.map((item) => {
+              const prodId = String(item.id || item._id || item.product?._id || item.productId);
               const isChecked = !unselectedIds.has(prodId);
-              const price = product.product?.price || product.product?.minPrice || product.price || product.minPrice || 0;
-              const imgUrl = product.image || product.product?.images?.[0] || product.product?.image || 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=600&q=80';
+              const price = getProductPrice(item);
+              const productName = item.name || item.product?.name || "Sản phẩm cao cấp";
+              const productSlug = item.slug || item.product?.slug || prodId;
+              const imgUrl = item.image || item.product?.images?.[0] || item.product?.image || 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=600&q=80';
 
               return (
                 <article className="wishlist-item" key={prodId}>
@@ -722,22 +786,22 @@ export function WishlistPage() {
                       type="checkbox"
                       checked={isChecked}
                       onChange={() => toggleSelected(prodId)}
-                      aria-label={`Chọn ${product.name} để mua`}
+                      aria-label={`Chọn ${productName} để mua`}
                     />
                     <span />
                   </label>
                   <img
                     src={imgUrl}
-                    alt={product.name}
+                    alt={productName}
                     onError={(e) => {
                       e.currentTarget.onerror = null;
                       e.currentTarget.src = 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=600&q=80';
                     }}
                   />
                   <div className="wishlist-item__details">
-                    <span>{product.variantLabel || "Phiên bản thủ công"}</span>
-                    <h2 style={{ fontFamily: 'var(--font-serif)' }}>
-                      <Link to={`/product/${product.slug || prodId}`}>{product.name}</Link>
+                    <span>{item.variantLabel || item.product?.categoryName || "Phiên bản thủ công"}</span>
+                    <h2 style={{ fontFamily: "'Montserrat', sans-serif" }}>
+                      <Link to={`/product/${productSlug}`}>{productName}</Link>
                     </h2>
                     <strong>{formatVND(price)}</strong>
                   </div>
@@ -745,7 +809,7 @@ export function WishlistPage() {
                     type="button"
                     className="wishlist-item__remove"
                     onClick={() => toggleWishlist(prodId)}
-                    aria-label={`Xóa ${product.name} khỏi danh sách yêu thích`}
+                    aria-label={`Xóa ${productName} khỏi danh sách yêu thích`}
                   >
                     <Trash2 size={17} />
                   </button>
@@ -755,7 +819,7 @@ export function WishlistPage() {
           </div>
 
           <aside className="wishlist-summary">
-            <h2 style={{ fontFamily: 'var(--font-serif)' }}>Tóm Tắt Lựa Chọn</h2>
+            <h2 style={{ fontFamily: "'Playfair Display', serif" }}>Tóm Tắt Lựa Chọn</h2>
             <div><span>Sản phẩm đã chọn</span><strong>{selectedProducts.length}</strong></div>
             <div><span>Tạm tính</span><strong>{formatVND(selectedTotal)}</strong></div>
             <p>Phí giao hàng White-Glove miễn phí cho mọi đơn hàng.</p>
@@ -775,7 +839,7 @@ export function WishlistPage() {
 }
 
 // ==========================================
-// 4. CHECKOUT PAGE (Tasks 6, 7, 8)
+// 4. CHECKOUT PAGE & OTHER ROUTES EXPORTS
 // ==========================================
 export { default as CheckoutPage } from "./CheckoutPage";
 export { default as PaymentSuccessPage } from "./PaymentSuccessPage";
@@ -788,140 +852,4 @@ export { default as QuickOrderTrack } from "./QuickOrderTrack";
 
 export function CollectionsPage() {
   return <CategoryPage />;
-}
-
-export function LookbookPage() {
-  return (
-    <div className="lookbook-page" style={{ paddingTop: "20px", paddingBottom: "80px" }}>
-      <div className="container" style={{ textAlign: "center", marginBottom: "40px" }}>
-        <span
-          className="section-heading__badge"
-          style={{ fontFamily: "var(--font-serif)", fontSize: "0.85rem", letterSpacing: "0.14em" }}
-        >
-          TRIỂN LÃM KHÔNG GIAN SỐNG 2026
-        </span>
-        <h1
-          style={{
-            fontFamily: "var(--font-serif)",
-            fontSize: "clamp(2.4rem, 4vw, 3.5rem)",
-            margin: "12px 0 16px",
-            color: "var(--lumora-text-main)",
-            fontWeight: 600,
-          }}
-        >
-          Lookbook Kyoto Residency
-        </h1>
-        <p
-          style={{
-            color: "var(--lumora-text-muted)",
-            maxWidth: "680px",
-            marginInline: "auto",
-            fontSize: "1rem",
-            lineHeight: 1.6,
-          }}
-        >
-          Khám phá không gian sống đương đại Kyoto Residency của LUMORA. Chạm vào các điểm tương tác để khám phá các tuyệt tác nội thất thủ công được hòa quyện hoàn mỹ cùng thiên nhiên.
-        </p>
-      </div>
-
-      <EditorialSpotlight />
-
-      {/* Curated Living Spaces Gallery */}
-      <div className="container" style={{ marginTop: "70px" }}>
-        <div style={{ textAlign: "center", marginBottom: "40px" }}>
-          <span className="section-heading__badge" style={{ fontFamily: "var(--font-serif)" }}>
-            BỘ SƯU TẬP THEO PHÒNG
-          </span>
-          <h2 style={{ fontFamily: "var(--font-serif)", fontSize: "2.2rem", marginTop: "8px" }}>
-            Khám Phá Các Không Gian Độc Bản
-          </h2>
-        </div>
-
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
-            gap: "24px",
-          }}
-        >
-          {[
-            {
-              title: "Phòng Khách Wabi-Sabi",
-              desc: "Gỗ sồi mộc nguyên tấm kết hợp sofa module vải lanh cao cấp.",
-              link: "/category/living-room",
-              img: "https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?auto=format&fit=crop&w=800&q=80",
-            },
-            {
-              title: "Phòng Ăn Solace",
-              desc: "Bàn ăn gỗ óc chó tự nhiên đạt chuẩn bảo tồn FSC®.",
-              link: "/category/dining-room",
-              img: "https://images.unsplash.com/photo-1617806118233-18e1de247200?auto=format&fit=crop&w=800&q=80",
-            },
-            {
-              title: "Thiền Viện Nordic Sanctuary",
-              desc: "Giường ngủ bọc da bò Ý nhập khẩu và nệm cao su hữu cơ.",
-              link: "/category/bedroom",
-              img: "https://images.unsplash.com/photo-1616594039964-ae9021a400a0?auto=format&fit=crop&w=800&q=80",
-            },
-            {
-              title: "Ánh Sáng Kiến Trúc",
-              desc: "Hệ đèn trần pha lê và đồng mạ thủ công tạo điểm nhấn sang trọng.",
-              link: "/category/lighting-decor",
-              img: "https://images.unsplash.com/photo-1513519245088-0e12902e5a38?auto=format&fit=crop&w=800&q=80",
-            },
-          ].map((room) => (
-            <Link
-              key={room.title}
-              to={room.link}
-              style={{
-                textDecoration: "none",
-                color: "inherit",
-                borderRadius: "14px",
-                overflow: "hidden",
-                border: "1px solid var(--lumora-border)",
-                backgroundColor: "#fff",
-                display: "flex",
-                flexDirection: "column",
-                transition: "transform 0.3s ease, box-shadow 0.3s ease",
-              }}
-              className="group"
-            >
-              <div style={{ height: "220px", overflow: "hidden", position: "relative" }}>
-                <img
-                  src={room.img}
-                  alt={room.title}
-                  style={{ width: "100%", height: "100%", objectFit: "cover" }}
-                  onError={(e) => {
-                    e.currentTarget.onerror = null;
-                    e.currentTarget.src = "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=800&q=80";
-                  }}
-                />
-              </div>
-              <div style={{ padding: "20px", display: "flex", flexDirection: "column", gap: "6px" }}>
-                <h3 style={{ fontFamily: "var(--font-serif)", fontSize: "1.25rem", margin: 0 }}>
-                  {room.title}
-                </h3>
-                <p style={{ color: "var(--lumora-text-muted)", fontSize: "0.88rem", margin: 0, lineHeight: 1.5 }}>
-                  {room.desc}
-                </p>
-                <span
-                  style={{
-                    color: "var(--lumora-accent-wood)",
-                    fontSize: "0.85rem",
-                    fontWeight: 600,
-                    marginTop: "8px",
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: "6px",
-                  }}
-                >
-                  Khám phá không gian <ArrowRight size={14} />
-                </span>
-              </div>
-            </Link>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
 }

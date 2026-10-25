@@ -137,7 +137,7 @@ export default function PaymentSuccessPage() {
                     .join(", ") || "---"}
                 </p>
                 <div className="payment-result__delivery-tag">
-                  <Truck size={14} /> Giao hàng & lắp đặt miễn phí (White-Glove)
+                  <Truck size={14} /> Giao hàng & lắp đặt miễn phí
                 </div>
               </div>
             </div>
