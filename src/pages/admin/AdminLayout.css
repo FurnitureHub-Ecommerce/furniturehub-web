@@ -179,9 +179,9 @@
   border-radius: 3px;
 }
 .la-nav-group {
-  margin-bottom: 22px;
   padding-bottom: 18px;
   border-bottom: 1px solid #eee8df;
+  margin-bottom: 10px;
 }
 .la-nav-group:last-child { border-bottom: 0; }
 .la-nav-group > p,
@@ -1082,8 +1082,7 @@
   padding-bottom: 10px;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
- 
+
 }
 
 /* Footer Profile Card ở đáy Sidebar */

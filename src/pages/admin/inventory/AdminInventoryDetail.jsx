@@ -17,7 +17,7 @@ const displayNumber = (value) =>
     : "Chưa có dữ liệu";
 const money = (value) =>
   typeof value === "number"
-    ? new Intl.NumberFormat("vi-VN", { style: "currency", currency: "EUR" }).format(value)
+    ? new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(value) // Đã chỉnh lại sang VNĐ cho đồng bộ hệ thống
     : "Chưa có dữ liệu";
 
 function loadErrorMessage(error) {
@@ -94,11 +94,12 @@ export default function AdminInventoryDetail() {
     <div className="lid-page">
       <div className="lid-top">
         <p className="lid-eyebrow">GIÁM SÁT HỆ THỐNG / TỒN KHO / CHI TIẾT SKU</p>
-        <Link to={TransactionHistoryPanel} ><ArrowLeft size={15} />Quay lại danh sách SKU</Link>
+        {/* Sửa lại đường dẫn quay lại trang Quản lý Biến thể & SKU */}
+        <Link to="/admin/variants"><ArrowLeft size={15} />Quay lại danh sách SKU</Link>
       </div>
 
       {loading ? (
-        <div className="lid-state" role="status"><RefreshCw className="lid-spin" size={24} aria-hidden="true" /><h1>Đang tải thông tin Variant</h1><p>Vui lòng chờ trong giây lát.</p></div>
+        <div className="lid-state" role="status"><RefreshCw className="lid-spin" size={24} aria-hidden="true" /><h1 style={{fontFamily: "'Montserrat', sans-serif"}}>Đang tải thông tin Variant</h1><p>Vui lòng chờ trong giây lát.</p></div>
       ) : state.error ? (
         <div className="lid-state lid-state-error" role="alert"><AlertTriangle size={26} aria-hidden="true" /><h1>Không thể tải chi tiết SKU</h1><p>{state.error}</p><button onClick={retry}>Thử lại</button></div>
       ) : !variant ? (
@@ -112,9 +113,11 @@ export default function AdminInventoryDetail() {
           <section className="lid-summary">
             <div>
               <span className="lid-tag">MÃ SKU: {displayValue(variant.sku)}</span>
-              <p className="lid-readonly"><LockKeyhole size={12} />CHẾ ĐỘ GIÁM SÁT (READ-ONLY)</p>
-              <h1>{product?.name ?? "Chưa có thông tin sản phẩm"}</h1>
-              <p className="lid-attributes">{displayValue(variant.size)} · {displayValue(variant.material)} · {displayValue(variant.color)}</p>
+              
+              <h1 style={{fontFamily: "'Montserrat', sans-serif"}}>{product?.name ?? "Chưa có thông tin sản phẩm"}</h1>
+              <p className="lid-attributes"><strong>Kích thước:</strong> {displayValue(variant.size)} </p>
+              <p className="lid-attributes"><strong>Chất liệu:</strong> {displayValue(variant.material)}</p>
+              <p className="lid-attributes"><strong>Màu sắc:</strong> {displayValue(variant.color)}</p>
             </div>
           </section>
 
@@ -127,7 +130,7 @@ export default function AdminInventoryDetail() {
             <article>
               <span>GIÁ NIÊM YẾT THAM CHIẾU <Banknote size={19} /></span>
               <strong className="lid-price">{money(variant.price)}</strong>
-              <small>EUR / Variant</small>
+              
             </article>
             <article>
               <span>NGƯỠNG AN TOÀN TỐI THIỂU <ShieldCheck size={19} /></span>
@@ -151,15 +154,19 @@ export default function AdminInventoryDetail() {
 
             <section className="lid-card">
               <div className="lid-heading">
-                <h2>Thông Số Kỹ Thuật Biến Thể Chi Tiết</h2>
+                <h2 style={{fontFamily: "'Playfair Display', serif"}}>Thông Số Kỹ Thuật Biến Thể Chi Tiết</h2>
               </div>
               <div className="lid-spec-grid">
-                <article><h3><Ruler size={16} />KÍCH THƯỚC</h3><strong>{displayValue(variant.size)}</strong></article>
-                <article><h3><Layers size={16} />VẬT LIỆU & MÀU SẮC</h3><strong>{displayValue(variant.material)}</strong><p>{displayValue(variant.color)}</p></article>
+                <article><h3 style={{fontFamily: "'Playfair Display', serif"}}><Ruler size={16} />KÍCH THƯỚC</h3><strong>{displayValue(variant.size)}</strong></article>
+                <article><h3 style={{fontFamily: "'Playfair Display', serif"}}><Layers size={16} />VẬT LIỆU & MÀU SẮC</h3><strong>{displayValue(variant.material)}</strong><p>{displayValue(variant.color)}</p></article>
               </div>
             </section>
           </div>
 
+          {/* --- TÍCH HỢP BẢNG LỊCH SỬ BIẾN ĐỘNG TỒN KHO RIÊNG CHO SKU NÀY --- */}
+          <div style={{ marginTop: "24px" }}>
+            <TransactionHistoryPanel variantId={variantId} compact={true} />
+          </div>
         </>
       )}
     </div>
