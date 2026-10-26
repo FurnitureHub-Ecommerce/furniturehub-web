@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { loadStorageVariants } from '../../services/storageData';
-import { Layers, FileSpreadsheet, Search, X, Package, Info } from 'lucide-react';
+import { storageAPI } from '../../services/api.js';
+import { Layers, FileSpreadsheet, Search, X, Package } from 'lucide-react';
 
 const StorageDashboard = () => {
   const [skuProducts, setSkuProducts] = useState([]);
@@ -8,18 +8,44 @@ const StorageDashboard = () => {
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   
-  // State quản lý việc hiển thị Modal chi tiết sản phẩm
+  // State quản lý Modal chi tiết sản phẩm / tồn kho
   const [selectedProduct, setSelectedProduct] = useState(null);
 
-  const fetchDashboardData = async () => {
+ const fetchDashboardData = async () => {
     try {
       setLoading(true);
       setError(null);
-      const data = await loadStorageVariants();
-      setSkuProducts(Array.isArray(data) ? data : []);
+
+      // Gọi API GET /api/inventory
+      const response = await storageAPI.getInventory();
+      const body = response?.data || {};
+      
+      // Lấy đúng mảng inventories từ response của backend
+      const inventories = body.inventories || body.data?.inventories || body.items || (Array.isArray(body) ? body : []);
+
+      // Chuẩn hóa dữ liệu hiển thị lên bảng kho
+      const formattedItems = inventories.map(item => {
+        const variant = item.variantId || item.variant || {};
+        const product = variant.productId || item.product || {};
+        
+        return {
+          id: variant.sku || variant._id || item._id || 'N/A',
+          name: product.name || item.name || 'Sản phẩm kho',
+          specs: [
+            variant.color ? `Màu: ${variant.color}` : '',
+            variant.size ? `Size: ${variant.size}` : '',
+            variant.material ? `Chất liệu: ${variant.material}` : ''
+          ].filter(Boolean).join(' — ') || 'Tiêu chuẩn',
+          // Lấy quantity làm số lượng tồn kho (hoặc availableStock)
+          stock: item.quantity ?? variant.availableStock ?? item.stock ?? 0,
+          price: variant.price ?? 0
+        };
+      });
+
+      setSkuProducts(formattedItems);
     } catch (err) {
-      console.error('Lỗi tải Dashboard kho:', err);
-      setError('Không thể tải dữ liệu kho từ hệ thống.');
+      console.error('Lỗi tải dữ liệu kho từ /api/inventory:', err);
+      setError('Không thể tải dữ liệu tồn kho từ Backend.');
     } finally {
       setLoading(false);
     }
@@ -78,7 +104,7 @@ const StorageDashboard = () => {
   ];
 
   if (loading) {
-    return <div className="dashboard-main" style={{ padding: '40px', textAlign: 'center' }}>Đang tải tổng quan hệ thống kho...</div>;
+    return <div className="dashboard-main" style={{ padding: '40px', textAlign: 'center' }}>Đang gọi API /api/inventory từ Backend...</div>;
   }
 
   if (error) {
@@ -93,7 +119,7 @@ const StorageDashboard = () => {
           <h2 style={{ fontFamily: "Bodoni Moda", fontSize: 'clamp(2rem, 2.5vw, 2.7rem)', color: '#1a1a1a', letterSpacing: '-0.02em', fontWeight: 600 }}>
             Quản Lý SKU, Biến Thể & Tồn Kho Thực Tế
           </h2>
-          <p>Theo dõi số lượng thực tế và thông số tồn kho theo thời gian thực từ hệ thống biến thể.</p>
+          <p>Theo dõi số lượng thực tế và thông số tồn kho theo thời gian thực từ API /api/inventory.</p>
         </div>
         <div className="actions" style={{ display: 'flex', gap: '10px' }}>
           <button className="btn-secondary" onClick={handleExportExcel} style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}>
@@ -187,7 +213,7 @@ const StorageDashboard = () => {
         </table>
       </section>
 
-      {/* MODAL HIỂN THỊ CHI TIẾT SẢN PHẨM KHI BẤM VÀO TÊN */}
+      {/* MODAL HIỂN THỊ CHI TIẾT SẢN PHẨM */}
       {selectedProduct && (
         <div style={{
           position: 'fixed',
@@ -211,7 +237,6 @@ const StorageDashboard = () => {
             overflow: 'hidden',
             animation: 'fadeIn 0.2s ease-out'
           }}>
-            {/* Header Modal */}
             <div style={{
               display: 'flex',
               justifyContent: 'space-between',
@@ -222,7 +247,7 @@ const StorageDashboard = () => {
             }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                 <Package size={22} color="#2563eb" />
-                <h3 style={{ margin: 0, fontSize: '1.2rem', color: '#111827' }}>Chi Tiết Sản Phẩm & SKU</h3>
+                <h3 style={{ margin: 0, fontSize: '1.2rem', color: '#111827' }}>Chi Tiết Tồn Kho & SKU</h3>
               </div>
               <button 
                 onClick={() => setSelectedProduct(null)}
@@ -238,14 +263,11 @@ const StorageDashboard = () => {
                   color: '#6b7280',
                   transition: 'background 0.2s'
                 }}
-                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#e5e7eb'}
-                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
               >
                 <X size={20} />
               </button>
             </div>
 
-            {/* Body Modal */}
             <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
               <div>
                 <span style={{ fontSize: '12px', fontWeight: '600', color: '#6b7280', textTransform: 'uppercase' }}>Tên Sản Phẩm</span>
@@ -271,12 +293,8 @@ const StorageDashboard = () => {
                   {selectedProduct.specs || 'Không có thông tin quy cách cụ thể.'}
                 </p>
               </div>
-
-              {/* Hiển thị các trường thông tin mở rộng khác nếu có trong object sản phẩm */}
-              
             </div>
 
-            {/* Footer Modal */}
             <div style={{
               padding: '16px 24px',
               backgroundColor: '#f9fafb',
