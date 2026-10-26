@@ -39,10 +39,11 @@ export function Header() {
   const [megaMenuOpen, setMegaMenuOpen] = useState(false);
 
   // Trạng thái tài khoản khách hàng
+  // Đổi từ localStorage thành sessionStorage
   const [currentUser, setCurrentUser] = useState(() => {
     try {
-      const token = localStorage.getItem("token");
-      const user = localStorage.getItem("user");
+      const token = sessionStorage.getItem("token");
+      const user = sessionStorage.getItem("user");
       return token && user ? JSON.parse(user) : null;
     } catch {
       return null;
@@ -88,8 +89,8 @@ export function Header() {
   }, []);
 
   const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
+    sessionStorage.removeItem("token");
+    sessionStorage.removeItem("user");
     setCurrentUser(null);
     setUserDropdownOpen(false);
     navigate("/");
