@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { storageAPI } from '../../services/api.js';
+import { storageAPI, productAPI } from '../../services/api.js';
 import { Layers, FileSpreadsheet, Search, X, Package } from 'lucide-react';
 
 const StorageDashboard = () => {
@@ -7,44 +7,93 @@ const StorageDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
-  
-  // State quản lý Modal chi tiết sản phẩm / tồn kho
   const [selectedProduct, setSelectedProduct] = useState(null);
 
- const fetchDashboardData = async () => {
+  const fetchDashboardData = async () => {
     try {
       setLoading(true);
       setError(null);
 
-      // Gọi API GET /api/inventory
-      const response = await storageAPI.getInventory();
-      const body = response?.data || {};
-      
-      // Lấy đúng mảng inventories từ response của backend
-      const inventories = body.inventories || body.data?.inventories || body.items || (Array.isArray(body) ? body : []);
+      const [invRes, productsRes] = await Promise.all([
+        storageAPI.getInventory().catch(() => ({ data: { inventories: [] } })),
+        productAPI.getProductsAdmin ? productAPI.getProductsAdmin().catch(() => ({ data: { products: [] } })) : Promise.resolve({ data: { products: [] } })
+      ]);
 
-      // Chuẩn hóa dữ liệu hiển thị lên bảng kho
-      const formattedItems = inventories.map(item => {
-        const variant = item.variantId || item.variant || {};
-        const product = variant.productId || item.product || {};
-        
-        return {
-          id: variant.sku || variant._id || item._id || 'N/A',
-          name: product.name || item.name || 'Sản phẩm kho',
-          specs: [
-            variant.color ? `Màu: ${variant.color}` : '',
-            variant.size ? `Size: ${variant.size}` : '',
-            variant.material ? `Chất liệu: ${variant.material}` : ''
-          ].filter(Boolean).join(' — ') || 'Tiêu chuẩn',
-          // Lấy quantity làm số lượng tồn kho (hoặc availableStock)
-          stock: item.quantity ?? variant.availableStock ?? item.stock ?? 0,
-          price: variant.price ?? 0
-        };
+      const invBody = invRes?.data || {};
+      const inventories = invBody.inventories || invBody.data?.inventories || invBody.items || invBody || [];
+      const stockMap = new Map();
+
+      (Array.isArray(inventories) ? inventories : []).forEach(item => {
+        const variantObj = item.variantId || item.variant || {};
+        const vId = variantObj._id || variantObj.id || item._id;
+        const sku = variantObj.sku || item.sku;
+        const qty = item.quantity ?? item.stock ?? item.availableStock ?? 0;
+        if (vId) stockMap.set(String(vId), qty);
+        if (sku) stockMap.set(String(sku), qty);
       });
 
-      setSkuProducts(formattedItems);
+      const prodBody = productsRes?.data || {};
+      const products = prodBody.products || prodBody.data || prodBody.rows || (Array.isArray(prodBody) ? prodBody : []);
+
+      const variantPromises = (Array.isArray(products) ? products : []).map(async (product) => {
+        const prodId = product._id || product.id;
+        const productName = product.name || 'Sản phẩm nội thất';
+        const productImage = product.image || product.thumbnail || product.images?.[0] || 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=300&q=80';
+
+        try {
+          const res = productAPI.getProductVariantsAdmin 
+            ? await productAPI.getProductVariantsAdmin(prodId).catch(() => null)
+            : productAPI.getClient ? await productAPI.getClient.get(`/products/${prodId}/variants/admin`).catch(() => null) : null;
+
+          const variantBody = res?.data || {};
+          const variants = variantBody.variants || variantBody.data || variantBody.rows || product.variants || [];
+
+          if (Array.isArray(variants) && variants.length > 0) {
+            return variants.map(variant => {
+              const variantId = variant._id || variant.id;
+              const sku = variant.sku || variant.code || 'SKU';
+              const currentStock = stockMap.get(String(variantId)) ?? stockMap.get(String(sku)) ?? 0;
+              const varImage = variant.image || productImage;
+
+              return {
+                id: sku,
+                variantId: variantId,
+                name: productName,
+                image: varImage,
+                specs: [
+                  variant.color ? `Màu: ${variant.color}` : '',
+                  variant.size ? `Size: ${variant.size}` : '',
+                  variant.material ? `Chất liệu: ${variant.material}` : ''
+                ].filter(Boolean).join(' — ') || 'Tiêu chuẩn',
+                stock: currentStock,
+                color: variant.color || '—',
+                size: variant.size || '—',
+                material: variant.material || '—'
+              };
+            });
+          }
+        } catch (e) {
+          console.error("Lỗi lấy variants:", prodId);
+        }
+
+        return [{
+          id: product.sku || 'SKU',
+          variantId: prodId,
+          name: productName,
+          image: productImage,
+          specs: 'Tiêu chuẩn',
+          stock: stockMap.get(String(prodId)) ?? 0,
+          color: product.color || '—',
+          size: product.size || '—',
+          material: product.material || '—'
+        }];
+      });
+
+      const nestedVariants = await Promise.all(variantPromises);
+      const allVariants = nestedVariants.flat().filter(Boolean);
+      setSkuProducts(allVariants);
     } catch (err) {
-      console.error('Lỗi tải dữ liệu kho từ /api/inventory:', err);
+      console.error('Lỗi tải dữ liệu kho:', err);
       setError('Không thể tải dữ liệu tồn kho từ Backend.');
     } finally {
       setLoading(false);
@@ -93,18 +142,16 @@ const StorageDashboard = () => {
   ) : [];
 
   const totalStock = skuProducts.reduce((acc, item) => acc + (Number(item.stock) || 0), 0);
-  const stockItems = skuProducts.filter((item) => item.stock !== null && item.stock !== undefined);
-  const lowStockCount = stockItems.filter((item) => Number(item.stock) <= 15).length;
-  const hasStockData = stockItems.length > 0;
+  const lowStockCount = skuProducts.filter((item) => Number(item.stock) <= 15).length;
 
   const storageMetrics = [
     { label: 'TỔNG SỐ SKU', value: skuProducts.length, sub: 'Đang quản lý trong hệ thống' },
-    { label: 'TỔNG HÀNG TỒN KHO', value: hasStockData ? totalStock.toLocaleString() : 'Chưa cập nhật', sub: 'Sản phẩm sẵn sàng lưu trữ' },
-    { label: 'CẢNH BÁO TỒN THẤP', value: hasStockData ? `${lowStockCount} sản phẩm` : 'Chưa cập nhật', sub: 'Dưới mức tồn kho tối thiểu' }
+    { label: 'TỔNG HÀNG TỒN KHO', value: totalStock.toLocaleString(), sub: 'Sản phẩm sẵn sàng lưu trữ' },
+    { label: 'CẢNH BÁO TỒN THẤP', value: `${lowStockCount} sản phẩm`, sub: 'Dưới mức tồn kho tối thiểu' }
   ];
 
   if (loading) {
-    return <div className="dashboard-main" style={{ padding: '40px', textAlign: 'center' }}>Đang gọi API /api/inventory từ Backend...</div>;
+    return <div className="dashboard-main" style={{ padding: '40px', textAlign: 'center' }}>Đang đồng bộ dữ liệu từ hệ thống...</div>;
   }
 
   if (error) {
@@ -115,11 +162,11 @@ const StorageDashboard = () => {
     <div className="dashboard-main" style={{ position: 'relative' }}>
       <header className="dash-header">
         <div>
-          <span className="subtitle">QUẢN LÝ DANH MỤC & HỆ THỐNG KHO</span>
-          <h2 style={{ fontFamily: "Bodoni Moda", fontSize: 'clamp(2rem, 2.5vw, 2.7rem)', color: '#1a1a1a', letterSpacing: '-0.02em', fontWeight: 600 }}>
+          <span className="subtitle" style={{fontFamily: "'Playfair Display', serif"}}>QUẢN LÝ DANH MỤC & HỆ THỐNG KHO</span>
+          <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: 'clamp(2rem, 2.5vw, 2.7rem)', color: '#1a1a1a', letterSpacing: '-0.02em', fontWeight: 600 }}>
             Quản Lý SKU, Biến Thể & Tồn Kho Thực Tế
           </h2>
-          <p>Theo dõi số lượng thực tế và thông số tồn kho theo thời gian thực từ API /api/inventory.</p>
+          <p>Theo dõi số lượng thực tế và thông số tồn kho theo thời gian thực.</p>
         </div>
         <div className="actions" style={{ display: 'flex', gap: '10px' }}>
           <button className="btn-secondary" onClick={handleExportExcel} style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}>
@@ -141,8 +188,8 @@ const StorageDashboard = () => {
       <section className="sku-section">
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px', flexWrap: 'wrap', gap: '12px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <Layers size={20} color="#1c1c1c" />
-            <h3 style={{ margin: 0 }}>Danh Mục SKU Master & Hiện Trạng Tồn Kho</h3>
+            <Layers size={28} color="#1c1c1c" />
+            <h3 style={{ margin: 0, fontFamily: "'Playfair Display', serif", fontSize: 'clamp(2rem, 2.5vw, 2rem)', color:'ActiveBorder' }}>Danh Mục SKU Master & Hiện Trạng Tồn Kho</h3>
           </div>
           
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: '#fff', padding: '6px 12px', borderRadius: '6px', border: '1px solid #ddd' }}>
@@ -159,10 +206,11 @@ const StorageDashboard = () => {
 
         <table className="storage-table">
           <thead>
-            <tr>
+            <tr >
+              <th style={{ width: '100px' }}>HÌNH ẢNH</th>
               <th>MÃ SKU & SẢN PHẨM</th>
               <th>QUY CÁCH & BIẾN THỂ</th>
-              <th>SỐ LƯỢNG TỒN</th>
+              <th>SỐ LƯỢNG </th>
               <th>TRẠNG THÁI</th>
             </tr>
           </thead>
@@ -171,32 +219,39 @@ const StorageDashboard = () => {
               filteredProducts.map((prod) => {
                 const stockVal = prod.stock;
                 return (
-                  <tr key={prod.id || Math.random()}>
+                  <tr key={prod.variantId || prod.id}>
+                    <td>
+                      <img 
+                        src={prod.image} 
+                        alt={prod.name} 
+                        onClick={() => setSelectedProduct(prod)}
+                        style={{ width: '40px', height: '40px', objectFit: 'cover', borderRadius: '6px', cursor: 'pointer', border: '1px solid #eae6df' }} 
+                        title="Bấm để xem chi tiết"
+                      />
+                    </td>
                     <td>
                       <strong 
                         onClick={() => setSelectedProduct(prod)}
-                        style={{ color: '#2563eb', cursor: 'pointer', transition: 'color 0.2s' }}
-                        title="Bấm để xem chi tiết sản phẩm"
-                        onMouseEnter={(e) => e.target.style.textDecoration = 'underline'}
-                        onMouseLeave={(e) => e.target.style.textDecoration = 'none'}
+                        style={{ color: '#2563eb', cursor: 'pointer' }}
+                        title="Bấm để xem chi tiết"
                       >
                         {prod.name}
                       </strong>
                       <br />
-                      <small style={{ color: '#888' }}>{prod.id}</small>
+                      <span style={{ fontSize: '11px', fontWeight: 700, color: '#b45309', background: '#fef3c7', padding: '2px 6px', borderRadius: '4px' }}>{prod.id}</span>
                     </td>
                     <td>{prod.specs}</td>
-                    <td><strong>{stockVal === null || stockVal === undefined ? 'Chưa cập nhật' : stockVal}</strong>{stockVal !== null && stockVal !== undefined && ' chiếc'}</td>
+                    <td><strong>{stockVal}</strong> chiếc</td>
                     <td>
                       <span style={{
-                        background: stockVal == null ? '#f5f5f4' : stockVal === 0 ? '#fef2f2' : stockVal <= 15 ? '#fffbeb' : '#f0fdf4',
-                        color: stockVal == null ? '#78716c' : stockVal === 0 ? '#dc2626' : stockVal <= 15 ? '#d97706' : '#16a34a',
+                        background: stockVal === 0 ? '#fef2f2' : stockVal <= 15 ? '#fffbeb' : '#f0fdf4',
+                        color: stockVal === 0 ? '#dc2626' : stockVal <= 15 ? '#d97706' : '#16a34a',
                         padding: '4px 8px',
                         borderRadius: '4px',
                         fontSize: '11px',
                         fontWeight: '700'
                       }}>
-                        {stockVal == null ? 'CHƯA CÓ DỮ LIỆU' : stockVal === 0 ? 'HẾT HÀNG' : stockVal <= 15 ? 'SẮP HẾT' : 'ỔN ĐỊNH'}
+                        {stockVal === 0 ? 'HẾT HÀNG' : stockVal <= 15 ? 'SẮP HẾT' : 'ỔN ĐỊNH'}
                       </span>
                     </td>
                   </tr>
@@ -204,7 +259,7 @@ const StorageDashboard = () => {
               })
             ) : (
               <tr>
-                <td colSpan="4" style={{ textAlign: 'center', padding: '30px', color: '#666' }}>
+                <td colSpan="5" style={{ textAlign: 'center', padding: '30px', color: '#666' }}>
                   Không tìm thấy SKU nào phù hợp.
                 </td>
               </tr>
@@ -215,107 +270,35 @@ const StorageDashboard = () => {
 
       {/* MODAL HIỂN THỊ CHI TIẾT SẢN PHẨM */}
       {selectedProduct && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          width: '100vw',
-          height: '100vh',
-          backgroundColor: 'rgba(0, 0, 0, 0.5)',
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          zIndex: 1000,
-          backdropFilter: 'blur(4px)'
-        }}>
-          <div style={{
-            background: '#fff',
-            borderRadius: '12px',
-            width: '90%',
-            maxWidth: '550px',
-            boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
-            overflow: 'hidden',
-            animation: 'fadeIn 0.2s ease-out'
-          }}>
-            <div style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              padding: '20px 24px',
-              borderBottom: '1px solid #f3f4f6',
-              backgroundColor: '#f9fafb'
-            }}>
+        <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', backgroundColor: 'rgba(0, 0, 0, 0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000, backdropFilter: 'blur(4px)' }}>
+          <div style={{ background: '#fff', borderRadius: '12px', width: '90%', maxWidth: '500px', boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)', overflow: 'hidden' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '20px 24px', borderBottom: '1px solid #f3f4f6', backgroundColor: '#f9fafb' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                 <Package size={22} color="#2563eb" />
                 <h3 style={{ margin: 0, fontSize: '1.2rem', color: '#111827' }}>Chi Tiết Tồn Kho & SKU</h3>
               </div>
-              <button 
-                onClick={() => setSelectedProduct(null)}
-                style={{
-                  background: 'transparent',
-                  border: 'none',
-                  cursor: 'pointer',
-                  padding: '4px',
-                  borderRadius: '50%',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  color: '#6b7280',
-                  transition: 'background 0.2s'
-                }}
-              >
-                <X size={20} />
-              </button>
+              <button onClick={() => setSelectedProduct(null)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: '#6b7280' }}><X size={20} /></button>
             </div>
 
             <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              <div>
-                <span style={{ fontSize: '12px', fontWeight: '600', color: '#6b7280', textTransform: 'uppercase' }}>Tên Sản Phẩm</span>
-                <h2 style={{ margin: '4px 0 0 0', fontSize: '1.4rem', color: '#1f2937' }}>{selectedProduct.name}</h2>
-              </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', background: '#f9fafb', padding: '16px', borderRadius: '8px' }}>
+              <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+                <img src={selectedProduct.image} alt="" style={{ width: '80px', height: '80px', objectFit: 'cover', borderRadius: '8px', border: '1px solid #eae6df' }} />
                 <div>
-                  <span style={{ fontSize: '12px', fontWeight: '600', color: '#6b7280' }}>MÃ SKU</span>
-                  <p style={{ margin: '4px 0 0 0', fontWeight: '600', color: '#374151', fontFamily: 'monospace', fontSize: '14px' }}>{selectedProduct.id}</p>
-                </div>
-                <div>
-                  <span style={{ fontSize: '12px', fontWeight: '600', color: '#6b7280' }}>SỐ LƯỢNG TỒN KHO</span>
-                  <p style={{ margin: '4px 0 0 0', fontWeight: '700', color: '#2563eb', fontSize: '16px' }}>
-                    {selectedProduct.stock !== null && selectedProduct.stock !== undefined ? `${selectedProduct.stock} chiếc` : 'Chưa cập nhật'}
-                  </p>
+                  <span style={{ fontSize: '11px', fontWeight: 700, color: '#b45309', background: '#fef3c7', padding: '2px 6px', borderRadius: '4px' }}>{selectedProduct.id}</span>
+                  <h2 style={{ margin: '6px 0 0 0', fontSize: '1.2rem', color: '#1f2937' }}>{selectedProduct.name}</h2>
                 </div>
               </div>
 
-              <div>
-                <span style={{ fontSize: '12px', fontWeight: '600', color: '#6b7280', textTransform: 'uppercase' }}>Quy Cách & Biến Thể Chi Tiết</span>
-                <p style={{ margin: '6px 0 0 0', color: '#4b5563', lineHeight: '1.5', background: '#fff', border: '1px solid #e5e7eb', padding: '12px', borderRadius: '6px' }}>
-                  {selectedProduct.specs || 'Không có thông tin quy cách cụ thể.'}
-                </p>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', background: '#f9fafb', padding: '16px', borderRadius: '8px', fontSize: '13px' }}>
+                <div><strong>Màu sắc:</strong> {selectedProduct.color}</div>
+                <div><strong>Kích thước:</strong> {selectedProduct.size}</div>
+                <div style={{ gridColumn: 'span 2' }}><strong>Chất liệu:</strong> {selectedProduct.material}</div>
+                <div style={{ gridColumn: 'span 2' }}><strong>Số lượng tồn:</strong> <span style={{ color: '#2563eb', fontWeight: 700 }}>{selectedProduct.stock} chiếc</span></div>
               </div>
             </div>
 
-            <div style={{
-              padding: '16px 24px',
-              backgroundColor: '#f9fafb',
-              borderTop: '1px solid #f3f4f6',
-              display: 'flex',
-              justifyContent: 'flex-end'
-            }}>
-              <button 
-                onClick={() => setSelectedProduct(null)}
-                style={{
-                  backgroundColor: '#111827',
-                  color: '#fff',
-                  border: 'none',
-                  padding: '8px 16px',
-                  borderRadius: '6px',
-                  fontWeight: '500',
-                  cursor: 'pointer'
-                }}
-              >
-                Đóng
-              </button>
+            <div style={{ padding: '16px 24px', backgroundColor: '#f9fafb', borderTop: '1px solid #f3f4f6', display: 'flex', justifyContent: 'flex-end' }}>
+              <button onClick={() => setSelectedProduct(null)} style={{ backgroundColor: '#111827', color: '#fff', border: 'none', padding: '8px 16px', borderRadius: '6px', fontWeight: '500', cursor: 'pointer' }}>Đóng</button>
             </div>
           </div>
         </div>

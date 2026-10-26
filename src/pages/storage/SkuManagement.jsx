@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { storageAPI } from '../../services/api.js';
-import { Search, Filter, Eye, X, Info, CheckCircle, XCircle, Calendar } from 'lucide-react';
+import { storageAPI, productAPI } from '../../services/api.js';
+import { Search, Filter, Eye, X, Package } from 'lucide-react';
 
 const SkuManagement = () => {
   const [skuProducts, setSkuProducts] = useState([]);
@@ -11,23 +11,97 @@ const SkuManagement = () => {
   const [isOpenModal, setIsOpenModal] = useState(false);
 
   useEffect(() => {
-    const fetchRealInventory = async () => {
+    const fetchInventoryAndVariants = async () => {
       try {
         setLoading(true);
-        const res = await storageAPI.getInventory();
-        const data = res?.data?.inventories || res?.data?.data?.inventories || res?.data || [];
         
-        const formatted = (Array.isArray(data) ? data : []).map(item => {
-          const variant = item.variantId || item.variant || {};
-          const product = variant.productId || item.product || {};
+        // 1. Gọi đồng thời API Tồn kho và API Danh sách sản phẩm Admin
+        const [invRes, productsRes] = await Promise.all([
+          storageAPI.getInventory().catch(() => ({ data: { inventories: [] } })),
+          productAPI.getProductsAdmin ? productAPI.getProductsAdmin().catch(() => ({ data: { products: [] } })) : Promise.resolve({ data: { products: [] } })
+        ]);
+
+        const invBody = invRes?.data || {};
+        const inventories = invBody.inventories || invBody.data?.inventories || invBody.items || invBody || [];
+
+        const prodBody = productsRes?.data || {};
+        const products = prodBody.products || prodBody.data || prodBody.rows || (Array.isArray(prodBody) ? prodBody : []);
+
+        // 2. Duyệt qua từng sản phẩm để gọi API lấy Variants chi tiết nếu có
+        const detailedSkuPromises = (Array.isArray(products) ? products : []).map(async (product) => {
+          const prodId = product._id || product.id;
+          const productName = product.name || 'Sản phẩm nội thất';
+          const defaultImg = product.image || product.thumbnail || product.images?.[0] || 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=300&q=80';
+
+          let variants = product.variants || [];
+          try {
+            if (productAPI.getProductVariantsAdmin) {
+              const varRes = await productAPI.getProductVariantsAdmin(prodId).catch(() => null);
+              const varBody = varRes?.data || {};
+              if (Array.isArray(varBody.variants)) variants = varBody.variants;
+              else if (Array.isArray(varBody.data)) variants = varBody.data;
+              else if (Array.isArray(varBody)) variants = varBody;
+            }
+          } catch (e) {
+            console.error("Lỗi gọi variants cho sản phẩm:", prodId);
+          }
+
+          if (Array.isArray(variants) && variants.length > 0) {
+            return variants.map(v => {
+              const vId = v._id || v.id;
+              const sku = v.sku || v.code || product.sku || 'SKU';
+              return {
+                id: sku,
+                vId: vId,
+                name: productName,
+                image: v.image || defaultImg,
+                color: v.color || v.attributes?.color || '—',
+                size: v.size || v.attributes?.size || '—',
+                material: v.material || v.attributes?.material || '—',
+                rawVariant: v
+              };
+            });
+          }
+
+          return [{
+            id: product.sku || 'SKU',
+            vId: prodId,
+            name: productName,
+            image: defaultImg,
+            color: product.color || '—',
+            size: product.size || '—',
+            material: product.material || '—',
+            rawVariant: product
+          }];
+        });
+
+        const nestedSkuList = await Promise.all(detailedSkuPromises);
+        const allSkuMeta = nestedSkuList.flat();
+
+        // Map dữ liệu tồn kho từ API Inventory vào danh sách SKU chi tiết
+        const stockMap = new Map();
+        (Array.isArray(inventories) ? inventories : []).forEach(item => {
+          const variantObj = item.variantId || item.variant || {};
+          const vId = variantObj._id || variantObj.id || item._id;
+          const sku = variantObj.sku || item.sku;
+          const qty = item.quantity ?? item.stock ?? item.availableStock ?? 0;
+          if (vId) stockMap.set(String(vId), qty);
+          if (sku) stockMap.set(String(sku).trim(), qty);
+        });
+
+        const formatted = allSkuMeta.map(meta => {
+          const currentStock = stockMap.get(String(meta.vId)) ?? stockMap.get(String(meta.id).trim()) ?? 0;
           return {
-            ...item,
-            id: variant.sku || variant._id || item._id,
-            name: product.name || item.name || 'Sản phẩm nội thất',
-            specs: [variant.color, variant.size, variant.material].filter(Boolean).join(' — ') || 'Tiêu chuẩn',
-            stock: item.quantity ?? variant.availableStock ?? 0
+            ...meta,
+            stock: currentStock,
+            specs: [
+              meta.color !== '—' ? `Màu: ${meta.color}` : '',
+              meta.size !== '—' ? `Size: ${meta.size}` : '',
+              meta.material !== '—' ? `Chất liệu: ${meta.material}` : ''
+            ].filter(Boolean).join(' — ') || 'Tiêu chuẩn'
           };
         });
+
         setSkuProducts(formatted);
       } catch (error) {
         console.error('Lỗi khi tải dữ liệu SKU từ API:', error);
@@ -35,7 +109,8 @@ const SkuManagement = () => {
         setLoading(false);
       }
     };
-    fetchRealInventory();
+
+    fetchInventoryAndVariants();
   }, []);
 
   const danhSachLoc = skuProducts.filter((item) => {
@@ -51,27 +126,31 @@ const SkuManagement = () => {
   });
 
   if (loading) {
-    return <div className="dashboard-main" style={{ padding: '50px', textAlign: 'center', color: '#888' }}>Đang đồng bộ dữ liệu SKU từ API Backend...</div>;
+    return <div className="dashboard-main" style={{ padding: '60px', textAlign: 'center', color: '#78716c', fontFamily: "'Inter', sans-serif" }}>Đang đồng bộ dữ liệu SKU và Biến thể từ hệ thống...</div>;
   }
 
   return (
-    <div className="dashboard-main" style={{ fontFamily: "'Inter', sans-serif", paddingBottom: '60px' }}>
-      <header className="dash-header" style={{ marginBottom: '24px' }}>
+    <div className="dashboard-main" style={{ fontFamily: "'Inter', sans-serif", paddingBottom: '60px', padding: '16px clamp(12px, 3vw, 24px)', boxSizing: 'border-box', width: '100%', maxWidth: '100%', overflowX: 'hidden' }}>
+      
+      {/* HEADER */}
+      <header className="dash-header" style={{ marginBottom: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: '16px' }}>
         <div>
-          <span className="subtitle" style={{ fontSize: '12px', fontWeight: '700', color: '#6b7280', letterSpacing: '0.05em' }}>QUẢN LÝ DANH MỤC SKU</span>
-          <h2 style={{ fontFamily: "Bodoni Moda", fontSize: 'clamp(2rem, 2.5vw, 2.7rem)', color: '#1a1a1a', letterSpacing: '-0.02em', fontWeight: 600, margin: '4px 0 8px 0' }}>
+          <span className="subtitle" style={{ fontSize: '11px', fontWeight: '700', color: '#78716c', letterSpacing: '0.05em' }}>QUẢN LÝ DANH MỤC SKU</span>
+          <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: 'clamp(1.7rem, 2.5vw, 2.2rem)', color: '#1a1a1a', fontWeight: 600, margin: '4px 0' }}>
             Quản Lý Danh Mục SKU & Biến Thể
           </h2>
-          <p style={{ color: '#666', fontSize: '14px', margin: 0 }}>Quản lý toàn bộ thông tin định danh sản phẩm và thuộc tính biến thể từ hệ thống.</p>
+          <p style={{ color: '#666', fontSize: '13px', margin: 0 }}>Quản lý toàn bộ thông tin định danh sản phẩm và thuộc tính biến thể thời gian thực.</p>
         </div>
-        <div className="actions" style={{ display: 'flex', gap: '8px', alignItems: 'center', marginTop: '80px' }}>
-          <span style={{ fontSize: '13px', color: '#666', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 600 }}>
-            <Filter size={14} /> Lọc trạng thái:
+
+        {/* BỘ LỌC TRẠNG THÁI */}
+        <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+          <span style={{ fontSize: '12px', color: '#78716c', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 600 }}>
+            <Filter size={14} /> Lọc:
           </span>
           <select 
             value={boLocTrangThai} 
             onChange={(e) => setBoLocTrangThai(e.target.value)}
-            style={{ padding: '10px 14px', borderRadius: '8px', border: '1px solid #dcd6cd', background: '#fff', fontSize: '13px', outline: 'none', cursor: 'pointer', fontWeight: 500 }}
+            style={{ padding: '8px 12px', borderRadius: '8px', border: '1px solid #dcd6cd', background: '#fff', fontSize: '12px', outline: 'none', cursor: 'pointer', fontWeight: 500 }}
           >
             <option value="ALL">Tất Cả Trạng Thái</option>
             <option value="STABLE">Ổn Định (&gt; 15)</option>
@@ -81,9 +160,10 @@ const SkuManagement = () => {
         </div>
       </header>
 
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px', background: '#fff', padding: '16px 20px', borderRadius: '12px', border: '1px solid #eae6df', alignItems: 'center' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', width: '380px', background: '#faf8f5', padding: '10px 14px', borderRadius: '8px', border: '1px solid #e2ded4' }}>
-          <Search size={18} color="#8c857b" />
+      {/* THANH TÌM KIẾM & THỐNG KÊ NHANH */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px', background: '#fff', padding: '14px 18px', borderRadius: '12px', border: '1px solid #eae6df', alignItems: 'center', flexWrap: 'wrap', gap: '12px', boxSizing: 'border-box' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', width: '100%', maxWidth: '360px', background: '#faf8f5', padding: '9px 14px', borderRadius: '8px', border: '1px solid #e2ded4', boxSizing: 'border-box' }}>
+          <Search size={16} color="#78716c" />
           <input
             type="text"
             placeholder="Tìm kiếm theo tên hoặc mã SKU..."
@@ -92,90 +172,118 @@ const SkuManagement = () => {
             style={{ border: 'none', background: 'transparent', outline: 'none', width: '100%', fontSize: '13px' }}
           />
         </div>
-        <span style={{ fontSize: '13px', color: '#78716c' }}>Hiển thị tổng số <strong>{danhSachLoc.length}</strong> SKU</span>
+        <span style={{ fontSize: '12px', color: '#78716c', fontWeight: 600 }}>Hiển thị tổng số <strong>{danhSachLoc.length}</strong> SKU</span>
       </div>
 
-      <section className="sku-section" style={{ background: 'transparent', padding: 0 }}>
-        <table className="storage-table" style={{ width: '100%', borderCollapse: 'collapse', background: '#fff', borderRadius: '12px', overflow: 'hidden', border: '1px solid #eae6df' }}>
-          <thead>
-            <tr style={{ background: '#faf8f5', color: '#78716c', fontSize: '11px', fontWeight: 700, textAlign: 'left' }}>
-              <th style={{ padding: '14px 16px' }}>TÊN SẢN PHẨM & MÃ SKU</th>
-              <th style={{ padding: '14px 16px' }}>QUY CÁCH & THUỘC TÍNH</th>
-              <th style={{ padding: '14px 16px', textAlign: 'center' }}>TỒN KHO</th>
-              <th style={{ padding: '14px 16px', textAlign: 'center' }}>TRẠNG THÁI</th>
-              <th style={{ padding: '14px 16px', textAlign: 'center' }}>THAO TÁC</th>
-            </tr>
-          </thead>
-          <tbody>
-            {danhSachLoc.length > 0 ? (
-              danhSachLoc.map((prod) => (
-                <tr key={prod._id || prod.id} style={{ borderBottom: '1px solid #f2efeb' }}>
-                  <td style={{ padding: '16px' }}>
-                    <strong style={{ color: '#1c1c1c', fontWeight: 600, fontSize: '13px' }}>{prod.name}</strong>
-                    <br />
-                    <span style={{ fontFamily: 'monospace', fontSize: '11px', color: '#2563eb', background: '#eff6ff', padding: '2px 6px', borderRadius: '4px', display: 'inline-block', marginTop: '4px' }}>
-                      {prod.id}
-                    </span>
-                  </td>
-                  <td style={{ padding: '16px' }}>{prod.specs}</td>
-                  <td style={{ padding: '16px', textAlign: 'center' }}>
-                    <strong style={{ fontSize: '14px', color: prod.stock > 0 ? '#111827' : '#dc2626' }}>{prod.stock.toLocaleString()}</strong> chiếc
-                  </td>
-                  <td style={{ padding: '16px', textAlign: 'center' }}>
-                    <span style={{
-                      background: prod.stock === 0 ? '#fef2f2' : prod.stock <= 15 ? '#fffbeb' : '#f0fdf4',
-                      color: prod.stock === 0 ? '#dc2626' : prod.stock <= 15 ? '#d97706' : '#16a34a',
-                      padding: '4px 10px', borderRadius: '20px', fontSize: '11px', fontWeight: '700'
-                    }}>
-                      {prod.stock === 0 ? 'HẾT HÀNG' : prod.stock <= 15 ? 'SẮP HẾT' : 'ỔN ĐỊNH'}
-                    </span>
-                  </td>
-                  <td style={{ padding: '16px', textAlign: 'center' }}>
-                    <button 
-                      onClick={() => { setSelectedSku(prod); setIsOpenModal(true); }}
-                      style={{ background: '#fff', border: '1px solid #dcd6cd', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer', fontSize: '12px', fontWeight: 600 }}
-                    >
-                      <Eye size={13} style={{ verticalAlign: 'middle', marginRight: '4px' }} /> Xem
-                    </button>
-                  </td>
-                </tr>
-              ))
-            ) : (
-              <tr><td colSpan="5" style={{ textAlign: 'center', padding: '40px', color: '#8c857b' }}>Không tìm thấy SKU nào phù hợp.</td></tr>
-            )}
-          </tbody>
-        </table>
+      {/* BẢNG DANH SÁCH SKU */}
+      <section style={{ background: '#fff', border: '1px solid #eae6df', borderRadius: '12px', overflow: 'hidden', padding: '16px', width: '100%', boxSizing: 'border-box' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
+          <Package size={18} color="#1c1c1c" />
+          <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 600, color: '#1a1a1a' }}>Danh Sách Biến Thể & SKU</h3>
+        </div>
+
+        <div style={{ width: '100%', overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+          <table style={{ width: '100%', minWidth: '700px', borderCollapse: 'collapse' }}>
+            <thead>
+              <tr style={{ background: '#faf8f5', color: '#78716c', fontSize: '11px', fontWeight: 700, textAlign: 'left' }}>
+                <th style={{ padding: '12px 14px', width: '70px' }}>HÌNH ẢNH</th>
+                <th style={{ padding: '12px 14px' }}>MÃ SKU & TÊN SẢN PHẨM</th>
+                <th style={{ padding: '12px 14px' }}>QUY CÁCH & THUỘC TÍNH</th>
+                <th style={{ padding: '12px 14px', textAlign: 'center' }}>TỒN KHO</th>
+                <th style={{ padding: '12px 14px', textAlign: 'center' }}>TRẠNG THÁI</th>
+                <th style={{ padding: '12px 14px', textAlign: 'center' }}>THAO TÁC</th>
+              </tr>
+            </thead>
+            <tbody>
+              {danhSachLoc.length > 0 ? (
+                danhSachLoc.map((prod) => (
+                  <tr key={prod.vId || prod.id} style={{ borderBottom: '1px solid #f2efeb' }}>
+                    <td style={{ padding: '12px 14px' }}>
+                      <img 
+                        src={prod.image} 
+                        alt={prod.name} 
+                        style={{ width: '42px', height: '42px', objectFit: 'cover', borderRadius: '8px', border: '1px solid #eae6df', display: 'block' }} 
+                        onError={(e) => { e.target.src = 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=300&q=80'; }}
+                      />
+                    </td>
+                    <td style={{ padding: '12px 14px' }}>
+                      <span style={{ fontSize: '11px', fontWeight: 700, color: '#b45309', background: '#fef3c7', padding: '2px 6px', borderRadius: '4px', display: 'inline-block' }}>
+                        {prod.id}
+                      </span>
+                      <div style={{ fontWeight: 600, color: '#1a1a1a', fontSize: '13px', marginTop: '4px', lineHeight: '1.4' }}>
+                        {prod.name}
+                      </div>
+                    </td>
+                    <td style={{ padding: '12px 14px', fontSize: '12px', color: '#57534e' }}>
+                      {prod.specs}
+                    </td>
+                    <td style={{ padding: '12px 14px', textAlign: 'center', whiteSpace: 'nowrap' }}>
+                      <strong style={{ fontSize: '13px', color: prod.stock > 0 ? '#16a34a' : '#dc2626' }}>
+                        {prod.stock.toLocaleString()}
+                      </strong> <span style={{ fontSize: '11px', color: '#78716c' }}>chiếc</span>
+                    </td>
+                    <td style={{ padding: '12px 14px', textAlign: 'center', whiteSpace: 'nowrap' }}>
+                      <span style={{
+                        background: prod.stock === 0 ? '#fef2f2' : prod.stock <= 15 ? '#fffbeb' : '#f0fdf4',
+                        color: prod.stock === 0 ? '#dc2626' : prod.stock <= 15 ? '#d97706' : '#16a34a',
+                        padding: '4px 10px', 
+                        borderRadius: '20px', 
+                        fontSize: '11px', 
+                        fontWeight: '700',
+                        display: 'inline-block'
+                      }}>
+                        {prod.stock === 0 ? 'HẾT HÀNG' : prod.stock <= 15 ? 'SẮP HẾT' : 'ỔN ĐỊNH'}
+                      </span>
+                    </td>
+                    <td style={{ padding: '12px 14px', textAlign: 'center', whiteSpace: 'nowrap' }}>
+                      <button 
+                        onClick={() => { setSelectedSku(prod); setIsOpenModal(true); }}
+                        style={{ background: '#fff', border: '1px solid #dcd6cd', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer', fontSize: '12px', fontWeight: 600, color: '#1a1a1a' }}
+                      >
+                        <Eye size={13} style={{ verticalAlign: 'middle', marginRight: '4px' }} /> Xem
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr><td colSpan="6" style={{ textAlign: 'center', padding: '40px', color: '#8c857b', fontSize: '13px' }}>Không tìm thấy SKU nào phù hợp.</td></tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       </section>
 
+      {/* MODAL XEM CHI TIẾT SKU */}
       {isOpenModal && selectedSku && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999 }}>
-          <div style={{ background: '#fff', width: '100%', maxWidth: '520px', borderRadius: '16px', padding: '32px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', borderBottom: '1px solid #eae6df', paddingBottom: '14px' }}>
-              <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 600 }}>Chi Tiết Thông Tin SKU</h3>
-              <button onClick={() => setIsOpenModal(false)} style={{ background: 'transparent', border: 'none', cursor: 'pointer' }}><X size={18} /></button>
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999, padding: '16px', boxSizing: 'border-box' }}>
+          <div style={{ background: '#fff', width: '100%', maxWidth: '480px', borderRadius: '16px', padding: '24px', boxSizing: 'border-box', maxHeight: '90vh', overflowY: 'auto' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', borderBottom: '1px solid #eae6df', paddingBottom: '12px' }}>
+              <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 600, color: '#1a1a1a' }}>Chi Tiết Thông Tin SKU</h3>
+              <button onClick={() => setIsOpenModal(false)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '4px' }}><X size={18} /></button>
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', fontSize: '14px' }}>
-              <div>
-                <span style={{ fontSize: '11px', fontWeight: 700, color: '#78716c' }}>TÊN SẢN PHẨM</span>
-                <p style={{ margin: '4px 0 0 0', fontWeight: 600, fontSize: '15px' }}>{selectedSku.name}</p>
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                <div style={{ background: '#f9fafb', padding: '12px', borderRadius: '8px' }}>
-                  <span style={{ fontSize: '11px', fontWeight: 700, color: '#78716c' }}>MÃ SKU</span>
-                  <p style={{ margin: '4px 0 0 0', fontFamily: 'monospace', fontWeight: 600, color: '#2563eb' }}>{selectedSku.id}</p>
-                </div>
-                <div style={{ background: '#f9fafb', padding: '12px', borderRadius: '8px' }}>
-                  <span style={{ fontSize: '11px', fontWeight: 700, color: '#78716c' }}>TỒN KHO</span>
-                  <p style={{ margin: '4px 0 0 0', fontWeight: 700, color: '#16a34a' }}>{selectedSku.stock} chiếc</p>
-                </div>
-              </div>
-              <div style={{ background: '#f9fafb', padding: '12px', borderRadius: '8px' }}>
-                <span style={{ fontSize: '11px', fontWeight: 700, color: '#78716c' }}>QUY CÁCH</span>
-                <p style={{ margin: '4px 0 0 0', fontWeight: 600 }}>{selectedSku.specs}</p>
+
+            <div style={{ display: 'flex', gap: '14px', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap' }}>
+              <img 
+                src={selectedSku.image} 
+                alt="" 
+                style={{ width: '80px', height: '80px', objectFit: 'cover', borderRadius: '10px', border: '1px solid #eae6df', flexShrink: 0 }} 
+                onError={(e) => { e.target.src = 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=300&q=80'; }}
+              />
+              <div style={{ flex: 1, minWidth: '180px' }}>
+                <span style={{ fontSize: '11px', fontWeight: 700, color: '#b45309', background: '#fef3c7', padding: '2px 6px', borderRadius: '4px', display: 'inline-block' }}>{selectedSku.id}</span>
+                <h4 style={{ margin: '6px 0 4px', fontSize: '1rem', color: '#1a1a1a', lineHeight: '1.4' }}>{selectedSku.name}</h4>
+                <span style={{ fontSize: '13px', color: selectedSku.stock > 0 ? '#16a34a' : '#dc2626', fontWeight: 700 }}>Tồn kho: {selectedSku.stock} chiếc</span>
               </div>
             </div>
-            <div style={{ marginTop: '24px', textAlign: 'right', borderTop: '1px solid #eae6df', paddingTop: '16px' }}>
-              <button onClick={() => setIsOpenModal(false)} style={{ padding: '10px 20px', borderRadius: '8px', background: '#1c1c1c', color: '#fff', border: 'none', cursor: 'pointer', fontWeight: 600 }}>Đóng</button>
+
+            <div style={{ background: '#faf8f5', padding: '14px', borderRadius: '10px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '10px', fontSize: '13px', marginBottom: '20px' }}>
+              <div><strong>Màu sắc:</strong> {selectedSku.color}</div>
+              <div><strong>Kích thước:</strong> {selectedSku.size}</div>
+              <div style={{ gridColumn: '1 / -1' }}><strong>Chất liệu:</strong> {selectedSku.material}</div>
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', borderTop: '1px solid #eae6df', paddingTop: '14px' }}>
+              <button onClick={() => setIsOpenModal(false)} style={{ padding: '9px 20px', borderRadius: '8px', background: '#1c1c1c', color: '#fff', border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: '13px' }}>Đóng cửa sổ</button>
             </div>
           </div>
         </div>
