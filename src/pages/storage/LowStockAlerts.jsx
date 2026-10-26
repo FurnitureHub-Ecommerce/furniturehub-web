@@ -1,161 +1,103 @@
 import React, { useState, useEffect } from 'react';
-import { loadStorageVariants } from '../../services/storageData';
-import { ShieldAlert, AlertTriangle, CheckCircle2 } from 'lucide-react';
+import { storageAPI } from '../../services/api.js';
+import { ShieldAlert, CheckCircle2 } from 'lucide-react';
 
 const LowStockAlerts = () => {
   const [skuProducts, setSkuProducts] = useState([]);
   const [loading, setLoading] = useState(true);
-  const nguongCanhBao = 15;
 
   useEffect(() => {
-    const fetchInventory = async () => {
+    const fetchLowStock = async () => {
       try {
         setLoading(true);
-        const data = await loadStorageVariants();
-        setSkuProducts(Array.isArray(data) ? data : []);
+        // Gọi chuẩn endpoint GET /api/inventory/low-stock từ Backend
+        const res = await storageAPI.getLowStock();
+        const data = res?.data?.inventories || res?.data?.data?.inventories || res?.data || [];
+        
+        const formatted = (Array.isArray(data) ? data : []).map(item => {
+          const variant = item.variantId || item.variant || {};
+          const product = variant.productId || item.product || {};
+          return {
+            ...item,
+            id: variant.sku || variant._id || item._id,
+            name: product.name || item.name || 'Sản phẩm nội thất',
+            sku: variant.sku || 'N/A',
+            specs: [variant.color, variant.size, variant.material].filter(Boolean).join(' - ') || 'Tiêu chuẩn',
+            quantity: item.quantity ?? variant.availableStock ?? 0
+          };
+        });
+        setSkuProducts(formatted);
       } catch (error) {
-        console.error('Lỗi tải dữ liệu cảnh báo:', error);
+        console.error('Lỗi tải dữ liệu cảnh báo tồn thấp từ API:', error);
       } finally {
         setLoading(false);
       }
     };
-    fetchInventory();
+    fetchLowStock();
   }, []);
 
-  const danhSachCanhBao = skuProducts.filter((item) => {
-    const stockVal = item.quantity !== undefined ? item.quantity : item.stock;
-    return stockVal !== null && stockVal !== undefined && stockVal <= nguongCanhBao;
-  });
-
   if (loading) {
-    return <div className="dashboard-main" style={{ padding: '50px', textAlign: 'center', color: '#888' }}>Đang quét dữ liệu tồn kho, vui lòng đợi trong giây lát...</div>;
+    return <div className="dashboard-main" style={{ padding: '50px', textAlign: 'center', color: '#888' }}>Đang quét dữ liệu cảnh báo từ Backend...</div>;
   }
 
   return (
     <div className="dashboard-main" style={{ fontFamily: "'Inter', sans-serif", paddingBottom: '60px' }}>
-      <style>{`
-        .custom-table {
-          width: 100%;
-          border-collapse: separate;
-          border-spacing: 0;
-          background: #fff;
-          border-radius: 12px;
-          overflow: hidden;
-          border: 1px solid #eae6df;
-          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
-        }
-        .custom-table th {
-          background: #faf8f5;
-          color: #78716c;
-          font-weight: 700;
-          font-size: 11px;
-          letter-spacing: 0.05em;
-          padding: 14px 16px;
-          text-align: left;
-          border-bottom: 1px solid #eae6df;
-          white-space: nowrap;
-        }
-        .custom-table td {
-          padding: 16px;
-          font-size: 13px;
-          color: #292524;
-          border-bottom: 1px solid #f2efeb;
-          vertical-align: middle;
-        }
-        .custom-table tbody tr:last-child td {
-          border-bottom: none;
-        }
-        .custom-table tbody tr:hover {
-          background: #fcfbfa;
-        }
-        .metric-card {
-          background: #fff;
-          padding: 24px;
-          border-radius: 12px;
-          border: 1px solid #eae6df;
-          box-shadow: 0 2px 8px rgba(0,0,0,0.02);
-        }
-      `}</style>
-
-      {/* Header trang */}
       <header className="dash-header" style={{ marginBottom: '24px' }}>
         <div>
           <span className="subtitle" style={{ fontSize: '12px', fontWeight: '700', color: '#6b7280', letterSpacing: '0.05em' }}>GIÁM SÁT TỒN KHO NGUY CƠ</span>
           <h2 style={{ fontFamily: "Bodoni Moda", fontSize: 'clamp(2rem, 2.5vw, 2.7rem)', color: '#1a1a1a', letterSpacing: '-0.02em', fontWeight: 600, margin: '4px 0 8px 0' }}>
             Cảnh Báo Tồn Thấp & Hết Hàng
           </h2>
-          <p style={{ color: '#666', fontSize: '14px', margin: 0 }}>Danh sách các mã SKU cần được bổ sung gấp để đảm bảo chuỗi cung ứng hoạt động thông suốt.</p>
+          <p style={{ color: '#666', fontSize: '14px', margin: 0 }}>Danh sách các mã SKU cần được bổ sung gấp từ Backend.</p>
         </div>
       </header>
 
-      {/* Thẻ thống kê */}
       <div className="metrics-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '20px', marginBottom: '28px' }}>
-        <div className="metric-card" style={{ borderLeft: '4px solid #dc2626' }}>
-          <h4 style={{ fontSize: '11px', fontWeight: 700, color: '#78716c', letterSpacing: '0.05em', margin: '0 0 8px 0' }}>SẢN PHẨM DƯỚI NGƯỠNG AN TOÀN</h4>
-          <div className="metric-val" style={{ fontSize: '2rem', fontWeight: 700, color: '#dc2626', marginBottom: '4px' }}>{danhSachCanhBao.length} SKU</div>
-          <p style={{ fontSize: '13px', color: '#666', margin: 0 }}>Cần lên kế hoạch đặt hàng với nhà cung cấp ngay lập tức.</p>
+        <div className="metric-card" style={{ borderLeft: '4px solid #dc2626', background: '#fff', padding: '24px', borderRadius: '12px' }}>
+          <h4 style={{ fontSize: '11px', fontWeight: 700, color: '#78716c', margin: '0 0 8px 0' }}>SẢN PHẨM DƯỚI NGƯỠNG AN TOÀN</h4>
+          <div className="metric-val" style={{ fontSize: '2rem', fontWeight: 700, color: '#dc2626' }}>{skuProducts.length} SKU</div>
         </div>
-        <div className="metric-card" style={{ borderLeft: '4px solid #16a34a' }}>
-          <h4 style={{ fontSize: '11px', fontWeight: 700, color: '#78716c', letterSpacing: '0.05em', margin: '0 0 8px 0' }}>TRẠNG THÁI GIÁM SÁT</h4>
-          <div className="metric-val" style={{ fontSize: '2rem', fontWeight: 700, color: '#16a34a', marginBottom: '4px' }}>Hoạt Động</div>
-          <p style={{ fontSize: '13px', color: '#666', margin: 0 }}>Tự động đồng bộ thời gian thực từ dữ liệu.</p>
+        <div className="metric-card" style={{ borderLeft: '4px solid #16a34a', background: '#fff', padding: '24px', borderRadius: '12px' }}>
+          <h4 style={{ fontSize: '11px', fontWeight: 700, color: '#78716c', margin: '0 0 8px 0' }}>TRẠNG THÁI GIÁM SÁT</h4>
+          <div className="metric-val" style={{ fontSize: '2rem', fontWeight: 700, color: '#16a34a' }}>Đang kết nối API</div>
         </div>
       </div>
 
-      {/* Bảng danh sách cảnh báo */}
       <section className="sku-section" style={{ background: 'transparent', padding: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
           <ShieldAlert size={18} color="#dc2626" />
-          <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 600, color: '#1c1c1c' }}>Danh Sách SKU Cần Chú Ý Đặc Biệt</h3>
+          <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 600 }}>Danh Sách SKU Cần Chú Ý Đặc Biệt</h3>
         </div>
 
-        <table className="custom-table">
+        <table className="storage-table" style={{ width: '100%', borderCollapse: 'collapse', background: '#fff', borderRadius: '12px', overflow: 'hidden', border: '1px solid #eae6df' }}>
           <thead>
-            <tr>
-              <th style={{ width: '40%' }}>TÊN SẢN PHẨM & MÃ SKU</th>
-              <th style={{ width: '30%' }}>QUY CÁCH</th>
-              <th style={{ width: '15%', textAlign: 'center' }}>SỐ LƯỢNG TỒN</th>
-              <th style={{ width: '15%', textAlign: 'center' }}>TRẠNG THÁI</th>
+            <tr style={{ background: '#faf8f5', color: '#78716c', fontSize: '11px', fontWeight: 700, textAlign: 'left' }}>
+              <th style={{ padding: '14px 16px' }}>TÊN SẢN PHẨM & MÃ SKU</th>
+              <th style={{ padding: '14px 16px' }}>QUY CÁCH</th>
+              <th style={{ padding: '14px 16px', textAlign: 'center' }}>SỐ LƯỢNG TỒN</th>
+              <th style={{ padding: '14px 16px', textAlign: 'center' }}>TRẠNG THÁI</th>
             </tr>
           </thead>
           <tbody>
-            {danhSachCanhBao.length > 0 ? (
-              danhSachCanhBao.map((prod) => {
-                const productName = prod.variantId?.productId?.name || prod.name || 'Sản phẩm nội thất';
-                const skuCode = prod.variantId?.sku || prod.sku || 'Chưa có SKU';
-                const specsText = prod.specs || [prod.variantId?.color, prod.variantId?.size].filter(Boolean).join(' - ') || 'Chưa cập nhật';
-                const currentStock = prod.quantity !== undefined ? prod.quantity : prod.stock;
-                const isOut = currentStock === 0;
-
+            {skuProducts.length > 0 ? (
+              skuProducts.map((prod, idx) => {
+                const isOut = prod.quantity === 0;
                 return (
-                  <tr key={prod._id || prod.id}>
-                    <td>
-                      <strong style={{ color: '#1c1c1c', fontWeight: 600, fontSize: '13px' }}>{productName}</strong>
+                  <tr key={idx} style={{ borderBottom: '1px solid #f2efeb' }}>
+                    <td style={{ padding: '16px' }}>
+                      <strong style={{ color: '#1c1c1c', fontWeight: 600 }}>{prod.name}</strong>
                       <br />
-                      <span style={{ fontFamily: 'monospace', fontSize: '11px', color: '#2563eb', background: '#eff6ff', padding: '2px 6px', borderRadius: '4px', display: 'inline-block', marginTop: '4px' }}>
-                        {skuCode}
-                      </span>
+                      <span style={{ fontFamily: 'monospace', fontSize: '11px', color: '#2563eb' }}>{prod.sku}</span>
                     </td>
-                    <td>
-                      <span style={{ color: '#57534e', fontSize: '13px', lineHeight: '1.4' }}>{specsText}</span>
+                    <td style={{ padding: '16px' }}>{prod.specs}</td>
+                    <td style={{ padding: '16px', textAlign: 'center' }}>
+                      <strong style={{ color: isOut ? '#dc2626' : '#d97706' }}>{prod.quantity}</strong> chiếc
                     </td>
-                    <td style={{ textAlign: 'center' }}>
-                      <strong style={{ fontSize: '14px', color: isOut ? '#dc2626' : '#d97706' }}>
-                        {currentStock !== null && currentStock !== undefined ? Number(currentStock).toLocaleString() : 0}
-                      </strong>
-                      <span style={{ fontSize: '12px', color: '#78716c', marginLeft: '4px' }}>chiếc</span>
-                    </td>
-                    <td style={{ textAlign: 'center' }}>
+                    <td style={{ padding: '16px', textAlign: 'center' }}>
                       <span style={{
                         background: isOut ? '#fef2f2' : '#fffbeb',
                         color: isOut ? '#dc2626' : '#d97706',
-                        padding: '4px 10px',
-                        borderRadius: '20px',
-                        fontSize: '11px',
-                        fontWeight: '700',
-                        border: `1px solid ${isOut ? '#fecaca' : '#fde68a'}`,
-                        display: 'inline-block',
-                        whiteSpace: 'nowrap'
+                        padding: '4px 10px', borderRadius: '20px', fontWeight: 700, fontSize: '11px'
                       }}>
                         {isOut ? 'HẾT HÀNG' : 'SẮP HẾT'}
                       </span>
