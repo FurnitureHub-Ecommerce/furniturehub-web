@@ -106,7 +106,7 @@
 }
 
 .dash-header h2 {
-  font-family: 'Be Vietnam Pro', sans-serif !important;
+ 
   font-size: clamp(2rem, 2.5vw, 2.7rem);
   margin: 6px 0;
   color: #1a1a1a;

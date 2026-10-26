@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { loadStorageVariants } from '../../services/storageData';
+import { storageAPI, productAPI } from '../../services/api';
 import { Sliders, CheckCircle2, ShieldAlert, CheckCircle } from 'lucide-react';
 
 const StockAdjustment = () => {
@@ -10,21 +10,105 @@ const StockAdjustment = () => {
   const [thongBao, setThongBao] = useState('');
 
   useEffect(() => {
-    loadStorageVariants().then((variants) => {
-      setSkuProducts(variants);
-      setSkuChon(variants[0]?.id || '');
-    }).catch(() => setThongBao('Không thể tải danh sách SKU từ hệ thống.'));
+    const fetchVariants = async () => {
+      try {
+        const [invRes, productsRes] = await Promise.all([
+          storageAPI.getInventory().catch(() => ({ data: { inventories: [] } })),
+          productAPI.getProductsAdmin ? productAPI.getProductsAdmin().catch(() => ({ data: { products: [] } })) : Promise.resolve({ data: { products: [] } })
+        ]);
+
+        const invBody = invRes?.data || {};
+        const inventories = invBody.inventories || invBody.data?.inventories || invBody.items || invBody || [];
+        const stockMap = new Map();
+
+        (Array.isArray(inventories) ? inventories : []).forEach(item => {
+          const variantObj = item.variantId || item.variant || {};
+          const vId = variantObj._id || variantObj.id || item._id;
+          const sku = variantObj.sku || item.sku;
+          const qty = item.quantity ?? item.stock ?? item.availableStock ?? 0;
+          if (vId) stockMap.set(String(vId), qty);
+          if (sku) stockMap.set(String(sku), qty);
+        });
+
+        const prodBody = productsRes?.data || {};
+        const products = prodBody.products || prodBody.data || prodBody.rows || (Array.isArray(prodBody) ? prodBody : []);
+
+        const variantPromises = (Array.isArray(products) ? products : []).map(async (product) => {
+          const prodId = product._id || product.id;
+          const productName = product.name || 'Sản phẩm nội thất';
+
+          try {
+            const res = productAPI.getProductVariantsAdmin 
+              ? await productAPI.getProductVariantsAdmin(prodId).catch(() => null)
+              : productAPI.getClient ? await productAPI.getClient.get(`/products/${prodId}/variants/admin`).catch(() => null) : null;
+
+            const variantBody = res?.data || {};
+            const variants = variantBody.variants || variantBody.data || variantBody.rows || product.variants || [];
+
+            if (Array.isArray(variants) && variants.length > 0) {
+              return variants.map(variant => {
+                const variantId = variant._id || variant.id;
+                const sku = variant.sku || variant.code || 'SKU';
+                const currentStock = stockMap.get(String(variantId)) ?? stockMap.get(String(sku)) ?? 0;
+
+                return {
+                  id: variantId,
+                  sku: sku,
+                  name: productName,
+                  stock: currentStock
+                };
+              });
+            }
+          } catch (e) {
+            console.error("Lỗi:", e);
+          }
+
+          return [{
+            id: prodId,
+            sku: product.sku || 'SKU',
+            name: productName,
+            stock: stockMap.get(String(prodId)) ?? 0
+          }];
+        });
+
+        const nestedVariants = await Promise.all(variantPromises);
+        const list = nestedVariants.flat().filter(Boolean);
+        setSkuProducts(list);
+        if (list.length > 0) setSkuChon(list[0].id);
+      } catch (error) {
+        console.error('Lỗi tải danh sách SKU:', error);
+        setThongBao('Không thể tải danh sách SKU từ hệ thống.');
+      }
+    };
+    fetchVariants();
   }, []);
 
-  const xuLyGui = (e) => {
+  const xuLyGui = async (e) => {
     e.preventDefault();
-    if (!soLuong || !lyDo) {
-      setThongBao('Vui lòng nhập đầy đủ số lượng và lý do điều chỉnh!');
+    if (!soLuong || !lyDo || !skuChon) {
+      setThongBao('Vui lòng nhập đầy đủ thông tin điều chỉnh!');
       return;
     }
-    setThongBao(`Đã tạo phiếu điều chỉnh thành công cho SKU: ${skuChon}!`);
-    setSoLuong('');
-    setLyDo('');
+
+    try {
+      const payload = {
+        quantity: Number(soLuong),
+        note: `Điều chỉnh tồn kho: ${lyDo}`
+      };
+      // Gọi API xuất/nhập điều chỉnh tùy theo số lượng
+      if (Number(soLuong) >= 0) {
+        await storageAPI.importInventory(skuChon, payload);
+      } else {
+        await storageAPI.exportInventory(skuChon, { ...payload, quantity: Math.abs(Number(soLuong)) });
+      }
+
+      setThongBao(`Đã tạo phiếu điều chỉnh thành công!`);
+      setSoLuong('');
+      setLyDo('');
+    } catch (error) {
+      console.error("Lỗi điều chỉnh:", error);
+      setThongBao('Lỗi: Không thể thực hiện điều chỉnh kho từ Backend.');
+    }
   };
 
   return (
@@ -40,7 +124,6 @@ const StockAdjustment = () => {
       </header>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '24px', alignItems: 'start' }}>
-        {/* Form Tạo Phiếu Điều Chỉnh */}
         <section className="sku-section" style={{ margin: 0, background: '#fff', padding: '28px', borderRadius: '12px', border: '1px solid #eae6df', boxShadow: '0 2px 8px rgba(0, 0, 0, 0.02)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '20px', borderBottom: '1px solid #eae6df', paddingBottom: '14px' }}>
             <Sliders size={20} color="#1c1c1c" />
@@ -61,15 +144,11 @@ const StockAdjustment = () => {
                 onChange={(e) => setSkuChon(e.target.value)}
                 style={{ width: '100%', padding: '12px 14px', borderRadius: '8px', border: '1px solid #dcd6cd', background: '#faf8f5', fontSize: '13px', outline: 'none', cursor: 'pointer', boxSizing: 'border-box' }}
               >
-                {skuProducts.map((item) => {
-                  const skuCode = item.sku || item.id;
-                  const stockVal = item.stock !== null && item.stock !== undefined ? item.stock : 0;
-                  return (
-                    <option key={item.id} value={item.id}>
-                      [{skuCode}] {item.name} — Tồn kho: {stockVal}
-                    </option>
-                  );
-                })}
+                {skuProducts.map((item) => (
+                  <option key={item.id} value={item.id}>
+                    [{item.sku}] {item.name} — Tồn kho: {item.stock}
+                  </option>
+                ))}
               </select>
             </div>
 
@@ -101,7 +180,6 @@ const StockAdjustment = () => {
           </form>
         </section>
 
-        {/* Khối Quy Định Kiểm Kê */}
         <section className="sku-section" style={{ margin: 0, background: '#faf8f5', padding: '28px', borderRadius: '12px', border: '1px solid #eae6df', height: 'fit-content' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px', borderBottom: '1px solid #eae6df', paddingBottom: '14px' }}>
             <ShieldAlert size={20} color="#d97706" />
@@ -115,24 +193,6 @@ const StockAdjustment = () => {
               </div>
               <p style={{ margin: 0, fontSize: '13px', color: '#57534e', lineHeight: '1.5' }}>
                 Mọi thay đổi số lượng tồn kho đều phải có biên bản kiểm kê kèm chữ ký xác nhận của thủ kho.
-              </p>
-            </div>
-
-            <div style={{ display: 'flex', gap: '10px', alignItems: 'flex-start' }}>
-              <div style={{ background: '#fef3c7', padding: '4px', borderRadius: '50%', display: 'flex', marginTop: '2px' }}>
-                <CheckCircle size={14} color="#d97706" />
-              </div>
-              <p style={{ margin: 0, fontSize: '13px', color: '#57534e', lineHeight: '1.5' }}>
-                Đối với hàng hóa hư hỏng do vận chuyển hoặc bảo quản, bắt buộc phải chụp ảnh đính kèm lý do giảm tồn.
-              </p>
-            </div>
-
-            <div style={{ display: 'flex', gap: '10px', alignItems: 'flex-start' }}>
-              <div style={{ background: '#fef3c7', padding: '4px', borderRadius: '50%', display: 'flex', marginTop: '2px' }}>
-                <CheckCircle size={14} color="#d97706" />
-              </div>
-              <p style={{ margin: 0, fontSize: '13px', color: '#57534e', lineHeight: '1.5' }}>
-                Hệ thống sẽ tự động ghi lại lịch sử thao tác của từng tài khoản để đối soát số liệu định kỳ vào cuối tháng.
               </p>
             </div>
           </div>

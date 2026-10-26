@@ -322,7 +322,7 @@ export function CartPage() {
 
       {isCartLoading && (
         <div style={{ padding: "12px 16px", backgroundColor: "#F3F4F6", borderRadius: "8px", marginBottom: "20px", fontSize: "0.85rem", color: "#4B5563" }}>
-          Đang đồng bộ với hệ thống giỏ hàng Backend...
+          Đang đồng bộ với hệ thống giỏ hàng ...
         </div>
       )}
 

@@ -1,107 +1,127 @@
 import React, { useState, useEffect } from "react";
-import { storageAPI } from "../../services/api";
-import { ArrowDownLeft, ArrowUpRight, FileText, Plus, X, CheckCircle2 } from "lucide-react";
+import { storageAPI, productAPI } from "../../services/api";
+import { ArrowDownLeft, ArrowUpRight, FileText, X, CheckCircle2, History, Package, Filter, AlertCircle } from "lucide-react";
 
 const ImportExportStock = () => {
-  const [tabHienTai, setTabHienTai] = useState("import");
+  const [activeMainTab, setActiveMainTab] = useState("products");
+  const [historySubTab, setHistorySubTab] = useState("import");
+  const [filterStatus, setFilterStatus] = useState("all");
+
+  const [danhSachSanPham, setDanhSachSanPham] = useState([]);
   const [chungTu, setChungTu] = useState({ import: [], export: [] });
   const [loading, setLoading] = useState(true);
+
   const [isOpenModal, setIsOpenModal] = useState(false);
-  const [danhSachSanPham, setDanhSachSanPham] = useState([]);
-  const [formData, setFormData] = useState({ variantId: "", quantity: 1, note: "", partner: "" });
+  const [modalType, setModalType] = useState("import");
+  const [selectedProduct, setSelectedProduct] = useState(null);
+  
+  const [isOpenDetailModal, setIsOpenDetailModal] = useState(false);
+  const [detailProduct, setDetailProduct] = useState(null);
+
+  const [formData, setFormData] = useState({ quantity: 1, note: "", partner: "" });
   const [submitting, setSubmitting] = useState(false);
   const [thongBaoThanhCong, setThongBaoThanhCong] = useState("");
+  const [errorMessage, setErrorMessage] = useState(""); // State chứa thông báo lỗi UI đẹp mắt
 
   const fetchData = async () => {
     try {
       setLoading(true);
 
-      // Gọi đồng thời API lấy danh sách kho, lịch sử giao dịch và danh sách sản phẩm từ Admin để cập nhật SKU mới tạo
       const [invRes, txRes, productsRes] = await Promise.all([
         storageAPI.getInventory().catch(() => ({ data: { inventories: [] } })),
         storageAPI.getInventoryTransactions().catch(() => ({ data: { transactions: [] } })),
-        storageAPI.getProductsAdmin ? storageAPI.getProductsAdmin().catch(() => ({ data: { products: [] } })) : Promise.resolve({ data: { products: [] } })
+        productAPI.getProductsAdmin ? productAPI.getProductsAdmin().catch(() => ({ data: { products: [] } })) : Promise.resolve({ data: { products: [] } })
       ]);
 
-      // 1. Xử lý tồn kho hiện tại để map số lượng
       const invBody = invRes?.data || {};
-      const inventories = invBody.inventories || invBody.data?.inventories || invBody.items || [];
+      const inventories = invBody.inventories || invBody.data?.inventories || invBody.items || invBody || [];
       const stockMap = new Map();
-      inventories.forEach(item => {
-        const variant = item.variantId || item.variant || {};
-        const key = variant.sku || variant._id || item._id;
-        if (key) {
-          stockMap.set(key, item.quantity ?? item.stock ?? 0);
-        }
+
+      (Array.isArray(inventories) ? inventories : []).forEach(item => {
+        const variantObj = item.variantId || item.variant || {};
+        const vId = variantObj._id || variantObj.id || item._id;
+        const sku = variantObj.sku || item.sku;
+        const qty = item.quantity ?? item.stock ?? item.availableStock ?? 0;
+
+        if (vId) stockMap.set(String(vId), qty);
+        if (sku) stockMap.set(String(sku), qty);
       });
 
-      // 2. Lấy danh sách biến thể từ sản phẩm do Admin quản lý để không bao giờ bị thiếu SKU mới tạo
       const prodBody = productsRes?.data || {};
-      const products = prodBody.products || prodBody.data || prodBody.rows || [];
+      const products = prodBody.products || prodBody.data || prodBody.rows || (Array.isArray(prodBody) ? prodBody : []);
 
-      const formattedVariants = [];
-      products.forEach(product => {
-        const variants = product.variants || [];
-        if (variants.length > 0) {
-          variants.forEach(variant => {
-            const sku = variant.sku || variant._id;
-            const variantId = variant._id || variant.id;
-            if (variantId) {
-              formattedVariants.push({
+      const variantPromises = (Array.isArray(products) ? products : []).map(async (product) => {
+        const prodId = product._id || product.id;
+        const productName = product.name || 'Sản phẩm nội thất';
+        const productImage = product.image || product.thumbnail || product.images?.[0] || 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=300&q=80';
+
+        try {
+          const res = productAPI.getProductVariantsAdmin 
+            ? await productAPI.getProductVariantsAdmin(prodId).catch(() => null)
+            : productAPI.getClient ? await productAPI.getClient.get(`/products/${prodId}/variants/admin`).catch(() => null) : null;
+
+          const variantBody = res?.data || {};
+          const variants = variantBody.variants || variantBody.data || variantBody.rows || product.variants || [];
+
+          if (Array.isArray(variants) && variants.length > 0) {
+            return variants.map(variant => {
+              const variantId = variant._id || variant.id;
+              const sku = variant.sku || variant.code || 'SKU';
+              const currentStock = stockMap.get(String(variantId)) ?? stockMap.get(String(sku)) ?? 0;
+              const varImage = variant.image || productImage;
+
+              return {
                 variantId: variantId,
-                sku: sku || 'SKU',
-                name: product.name,
-                specs: [
-                  variant.color ? `Màu: ${variant.color}` : '',
-                  variant.size ? `Size: ${variant.size}` : '',
-                  variant.material ? `Chất liệu: ${variant.material}` : ''
-                ].filter(Boolean).join(' — ') || 'Tiêu chuẩn',
-                stock: stockMap.has(sku) ? stockMap.get(sku) : 0
-              });
-            }
-          });
-        }
-      });
-
-      // Fallback dự phòng nếu API sản phẩm admin trống thì dùng trực tiếp từ inventory
-      if (formattedVariants.length === 0) {
-        inventories.forEach(item => {
-          const variant = item.variantId || item.variant || {};
-          const product = variant.productId || item.product || {};
-          const vId = variant._id || variant.id || item._id;
-          if (vId) {
-            formattedVariants.push({
-              variantId: vId,
-              sku: variant.sku || 'SKU',
-              name: product.name || item.name || 'Sản phẩm nội thất',
-              specs: [variant.color, variant.size, variant.material].filter(Boolean).join(' — ') || 'Tiêu chuẩn',
-              stock: item.quantity ?? 0
+                sku: sku,
+                name: productName,
+                image: varImage,
+                color: variant.color || variant.attributes?.color || '—',
+                size: variant.size || variant.attributes?.size || '—',
+                material: variant.material || variant.attributes?.material || '—',
+                stock: currentStock
+              };
             });
           }
-        });
-      }
+        } catch (e) {
+          console.error("Lỗi lấy variants cho sản phẩm:", prodId);
+        }
 
-      setDanhSachSanPham(formattedVariants);
+        return [{
+          variantId: prodId,
+          sku: product.sku || 'SKU',
+          name: productName,
+          image: productImage,
+          color: product.color || '—',
+          size: product.size || '—',
+          material: product.material || '—',
+          stock: stockMap.get(String(prodId)) ?? 0
+        }];
+      });
 
-      // 3. Xử lý danh sách chứng từ nhập xuất kho
-      const txData = txRes?.data?.transactions || txRes?.data?.data || txRes?.data || [];
+      const nestedVariants = await Promise.all(variantPromises);
+      const allVariants = nestedVariants.flat().filter(Boolean);
+      setDanhSachSanPham(allVariants);
+
+      const txBody = txRes?.data || {};
+      const txData = txBody.transactions || txBody.data || txBody.rows || (Array.isArray(txBody) ? txBody : []);
+      
       const importedList = [];
       const exportedList = [];
 
       (Array.isArray(txData) ? txData : []).forEach((tx) => {
-        const variant = tx.variantId || {};
-        const product = variant.productId || {};
-        const prodName = product.name || tx.productName || 'Sản phẩm nội thất';
+        const variant = tx.variantId || tx.variant || {};
+        const product = variant.productId || tx.product || {};
+        const prodName = product.name || tx.productName || variant.name || 'Sản phẩm nội thất';
 
         const itemObj = {
           date: tx.createdAt ? new Date(tx.createdAt).toLocaleString('vi-VN') : 'Hôm nay',
           productName: prodName,
-          quantity: tx.quantity || 0,
-          note: tx.note || '',
+          quantity: tx.quantity || tx.amount || 0,
+          note: tx.note || tx.description || 'Giao dịch kho',
           status: 'Hoàn Thành'
         };
 
-        const typeStr = String(tx.type || '').toUpperCase();
+        const typeStr = String(tx.type || tx.action || '').toUpperCase();
         if (typeStr.includes('IMPORT') || typeStr.includes('NHẬP')) {
           importedList.push(itemObj);
         } else {
@@ -111,7 +131,7 @@ const ImportExportStock = () => {
 
       setChungTu({ import: importedList, export: exportedList });
     } catch (error) {
-      console.error("Lỗi tải dữ liệu chứng từ từ Backend:", error);
+      console.error("Lỗi tải dữ liệu:", error);
     } finally {
       setLoading(false);
     }
@@ -121,153 +141,350 @@ const ImportExportStock = () => {
     fetchData();
   }, []);
 
-  const handleTaoPhieu = async (e) => {
+  const handleOpenActionModal = (product, type) => {
+    setSelectedProduct(product);
+    setModalType(type);
+    setFormData({ quantity: 1, note: "", partner: "" });
+    setThongBaoThanhCong("");
+    setErrorMessage("");
+    setIsOpenModal(true);
+  };
+
+  const handleOpenDetailModal = (product) => {
+    setDetailProduct(product);
+    setIsOpenDetailModal(true);
+  };
+
+  const handleThaoTacKho = async (e) => {
     e.preventDefault();
-    if (!formData.variantId) {
-      alert("Vui lòng chọn sản phẩm/biến thể cần thao tác!");
+    if (!selectedProduct) return;
+
+    setErrorMessage("");
+    const qtyNum = Number(formData.quantity);
+
+    // Kiểm tra xuất kho không đủ số lượng -> Hiển thị lỗi UI tinh tế thay vì alert()
+    if (modalType === "export" && qtyNum > selectedProduct.stock) {
+      setErrorMessage("Sản phẩm này không đủ số lượng yêu cầu!");
       return;
     }
 
     try {
       setSubmitting(true);
       const payload = {
-        quantity: Number(formData.quantity),
-        note: [formData.partner ? `Đối tác: ${formData.partner}` : '', formData.note].filter(Boolean).join(' - ') || 'Giao dịch kho'
+        quantity: qtyNum,
+        note: [formData.partner ? `Đối tác: ${formData.partner}` : '', formData.note].filter(Boolean).join(' - ') || (modalType === 'import' ? 'Nhập kho' : 'Xuất kho')
       };
 
-      if (tabHienTai === "import") {
-        await storageAPI.importInventory(formData.variantId, payload);
+      if (modalType === "import") {
+        await storageAPI.importInventory(selectedProduct.variantId, payload);
       } else {
-        await storageAPI.exportInventory(formData.variantId, payload);
+        await storageAPI.exportInventory(selectedProduct.variantId, payload);
       }
 
-      setThongBaoThanhCong(`Tạo phiếu ${tabHienTai === "import" ? "nhập" : "xuất"} kho thành công!`);
-      await fetchData();
+      const updatedStock = modalType === "import" 
+        ? selectedProduct.stock + qtyNum 
+        : Math.max(0, selectedProduct.stock - qtyNum);
+
+      setSelectedProduct(prev => ({ ...prev, stock: updatedStock }));
+      setDanhSachSanPham(prevList => 
+        prevList.map(item => item.variantId === selectedProduct.variantId ? { ...item, stock: updatedStock } : item)
+      );
+
+      setThongBaoThanhCong(`Tạo phiếu ${modalType === 'import' ? 'nhập' : 'xuất'} kho thành công!`);
+      fetchData();
 
       setTimeout(() => {
         setThongBaoThanhCong("");
         setIsOpenModal(false);
-        setFormData({ variantId: "", quantity: 1, note: "", partner: "" });
-      }, 1500);
+      }, 1200);
     } catch (err) {
-      console.error("Lỗi tạo phiếu:", err);
-      alert("Có lỗi xảy ra khi lưu vào Database hệ thống!");
+      console.error("Lỗi thao tác kho:", err);
+      setErrorMessage("Lỗi: Biến thể này chưa có bản ghi Inventory trên server. Nhờ bạn Backend bổ sung logic tự động tạo kho (upsert)!");
     } finally {
       setSubmitting(false);
     }
   };
 
+  const filteredProducts = danhSachSanPham.filter(item => {
+    if (filterStatus === "new") {
+      return item.stock === 0;
+    }
+    if (filterStatus === "out_of_stock") {
+      return item.stock === 0;
+    }
+    return true;
+  });
+
   return (
-    <div className="dashboard-main" style={{ fontFamily: "'Inter', sans-serif", paddingBottom: "60px" }}>
-      <header className="dash-header" style={{ marginBottom: "24px" }}>
+    <div className="dashboard-main" style={{ fontFamily: "ui-rounded", paddingBottom: "60px", padding: "24px" }}>
+      <header className="dash-header" style={{ marginBottom: "20px", display: "flex", justifyContent: "space-between", alignItems: "flex-end" }}>
         <div>
-          <span className="subtitle">QUẢN LÝ DÒNG CHẢY HÀNG HÓA</span>
-          <h2 style={{ fontFamily: "Bodoni Moda", fontSize: "clamp(2rem, 2.5vw, 2.7rem)", color: "#1a1a1a", fontWeight: 600 }}>
+          <span className="subtitle" style={{ fontSize: "11px", fontWeight: 700, color: "#78716c" }}>QUẢN LÝ DÒNG CHẢY HÀNG HÓA</span>
+          <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: "2rem", color: "#1a1a1a", fontWeight: 600, margin: "4px 0" }}>
             Quản Lý Nhập Kho & Xuất Kho
           </h2>
-          <p style={{ color: "#666", fontSize: "14px" }}>Đồng bộ chứng từ và lịch sử dòng chảy hàng hóa trực tiếp từ Backend.</p>
-        </div>
-        <div className="actions">
-          <button className="btn-primary" onClick={() => setIsOpenModal(true)} style={{ display: "flex", alignItems: "center", gap: "8px", padding: "11px 18px", borderRadius: "8px", background: "#1c1c1c", color: "#fff", border: "none", cursor: "pointer", fontWeight: 600 }}>
-            <Plus size={16} /> Tạo Phiếu {tabHienTai === "import" ? "Nhập" : "Xuất"} Kho Mới
-          </button>
         </div>
       </header>
 
-      <div style={{ display: "flex", gap: "12px", marginBottom: "24px" }}>
-        <button onClick={() => setTabHienTai("import")} style={{ padding: '10px 22px', borderRadius: '8px', fontWeight: 600, cursor: 'pointer', background: tabHienTai === 'import' ? '#1c1c1c' : '#fff', color: tabHienTai === 'import' ? '#fff' : '#666', border: '1px solid #e2ded8' }}>
-          <ArrowDownLeft size={16} style={{ verticalAlign: 'middle', marginRight: '6px' }} /> Phiếu Nhập Kho
+      {/* THANH TAB CHÍNH */}
+      <div style={{ display: "flex", gap: "12px", marginBottom: "20px", borderBottom: "1px solid #eae6df", paddingBottom: "12px" }}>
+        <button 
+          onClick={() => setActiveMainTab("products")} 
+          style={{ padding: '9px 20px', borderRadius: '8px', fontWeight: 600, cursor: 'pointer', background: activeMainTab === 'products' ? '#1c1c1c' : '#fff', color: activeMainTab === 'products' ? '#fff' : '#666', border: '1px solid #e2ded8', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '6px' }}
+        >
+          <Package size={16} /> Danh Sách SKU & Thao Tác
         </button>
-        <button onClick={() => setTabHienTai("export")} style={{ padding: '10px 22px', borderRadius: '8px', fontWeight: 600, cursor: 'pointer', background: tabHienTai === 'export' ? '#1c1c1c' : '#fff', color: tabHienTai === 'export' ? '#fff' : '#666', border: '1px solid #e2ded8' }}>
-          <ArrowUpRight size={16} style={{ verticalAlign: 'middle', marginRight: '6px' }} /> Phiếu Xuất Kho
+        <button 
+          onClick={() => setActiveMainTab("history")} 
+          style={{ padding: '9px 20px', borderRadius: '8px', fontWeight: 600, cursor: 'pointer', background: activeMainTab === 'history' ? '#1c1c1c' : '#fff', color: activeMainTab === 'history' ? '#fff' : '#666', border: '1px solid #e2ded8', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '6px' }}
+        >
+          <History size={16} /> Xem Lịch Sử Nhập / Xuất
         </button>
       </div>
 
-      <section style={{ background: "transparent" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "16px" }}>
-          <FileText size={18} color="#1c1c1c" />
-          <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 600 }}>Danh Sách Chứng Từ {tabHienTai === "import" ? "Nhập Kho" : "Xuất Kho"}</h3>
-        </div>
+      {/* TAB 1: DANH SÁCH SKU */}
+      {activeMainTab === "products" && (
+        <section style={{ background: "#fff", border: "1px solid #eae6df", borderRadius: "12px", overflow: "hidden", padding: "16px" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px", flexWrap: "wrap", gap: "12px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              <Package size={28} color="#1c1c1c" />
+              <h3 style={{ margin: 0, fontSize: '1.4rem', fontWeight: 600, fontFamily: "'Montserrat', sans-serif" }}>Danh Sách SKU & Biến Thể Quản Trị</h3>
+            </div>
 
-        {loading ? (
-          <div style={{ padding: '50px', textAlign: 'center' }}>Đang đồng bộ dữ liệu từ Backend...</div>
-        ) : (
-          <table className="storage-table" style={{ width: '100%', borderCollapse: 'collapse', background: '#fff', borderRadius: '12px', overflow: 'hidden', border: '1px solid #eae6df' }}>
-            <thead>
-              <tr style={{ background: '#faf8f5', color: '#78716c', fontSize: '11px', fontWeight: 700, textAlign: 'left' }}>
-                <th style={{ padding: '14px 16px' }}>THỜI GIAN</th>
-                <th style={{ padding: '14px 16px' }}>TÊN SẢN PHẨM</th>
-                <th style={{ padding: '14px 16px', textAlign: 'center' }}>SỐ LƯỢNG</th>
-                <th style={{ padding: '14px 16px' }}>GHI CHÚ</th>
-                <th style={{ padding: '14px 16px', textAlign: 'center' }}>TRẠNG THÁI</th>
-              </tr>
-            </thead>
-            <tbody>
-              {chungTu[tabHienTai].length > 0 ? (
-                chungTu[tabHienTai].map((item, idx) => (
-                  <tr key={idx} style={{ borderBottom: '1px solid #f2efeb' }}>
-                    <td style={{ padding: '16px', fontSize: '12px', color: '#57534e' }}>{item.date}</td>
-                    <td style={{ padding: '16px' }}><strong>{item.productName}</strong></td>
-                    <td style={{ padding: '16px', textAlign: 'center' }}>
-                      <strong style={{ color: tabHienTai === 'import' ? '#16a34a' : '#dc2626' }}>
-                        {tabHienTai === 'import' ? `+${item.quantity}` : `-${item.quantity}`}
-                      </strong>
-                    </td>
-                    <td style={{ padding: '16px', fontSize: '12px', color: '#78716c' }}>{item.note || 'Không có ghi chú'}</td>
-                    <td style={{ padding: '16px', textAlign: 'center' }}>
-                      <span style={{ background: '#ecfdf5', color: '#059669', padding: '4px 10px', borderRadius: '20px', fontSize: '11px', fontWeight: 700 }}>{item.status}</span>
-                    </td>
+            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              <Filter size={15} color="#78716c" />
+              <span style={{ fontSize: "12px", fontWeight: 600, color: "#78716c" }}>Lọc:</span>
+              <button 
+                onClick={() => setFilterStatus("all")} 
+                style={{ padding: '6px 12px', borderRadius: '6px', fontSize: '12px', fontWeight: 600, cursor: 'pointer', background: filterStatus === 'all' ? '#1c1c1c' : '#f5f2eb', color: filterStatus === 'all' ? '#fff' : '#57534e', border: 'none' }}
+              >
+                Tất cả ({danhSachSanPham.length})
+              </button>
+              <button 
+                onClick={() => setFilterStatus("new")} 
+                style={{ padding: '6px 12px', borderRadius: '6px', fontSize: '12px', fontWeight: 600, cursor: 'pointer', background: filterStatus === 'new' ? '#1c1c1c' : '#f5f2eb', color: filterStatus === 'new' ? '#fff' : '#57534e', border: 'none' }}
+              >
+                Sản phẩm mới / Hết hàng
+              </button>
+            </div>
+          </div>
+
+          {loading ? (
+            <div style={{ padding: '50px', textAlign: 'center', color: '#78716c' }}>Đang tải danh sách SKU từ hệ thống...</div>
+          ) : (
+            <div style={{ overflowX: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                <thead>
+                  <tr style={{ background: '#faf8f5', color: '#78716c', fontSize: '12px', fontWeight: 700, textAlign: 'left' }}>
+                    <th style={{ padding: '14px 16px', width: '100px' }}>HÌNH ẢNH</th>
+                    <th style={{ padding: '14px 16px' }}>MÃ SKU</th>
+                    <th style={{ padding: '14px 16px' }}>TÊN SẢN PHẨM</th>
+                    <th style={{ padding: '14px 16px', textAlign: 'center' }}>TỒN KHO</th>
+                    <th style={{ padding: '14px 16px', textAlign: 'center' }}>HÀNH ĐỘNG</th>
                   </tr>
-                ))
-              ) : (
-                <tr><td colSpan="5" style={{ textAlign: 'center', padding: '40px', color: '#8c857b' }}>Không có chứng từ nào.</td></tr>
-              )}
-            </tbody>
-          </table>
-        )}
-      </section>
+                </thead>
+                <tbody>
+                  {filteredProducts.length > 0 ? (
+                    filteredProducts.map((item) => (
+                      <tr key={item.variantId} style={{ borderBottom: '1px solid #f2efeb' }}>
+                        <td style={{ padding: '14px 16px' }}>
+                          <img 
+                            src={item.image} 
+                            alt={item.name} 
+                            onClick={() => handleOpenDetailModal(item)}
+                            style={{ width: '48px', height: '48px', objectFit: 'cover', borderRadius: '8px', cursor: 'pointer', border: '1px solid #eae6df' }} 
+                            title="Nhấp để xem chi tiết"
+                          />
+                        </td>
+                        <td style={{ padding: '14px 16px' }}>
+                          <span style={{ fontSize: '11px', fontWeight: 700, color: '#b45309', background: '#fef3c7', padding: '2px 6px', borderRadius: '4px' }}>{item.sku}</span>
+                        </td>
+                        <td style={{ padding: '14px 16px' }}>
+                          <strong 
+                            onClick={() => handleOpenDetailModal(item)}
+                            style={{ fontSize: '13px', display: 'block', color: '#1a1a1a', cursor: 'pointer' }}
+                            title="Nhấp để xem chi tiết"
+                          >
+                            {item.name}
+                          </strong>
+                          <span style={{ fontSize: '11px', color: '#78716c' }}>Màu: {item.color} | Size: {item.size}</span>
+                        </td>
+                        <td style={{ padding: '14px 16px', textAlign: 'center' }}>
+                          <span style={{ fontWeight: 700, fontSize: '14px', color: item.stock > 0 ? '#16a34a' : '#dc2626' }}>
+                            {item.stock} cái
+                          </span>
+                        </td>
+                        <td style={{ padding: '14px 16px', textAlign: 'center' }}>
+                          <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
+                            <button 
+                              onClick={() => handleOpenActionModal(item, 'import')}
+                              style={{ padding: '7px 14px', background: '#16a34a', color: '#fff', border: 'none', borderRadius: '6px', fontSize: '12px', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
+                            >
+                              <ArrowDownLeft size={14} /> Nhập Kho
+                            </button>
+                            <button 
+                              onClick={() => handleOpenActionModal(item, 'export')}
+                              style={{ padding: '7px 14px', background: '#dc2626', color: '#fff', border: 'none', borderRadius: '6px', fontSize: '12px', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
+                            >
+                              <ArrowUpRight size={14} /> Xuất Kho
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr><td colSpan="5" style={{ textAlign: 'center', padding: '40px', color: '#8c857b' }}>Không tìm thấy SKU nào phù hợp với bộ lọc.</td></tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </section>
+      )}
 
-      {isOpenModal && (
+      {/* TAB 2: LỊCH SỬ */}
+      {activeMainTab === "history" && (
+        <section style={{ background: "#fff", border: "1px solid #eae6df", borderRadius: "12px", overflow: "hidden", padding: "16px" }}>
+          <div style={{ display: "flex", gap: "10px", marginBottom: "16px" }}>
+            <button onClick={() => setHistorySubTab("import")} style={{ padding: '7px 16px', borderRadius: '6px', fontWeight: 600, cursor: 'pointer', background: historySubTab === 'import' ? '#1c1c1c' : '#f5f2eb', color: historySubTab === 'import' ? '#fff' : '#666', border: 'none', fontSize: '12px' }}>
+              Phiếu Nhập Kho ({chungTu.import.length})
+            </button>
+            <button onClick={() => setHistorySubTab("export")} style={{ padding: '7px 16px', borderRadius: '6px', fontWeight: 600, cursor: 'pointer', background: historySubTab === 'export' ? '#1c1c1c' : '#f5f2eb', color: historySubTab === 'export' ? '#fff' : '#666', border: 'none', fontSize: '12px' }}>
+              Phiếu Xuất Kho ({chungTu.export.length})
+            </button>
+          </div>
+
+          <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "12px" }}>
+            <FileText size={16} color="#1c1c1c" />
+            <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 600 }}>Lịch Sử {historySubTab === "import" ? "Nhập Kho" : "Xuất Kho"}</h3>
+          </div>
+
+          {loading ? (
+            <div style={{ padding: '40px', textAlign: 'center', color: '#78716c' }}>Đang tải lịch sử...</div>
+          ) : (
+            <div style={{ overflowX: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                <thead>
+                  <tr style={{ background: '#faf8f5', color: '#78716c', fontSize: '11px', fontWeight: 700, textAlign: 'left' }}>
+                    <th style={{ padding: '12px 16px' }}>THỜI GIAN</th>
+                    <th style={{ padding: '12px 16px' }}>TÊN SẢN PHẨM</th>
+                    <th style={{ padding: '12px 16px', textAlign: 'center' }}>SỐ LƯỢNG</th>
+                    <th style={{ padding: '12px 16px' }}>GHI CHÚ / ĐỐI TÁC</th>
+                    <th style={{ padding: '12px 16px', textAlign: 'center' }}>TRẠNG THÁI</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {chungTu[historySubTab].length > 0 ? (
+                    chungTu[historySubTab].map((item, idx) => (
+                      <tr key={idx} style={{ borderBottom: '1px solid #f2efeb' }}>
+                        <td style={{ padding: '14px 16px', fontSize: '12px', color: '#57534e' }}>{item.date}</td>
+                        <td style={{ padding: '14px 16px' }}><strong style={{ fontSize: '13px' }}>{item.productName}</strong></td>
+                        <td style={{ padding: '14px 16px', textAlign: 'center' }}>
+                          <strong style={{ color: historySubTab === 'import' ? '#16a34a' : '#dc2626', fontSize: '13px' }}>
+                            {historySubTab === 'import' ? `+${item.quantity}` : `-${item.quantity}`}
+                          </strong>
+                        </td>
+                        <td style={{ padding: '14px 16px', fontSize: '12px', color: '#78716c' }}>{item.note || 'Không có ghi chú'}</td>
+                        <td style={{ padding: '14px 16px', textAlign: 'center' }}>
+                          <span style={{ background: '#ecfdf5', color: '#059669', padding: '3px 8px', borderRadius: '20px', fontSize: '11px', fontWeight: 700 }}>{item.status}</span>
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr><td colSpan="5" style={{ textAlign: 'center', padding: '30px', color: '#8c857b', fontSize: '13px' }}>Chưa có lịch sử giao dịch nào.</td></tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </section>
+      )}
+
+      {/* MODAL XEM CHI TIẾT SẢN PHẨM */}
+      {isOpenDetailModal && detailProduct && (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999 }}>
-          <div style={{ background: '#fff', width: '100%', maxWidth: '540px', borderRadius: '16px', padding: '32px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', borderBottom: '1px solid #eae6df', paddingBottom: '14px' }}>
-              <h3 style={{ margin: 0, fontSize: '1.3rem', fontWeight: 600 }}>Tạo Phiếu {tabHienTai === "import" ? "Nhập" : "Xuất"} Kho Mới</h3>
+          <div style={{ background: '#fff', width: '100%', maxWidth: '500px', borderRadius: '16px', padding: '28px', boxSizing: 'border-box' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '18px', borderBottom: '1px solid #eae6df', paddingBottom: '12px' }}>
+              <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 600, color: '#1a1a1a' }}>
+                Chi Tiết Sản Phẩm & SKU
+              </h3>
+              <button onClick={() => setIsOpenDetailModal(false)} style={{ background: 'transparent', border: 'none', cursor: 'pointer' }}><X size={18} /></button>
+            </div>
+
+            <div style={{ display: 'flex', gap: '16px', alignItems: 'center', marginBottom: '16px' }}>
+              <img src={detailProduct.image} alt={detailProduct.name} style={{ width: '100px', height: '100px', objectFit: 'cover', borderRadius: '10px', border: '1px solid #eae6df' }} />
+              <div>
+                <span style={{ fontSize: '11px', fontWeight: 700, color: '#b45309', background: '#fef3c7', padding: '2px 6px', borderRadius: '4px' }}>{detailProduct.sku}</span>
+                <h4 style={{ margin: '6px 0 4px', fontSize: '1.1rem', color: '#1a1a1a' }}>{detailProduct.name}</h4>
+                <span style={{ fontSize: '13px', color: detailProduct.stock > 0 ? '#16a34a' : '#dc2626', fontWeight: 700 }}>Tồn kho: {detailProduct.stock} cái</span>
+              </div>
+            </div>
+
+            <div style={{ background: '#faf8f5', padding: '14px', borderRadius: '10px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', fontSize: '13px', marginBottom: '20px' }}>
+              <div><strong>Màu sắc:</strong> {detailProduct.color}</div>
+              <div><strong>Kích thước:</strong> {detailProduct.size}</div>
+              <div style={{ gridColumn: 'span 2' }}><strong>Chất liệu:</strong> {detailProduct.material}</div>
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+              <button onClick={() => setIsOpenDetailModal(false)} style={{ padding: '9px 20px', borderRadius: '8px', background: '#1c1c1c', color: '#fff', border: 'none', cursor: 'pointer', fontSize: '13px', fontWeight: 600 }}>Đóng cửa sổ</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL FORM NHẬP / XUẤT */}
+      {isOpenModal && selectedProduct && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999 }}>
+          <div style={{ background: '#fff', width: '100%', maxWidth: '480px', borderRadius: '16px', padding: '28px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '18px', borderBottom: '1px solid #eae6df', paddingBottom: '12px' }}>
+              <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 600, color: modalType === 'import' ? '#16a34a' : '#dc2626' }}>
+                {modalType === 'import' ? '📥 Nhập Kho SKU' : '📤 Xuất Kho SKU'}
+              </h3>
               <button onClick={() => setIsOpenModal(false)} style={{ background: 'transparent', border: 'none', cursor: 'pointer' }}><X size={18} /></button>
             </div>
 
+            <div style={{ display: 'flex', gap: '12px', marginBottom: '16px', padding: '10px 14px', background: '#faf8f5', borderRadius: '8px', alignItems: 'center' }}>
+              <img src={selectedProduct.image} alt="" style={{ width: '40px', height: '40px', objectFit: 'cover', borderRadius: '6px' }} />
+              <div style={{ fontSize: '13px' }}>
+                <strong>{selectedProduct.name}</strong> <br />
+                <span style={{ color: '#78716c', fontSize: '12px' }}>
+                  SKU: {selectedProduct.sku} <br />
+                  <strong>Tồn hiện tại:</strong> <span style={{ color: selectedProduct.stock > 0 ? '#16a34a' : '#dc2626', fontWeight: 700 }}>{selectedProduct.stock} cái</span>
+                </span>
+              </div>
+            </div>
+
+            {/* HIỂN THỊ THÔNG BÁO LỖI ĐẸP MẮT TRONG UI NẾU KHÔNG ĐỦ HÀNG */}
+            {errorMessage && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '12px 14px', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '8px', marginBottom: '14px', color: '#dc2626', fontSize: '13px', fontWeight: 600 }}>
+                <AlertCircle size={18} />
+                <span>{errorMessage}</span>
+              </div>
+            )}
+
             {thongBaoThanhCong ? (
-              <div style={{ padding: '30px', background: '#f0fdf4', borderRadius: '12px', textAlign: 'center', color: '#16a34a', fontWeight: 600 }}>
-                <CheckCircle2 size={40} style={{ margin: '0 auto 12px' }} />
+              <div style={{ padding: '24px', background: '#f0fdf4', borderRadius: '12px', textAlign: 'center', color: '#16a34a', fontWeight: 600 }}>
+                <CheckCircle2 size={36} style={{ margin: '0 auto 10px' }} />
                 {thongBaoThanhCong}
               </div>
             ) : (
-              <form onSubmit={handleTaoPhieu} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <form onSubmit={handleThaoTacKho} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
                 <div>
-                  <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, marginBottom: '6px', color: '#78716c' }}>CHỌN SẢN PHẨM / BIẾN THỂ (Đã đồng bộ từ Admin) *</label>
-                  <select value={formData.variantId} onChange={(e) => setFormData({ ...formData, variantId: e.target.value })} style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid #dcd6cd', background: '#fff' }} required>
-                    <option value="">-- Chọn sản phẩm hoặc SKU mới --</option>
-                    {danhSachSanPham.map((p) => (
-                      <option key={p.variantId} value={p.variantId}>
-                        [{p.sku}] {p.name} ({p.specs}) — Tồn hiện tại: {p.stock}
-                      </option>
-                    ))}
-                  </select>
+                  <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, marginBottom: '6px', color: '#78716c' }}>SỐ LƯỢNG {modalType === 'import' ? 'NHẬP' : 'XUẤT'} *</label>
+                  <input type="number" min="1" value={formData.quantity} onChange={(e) => { setFormData({ ...formData, quantity: parseInt(e.target.value) || 1 }); setErrorMessage(""); }} style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid #dcd6cd', boxSizing: 'border-box', fontSize: '13px' }} required />
                 </div>
                 <div>
                   <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, marginBottom: '6px', color: '#78716c' }}>ĐỐI TÁC / NHÀ CUNG CẤP</label>
-                  <input type="text" placeholder="Nhập tên đối tác hoặc nhà cung cấp..." value={formData.partner} onChange={(e) => setFormData({ ...formData, partner: e.target.value })} style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid #dcd6cd', boxSizing: 'border-box' }} />
-                </div>
-                <div>
-                  <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, marginBottom: '6px', color: '#78716c' }}>SỐ LƯỢNG THỰC TẾ *</label>
-                  <input type="number" min="1" value={formData.quantity} onChange={(e) => setFormData({ ...formData, quantity: parseInt(e.target.value) || 1 })} style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid #dcd6cd', boxSizing: 'border-box' }} required />
+                  <input type="text" placeholder="Nhập tên đối tác hoặc nhà cung cấp..." value={formData.partner} onChange={(e) => setFormData({ ...formData, partner: e.target.value })} style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid #dcd6cd', boxSizing: 'border-box', fontSize: '13px' }} />
                 </div>
                 <div>
                   <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, marginBottom: '6px', color: '#78716c' }}>GHI CHÚ GIAO DỊCH</label>
-                  <textarea rows="3" placeholder="Nhập ghi chú chi tiết..." value={formData.note} onChange={(e) => setFormData({ ...formData, note: e.target.value })} style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid #dcd6cd', boxSizing: 'border-box' }} />
+                  <textarea rows="3" placeholder="Nhập ghi chú chi tiết..." value={formData.note} onChange={(e) => setFormData({ ...formData, note: e.target.value })} style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid #dcd6cd', boxSizing: 'border-box', fontSize: '13px' }} />
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '8px', borderTop: '1px solid #eae6df', paddingTop: '16px' }}>
-                  <button type="button" onClick={() => setIsOpenModal(false)} style={{ padding: '10px 18px', borderRadius: '8px', border: '1px solid #dcd6cd', background: '#fff', cursor: 'pointer' }}>Hủy</button>
-                  <button type="submit" disabled={submitting} style={{ padding: '10px 22px', borderRadius: '8px', background: '#1c1c1c', color: '#fff', border: 'none', cursor: 'pointer', fontWeight: 600 }}>{submitting ? 'Đang lưu...' : 'Xác Nhận Tạo'}</button>
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '8px', borderTop: '1px solid #eae6df', paddingTop: '14px' }}>
+                  <button type="button" onClick={() => setIsOpenModal(false)} style={{ padding: '9px 16px', borderRadius: '8px', border: '1px solid #dcd6cd', background: '#fff', cursor: 'pointer', fontSize: '13px' }}>Hủy</button>
+                  <button type="submit" disabled={submitting} style={{ padding: '9px 20px', borderRadius: '8px', background: modalType === 'import' ? '#16a34a' : '#dc2626', color: '#fff', border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: '13px' }}>{submitting ? 'Đang lưu...' : 'Xác Nhận Thực Hiện'}</button>
                 </div>
               </form>
             )}
