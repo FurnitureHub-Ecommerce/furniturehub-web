@@ -23,10 +23,10 @@ export function FeaturedCategories({
     setError(null);
 
     try {
-      // 1. Gọi đồng thời API Danh mục và API Sản phẩm từ Backend
+      // Gọi đồng thời API Danh mục và API Sản phẩm với limit: 100 (tối đa theo quy định backend <=100)
       const [catRes, prodRes] = await Promise.all([
         categoryAPI.getCategories(),
-        productAPI.getProducts(),
+        productAPI.getProducts ? productAPI.getProducts({ limit: 100 }) : productAPI.getProducts(),
       ]);
 
       const catList = Array.isArray(catRes)
@@ -35,17 +35,19 @@ export function FeaturedCategories({
 
       const prodList = Array.isArray(prodRes)
         ? prodRes
-        : (prodRes?.data?.products || prodRes?.data || []);
+        : (prodRes?.data?.products || prodRes?.data || prodRes?.rows || []);
 
-      // 2. Map ảnh từ mảng images của sản phẩm vào Category ID tương ứng
+      // Xây dựng kho lưu trữ ảnh từ danh sách sản phẩm trả về
       const imageMap = {};
-      prodList.forEach((product) => {
+      
+      (Array.isArray(prodList) ? prodList : []).forEach((product) => {
         const rawCatId = product.categoryId?._id || product.categoryId?.id || product.categoryId;
         const catIdStr = rawCatId ? String(rawCatId) : null;
 
-        if (catIdStr && !imageMap[catIdStr] && Array.isArray(product.images) && product.images.length > 0) {
+        if (catIdStr && Array.isArray(product.images) && product.images.length > 0) {
           const firstImg = product.images.find((img) => typeof img === 'string' && img.trim() !== '');
-          if (firstImg) {
+          // Ưu tiên lưu ảnh đầu tiên tìm được cho danh mục này
+          if (firstImg && !imageMap[catIdStr]) {
             imageMap[catIdStr] = firstImg;
           }
         }
@@ -60,7 +62,6 @@ export function FeaturedCategories({
       setIsLoading(false);
     }
   };
-
   useEffect(() => {
     if (initialCategories !== null) {
       const list = Array.isArray(initialCategories)

@@ -13,7 +13,6 @@ import {
 } from "lucide-react";
 import { useShop } from "../../context/ShopContext";
 import { categoryAPI, productAPI } from "../../services/api";
-import { EditorialSpotlight } from "../../components/home/EditorialSpotlight/EditorialSpotlight";
 import "./Wishlist.css";
 
 // ==========================================
@@ -59,16 +58,16 @@ export function CategoryPage() {
   useEffect(() => {
     let isMounted = true;
     
-    // Cuộn mượt lên đầu trang ngay lập tức
     window.scrollTo({ top: 0, behavior: 'smooth' });
     setIsLoading(true);
     setApiError(null);
 
     async function fetchCategoryDataFast() {
       try {
+        // Tăng limit lên 500 để lấy trọn vẹn toàn bộ sản phẩm từ cũ đến mới
         const [categoriesRes, productsRes] = await Promise.all([
           categoryAPI.getCategories(),
-          productAPI.getProducts()
+          productAPI.getProducts({ limit: 100 })
         ]);
 
         if (!isMounted) return;
@@ -76,10 +75,21 @@ export function CategoryPage() {
         const categoriesList = categoriesRes?.data?.categories || categoriesRes?.data || [];
         const productsList = productsRes?.data?.products || productsRes?.data || [];
 
+        // Tìm chính xác danh mục đang được chọn trên URL
         const matchedCategory = categoriesList.find((cat) => {
-          const catId = String(cat._id || cat.id || "");
-          const catSlug = cat.slug || "";
-          return catId === String(id) || catSlug === id || cat.name?.toLowerCase() === id?.toLowerCase();
+          const catId = String(cat._id || cat.id || "").trim();
+          const catSlug = (cat.slug || "").toLowerCase().trim();
+          const catName = (cat.name || "").toLowerCase().trim();
+          const targetId = String(id || "").toLowerCase().trim();
+
+          return (
+            catId === String(id).trim() ||
+            catSlug === targetId ||
+            catName === targetId ||
+            Object.keys(CATEGORY_TRANSLATIONS).some(
+              (key) => key.toLowerCase() === catName && CATEGORY_TRANSLATIONS[key].toLowerCase() === targetId
+            )
+          );
         });
 
         if (matchedCategory) {
@@ -97,18 +107,39 @@ export function CategoryPage() {
           });
         }
 
-        const matchedCatId = String(matchedCategory?._id || matchedCategory?.id || id || "");
-        
-        // Lọc sản phẩm thuộc đúng danh mục một cách nhanh chóng
+        const matchedCatId = String(matchedCategory?._id || matchedCategory?.id || "").trim();
+        const targetSlug = String(id || "").toLowerCase().trim();
+        const matchedCatName = String(matchedCategory?.name || "").toLowerCase().trim();
+
+        // Lọc chuẩn xác tuyệt đối: Chỉ lấy sản phẩm thuộc đúng ID danh mục hoặc đúng tên/slug danh mục đó
         const filteredProducts = productsList.filter((product) => {
           if (!id) return true;
-          const productCatId = typeof product.categoryId === 'object' 
-            ? String(product.categoryId?._id || product.categoryId?.id || "") 
-            : String(product.categoryId || "");
-          const productCategorySlug = product.categorySlug || "";
+          
+          const rawProdCat = product.categoryId;
+          
+          // Lấy ID danh mục của sản phẩm
+          const productCatId = typeof rawProdCat === 'object' && rawProdCat !== null
+            ? String(rawProdCat._id || rawProdCat.id || "").trim() 
+            : String(rawProdCat || "").trim();
+            
+          // Lấy tên danh mục của sản phẩm
+          const productCategoryName = typeof rawProdCat === 'object' && rawProdCat !== null
+            ? String(rawProdCat.name || "").toLowerCase().trim()
+            : String(product.categoryName || "").toLowerCase().trim();
 
-          return productCatId === matchedCatId || productCatId === String(id) || productCategorySlug === id;
+          // Lấy slug danh mục của sản phẩm
+          const productCategorySlug = String(product.categorySlug || "").toLowerCase().trim();
+
+          // So sánh khít sao cho không bị lẫn lộn giữa các danh mục khác nhau
+          const isIdMatch = (matchedCatId && productCatId === matchedCatId) || productCatId === targetSlug;
+          const isSlugMatch = productCategorySlug === targetSlug;
+          const isNameMatch = productCategoryName === targetSlug || (matchedCatName && productCategoryName === matchedCatName);
+
+          return isIdMatch || isSlugMatch || isNameMatch;
         });
+
+        // Sắp xếp sản phẩm từ cũ đến mới (hoặc từ mới đến cũ tùy ý, ở đây xếp từ cũ đến mới theo createdAt)
+        filteredProducts.sort((a, b) => new Date(a.createdAt || 0) - new Date(b.createdAt || 0));
 
         setProducts(filteredProducts);
       } catch (err) {
