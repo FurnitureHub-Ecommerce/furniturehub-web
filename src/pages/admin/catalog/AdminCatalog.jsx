@@ -1,4 +1,4 @@
-﻿import { useEffect, useRef, useState } from "react";
+﻿import { useEffect, useRef, useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import {
   Search,
@@ -15,7 +15,8 @@ import {
 } from "lucide-react";
 import {
   deactivateProduct,
-  getCatalog,
+  loadAllCatalogData,
+  filterProducts,
   reactivateProduct,
 } from "../../../services/admin/catalog.service.js";
 import ProductDialog from "./ProductDialog.jsx";
@@ -164,7 +165,19 @@ export default function AdminCatalog() {
     material: "",
     status: "",
   });
-  const [state, setState] = useState({ data: null, loading: true, error: "" });
+  
+  // State phụ cho ô tìm kiếm giúp gõ phím mượt mà không bị delay
+  const [searchTerm, setSearchTerm] = useState(query.search);
+
+  // Lưu trữ toàn bộ dữ liệu thô cache trên client
+  const [rawCatalog, setRawCatalog] = useState({
+    products: [],
+    categories: [],
+    brands: [],
+    materials: [],
+  });
+
+  const [state, setState] = useState({ loading: true, error: "" });
   const [revision, setRevision] = useState(0);
   const [editor, setEditor] = useState(null);
   const [selectedProduct, setSelectedProduct] = useState(null);
@@ -186,16 +199,33 @@ export default function AdminCatalog() {
     return () => document.removeEventListener("click", handleClickOutside);
   }, []);
 
+  // Áp dụng Debounce 300ms cho ô tìm kiếm
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setQuery((current) => {
+        if (current.search === searchTerm) return current;
+        return { ...current, search: searchTerm };
+      });
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
+  // Chỉ gọi API tải toàn bộ dữ liệu một lần duy nhất khi vào trang hoặc reload()
   useEffect(() => {
     let cancelled = false;
-    getCatalog(query)
-      .then((data) => {
-        if (!cancelled) setState({ data, loading: false, error: "" });
+    setState((current) => ({ ...current, loading: true, error: "" }));
+    
+    loadAllCatalogData()
+      .then((res) => {
+        if (!cancelled) {
+          setRawCatalog(res);
+          setState({ loading: false, error: "" });
+        }
       })
       .catch((error) => {
         if (!cancelled)
           setState({
-            data: null,
             loading: false,
             error: error.message || "Không thể tải Catalog.",
           });
@@ -203,14 +233,23 @@ export default function AdminCatalog() {
     return () => {
       cancelled = true;
     };
-  }, [query, revision]);
+  }, [revision]);
+
+  // Sử dụng useMemo để lọc dữ liệu ngay lập tức trên RAM mà không gọi lại mạng
+  const data = useMemo(() => {
+    return filterProducts(
+      rawCatalog.products,
+      rawCatalog.categories,
+      rawCatalog.brands,
+      rawCatalog.materials,
+      query
+    );
+  }, [rawCatalog, query]);
 
   function update(values) {
-    setState((current) => ({ ...current, loading: true, error: "" }));
     setQuery((current) => ({ ...current, ...values }));
   }
   function reload() {
-    setState((current) => ({ ...current, loading: true, error: "" }));
     setRevision((value) => value + 1);
   }
   function saved(message) {
@@ -248,7 +287,6 @@ export default function AdminCatalog() {
     }
   }
 
-  const data = state.data;
   const selects = [
     ["categoryId", "Danh mục", data?.categories],
     ["brandId", "Thương hiệu", data?.brands],
@@ -274,8 +312,8 @@ export default function AdminCatalog() {
               disabled={
                 state.loading ||
                 Boolean(state.error) ||
-                !state.data?.categories.length ||
-                !state.data?.brands.length
+                !data?.categories.length ||
+                !data?.brands.length
               }
             >
               <Plus size={15} aria-hidden="true" />
@@ -312,8 +350,8 @@ export default function AdminCatalog() {
             type="search"
             aria-label="Tìm sản phẩm"
             placeholder="Tên sản phẩm, mô tả hoặc SKU…"
-            value={query.search}
-            onChange={(e) => update({ search: e.target.value })}
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
           />
         </label>
         {selects.map(([field, label, options]) => (
@@ -370,7 +408,7 @@ export default function AdminCatalog() {
             <small>{data?.rows.length ?? 0} mục đang hiển thị</small>
           )}
         </div>
-        {state.loading && !state.data ? (
+        {state.loading && !rawCatalog.products.length ? (
           <div className="lc-state" role="status">
             <RefreshCw size={22} className="lc-spin" aria-hidden="true" />
             <strong>Đang tải sản phẩm…</strong>

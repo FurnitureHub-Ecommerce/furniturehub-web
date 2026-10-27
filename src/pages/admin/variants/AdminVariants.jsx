@@ -1,4 +1,4 @@
-﻿import { useEffect, useRef, useState } from "react";
+﻿import { useEffect, useRef, useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import {
   Barcode,
@@ -15,7 +15,8 @@ import {
 } from "lucide-react";
 import {
   deactivateVariant,
-  getVariants,
+  loadAllVariantsData,
+  filterVariants,
 } from "../../../services/admin/variants.service.js";
 import VariantDialog from "./VariantDialog.jsx";
 import DeactivateDialog from "../DeactivateDialog.jsx";
@@ -144,7 +145,16 @@ function VariantDetailModal({ variant, onClose }) {
 
 export default function AdminVariants() {
   const [query, setQuery] = useState({ search: "", material: "", status: "" });
-  const [state, setState] = useState({ data: null, loading: true, error: "" });
+  const [searchTerm, setSearchTerm] = useState(query.search);
+
+  // Lưu trữ cache dữ liệu thô trên client
+  const [rawVariantsData, setRawVariantsData] = useState({
+    variants: [],
+    products: [],
+    materials: [],
+  });
+
+  const [state, setState] = useState({ loading: true, error: "" });
   const [revision, setRevision] = useState(0);
   const [editor, setEditor] = useState(null);
   const [selectedVariant, setSelectedVariant] = useState(null);
@@ -165,16 +175,32 @@ export default function AdminVariants() {
     return () => document.removeEventListener("click", handleClickOutside);
   }, []);
 
+  // Debounce 300ms cho ô tìm kiếm
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setQuery((current) => {
+        if (current.search === searchTerm) return current;
+        return { ...current, search: searchTerm };
+      });
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
+  // Chỉ gọi API tải toàn bộ dữ liệu 1 lần duy nhất khi vào trang hoặc reload
   useEffect(() => {
     let cancelled = false;
-    getVariants(query)
-      .then((data) => {
-        if (!cancelled) setState({ data, loading: false, error: "" });
+    setState({ loading: true, error: "" });
+
+    loadAllVariantsData()
+      .then((res) => {
+        if (!cancelled) {
+          setRawVariantsData(res);
+          setState({ loading: false, error: "" });
+        }
       })
       .catch((error) => {
         if (!cancelled)
           setState({
-            data: null,
             loading: false,
             error: error.message || "Không thể tải Variant.",
           });
@@ -182,14 +208,22 @@ export default function AdminVariants() {
     return () => {
       cancelled = true;
     };
-  }, [query, revision]);
+  }, [revision]);
+
+  // Lọc dữ liệu tức thì trên RAM bằng useMemo
+  const data = useMemo(() => {
+    return filterVariants(
+      rawVariantsData.variants,
+      rawVariantsData.products,
+      rawVariantsData.materials,
+      query
+    );
+  }, [rawVariantsData, query]);
 
   function update(values) {
-    setState((current) => ({ ...current, loading: true, error: "" }));
     setQuery((current) => ({ ...current, ...values }));
   }
   function reload() {
-    setState((current) => ({ ...current, loading: true, error: "" }));
     setRevision((value) => value + 1);
   }
   function saved(message) {
@@ -215,7 +249,6 @@ export default function AdminVariants() {
     }
   }
 
-  const data = state.data;
   return (
     <div className="lv-page">
       <div className="lv-hero">
@@ -267,8 +300,8 @@ export default function AdminVariants() {
             type="search"
             aria-label="Tìm kiếm SKU"
             placeholder="SKU, tên sản phẩm hoặc chất liệu…"
-            value={query.search}
-            onChange={(e) => update({ search: e.target.value })}
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
           />
         </label>
         <label>
@@ -307,7 +340,7 @@ export default function AdminVariants() {
             <small>{data?.rows.length ?? 0} biến thể đang hiển thị</small>
           )}
         </div>
-        {state.loading && !state.data ? (
+        {state.loading && !rawVariantsData.variants.length ? (
           <div className="lv-state" role="status">
             <RefreshCw size={22} className="lv-spin" aria-hidden="true" />
             <strong>Đang tải biến thể…</strong>
