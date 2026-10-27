@@ -14,80 +14,152 @@ const StorageDashboard = () => {
       setLoading(true);
       setError(null);
 
+      // Gọi song song API tồn kho và sản phẩm admin (giống hệt logic của ImportExportStock)
       const [invRes, productsRes] = await Promise.all([
         storageAPI.getInventory().catch(() => ({ data: { inventories: [] } })),
         productAPI.getProductsAdmin ? productAPI.getProductsAdmin().catch(() => ({ data: { products: [] } })) : Promise.resolve({ data: { products: [] } })
       ]);
 
       const invBody = invRes?.data || {};
-      const inventories = invBody.inventories || invBody.data?.inventories || invBody.items || invBody || [];
+      const inventories = Array.isArray(invBody) 
+        ? invBody 
+        : (invBody.inventories || invBody.data?.inventories || invBody.items || invBody.data || []);
+      
       const stockMap = new Map();
 
-      (Array.isArray(inventories) ? inventories : []).forEach(item => {
-        const variantObj = item.variantId || item.variant || {};
-        const vId = variantObj._id || variantObj.id || item._id;
-        const sku = variantObj.sku || item.sku;
-        const qty = item.quantity ?? item.stock ?? item.availableStock ?? 0;
-        if (vId) stockMap.set(String(vId), qty);
-        if (sku) stockMap.set(String(sku), qty);
+      // Mapping tồn kho vét cạn toàn bộ các trường hợp ID và SKU từ mảng inventory chung (Chuẩn ImportExportStock)
+      (Array.isArray(inventories) ? inventories : []).forEach((item) => {
+        const invObj = item.inventory || item;
+        const variantField = invObj.variantId || item.variantId;
+        
+        const vIdObj = typeof variantField === "object" && variantField !== null ? variantField : {};
+        const vId1 = vIdObj._id;
+        const vId2 = typeof variantField === "string" ? variantField : null;
+        const sku = vIdObj.sku || invObj.sku || item.sku;
+        
+        const qty = invObj.quantity ?? invObj.stock ?? invObj.availableStock ?? item.quantity ?? item.stock ?? 0;
+
+        if (vId1) stockMap.set(String(vId1).trim(), Number(qty));
+        if (vId2) stockMap.set(String(vId2).trim(), Number(qty));
+        if (sku) stockMap.set(String(sku).trim(), Number(qty));
       });
 
       const prodBody = productsRes?.data || {};
-      const products = prodBody.products || prodBody.data || prodBody.rows || (Array.isArray(prodBody) ? prodBody : []);
+      const products =
+        prodBody.products ||
+        prodBody.data ||
+        prodBody.rows ||
+        (Array.isArray(prodBody) ? prodBody : []);
 
-      const variantPromises = (Array.isArray(products) ? products : []).map(async (product) => {
-        const prodId = product._id || product.id;
-        const productName = product.name || 'Sản phẩm nội thất';
-        const productImage = product.image || product.thumbnail || product.images?.[0] || 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=300&q=80';
+      const variantPromises = (Array.isArray(products) ? products : []).map(
+        async (product) => {
+          const prodId = product._id || product.id;
+          const productName = product.name || "Sản phẩm nội thất";
+          const productImage =
+            product.image ||
+            product.thumbnail ||
+            product.images?.[0] ||
+            "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=300&q=80";
 
-        try {
-          const res = productAPI.getProductVariantsAdmin 
-            ? await productAPI.getProductVariantsAdmin(prodId).catch(() => null)
-            : productAPI.getClient ? await productAPI.getClient.get(`/products/${prodId}/variants/admin`).catch(() => null) : null;
+          try {
+            const res = productAPI.getProductVariantsAdmin
+              ? await productAPI
+                  .getProductVariantsAdmin(prodId)
+                  .catch(() => null)
+              : productAPI.getClient
+                ? await productAPI.getClient
+                    .get(`/products/${prodId}/variants/admin`)
+                    .catch(() => null)
+                : null;
 
-          const variantBody = res?.data || {};
-          const variants = variantBody.variants || variantBody.data || variantBody.rows || product.variants || [];
+            const variantBody = res?.data || {};
+            const variants =
+              variantBody.variants ||
+              variantBody.data ||
+              variantBody.rows ||
+              product.variants ||
+              [];
 
-          if (Array.isArray(variants) && variants.length > 0) {
-            return variants.map(variant => {
-              const variantId = variant._id || variant.id;
-              const sku = variant.sku || variant.code || 'SKU';
-              const currentStock = stockMap.get(String(variantId)) ?? stockMap.get(String(sku)) ?? 0;
-              const varImage = variant.image || productImage;
+            if (Array.isArray(variants) && variants.length > 0) {
+              return Promise.all(
+                variants.map(async (variant) => {
+                  const variantId = variant._id || variant.id || variant.variantId;
+                  const sku = variant.sku || variant.code || "SKU";
+                  
+                  let currentStock =
+                    stockMap.get(String(variantId).trim()) ??
+                    stockMap.get(String(sku).trim()) ??
+                    0;
 
-              return {
-                id: sku,
-                variantId: variantId,
-                name: productName,
-                image: varImage,
-                specs: [
-                  variant.color ? `Màu: ${variant.color}` : '',
-                  variant.size ? `Size: ${variant.size}` : '',
-                  variant.material ? `Chất liệu: ${variant.material}` : ''
-                ].filter(Boolean).join(' — ') || 'Tiêu chuẩn',
-                stock: currentStock,
-                color: variant.color || '—',
-                size: variant.size || '—',
-                material: variant.material || '—'
-              };
-            });
+                  // Nếu chưa có trong mảng chung, gọi trực tiếp API GET /api/inventory/{variantId}
+                  if (currentStock === 0 && variantId) {
+                    try {
+                      const singleInvRes = await storageAPI.getInventoryByVariantId(variantId).catch(() => null);
+                      const singleBody = singleInvRes?.data || {};
+                      const singleInv = singleBody.inventory || singleBody.data || singleBody;
+                      
+                      const fetchedQty = singleInv.quantity ?? singleInv.stock ?? singleInv.availableStock;
+                      if (fetchedQty !== undefined && fetchedQty !== null) {
+                        currentStock = Number(fetchedQty);
+                      }
+                    } catch (e) {}
+                  }
+
+                  const varImage = variant.image || productImage;
+
+                  return {
+                    id: String(sku).trim(),
+                    variantId: String(variantId).trim(),
+                    name: productName,
+                    image: varImage,
+                    specs: [
+                      variant.color ? `Màu: ${variant.color}` : '',
+                      variant.size ? `Size: ${variant.size}` : '',
+                      variant.material ? `Chất liệu: ${variant.material}` : ''
+                    ].filter(Boolean).join(' — ') || 'Tiêu chuẩn',
+                    stock: Number(currentStock),
+                    color: variant.color || variant.attributes?.color || "—",
+                    size: variant.size || variant.attributes?.size || "—",
+                    material: variant.material || variant.attributes?.material || "—",
+                  };
+                })
+              );
+            }
+          } catch (e) {
+            console.error("Lỗi lấy variants cho sản phẩm:", prodId);
           }
-        } catch (e) {
-          console.error("Lỗi lấy variants:", prodId);
-        }
 
-        return [{
-          id: product.sku || 'SKU',
-          variantId: prodId,
-          name: productName,
-          image: productImage,
-          specs: 'Tiêu chuẩn',
-          stock: stockMap.get(String(prodId)) ?? 0,
-          color: product.color || '—',
-          size: product.size || '—',
-          material: product.material || '—'
-        }];
-      });
+          const fallbackId = String(prodId).trim();
+          const fallbackSku = String(product.sku || "SKU").trim();
+          let fallbackStock = stockMap.get(fallbackId) ?? stockMap.get(fallbackSku) ?? 0;
+
+          if (fallbackStock === 0) {
+            try {
+              const singleInvRes = await storageAPI.getInventoryByVariantId(fallbackId).catch(() => null);
+              const singleBody = singleInvRes?.data || {};
+              const singleInv = singleBody.inventory || singleBody.data || singleBody;
+              const fetchedQty = singleInv.quantity ?? singleInv.stock ?? singleInv.availableStock;
+              if (fetchedQty !== undefined && fetchedQty !== null) {
+                fallbackStock = Number(fetchedQty);
+              }
+            } catch (e) {}
+          }
+
+          return [
+            {
+              id: fallbackSku,
+              variantId: fallbackId,
+              name: productName,
+              image: productImage,
+              specs: 'Tiêu chuẩn',
+              stock: Number(fallbackStock),
+              color: product.color || "—",
+              size: product.size || "—",
+              material: product.material || "—",
+            },
+          ];
+        },
+      );
 
       const nestedVariants = await Promise.all(variantPromises);
       const allVariants = nestedVariants.flat().filter(Boolean);
@@ -206,11 +278,11 @@ const StorageDashboard = () => {
 
         <table className="storage-table">
           <thead>
-            <tr >
+            <tr>
               <th style={{ width: '100px' }}>HÌNH ẢNH</th>
               <th>MÃ SKU & SẢN PHẨM</th>
               <th>QUY CÁCH & BIẾN THỂ</th>
-              <th>SỐ LƯỢNG </th>
+              <th>SỐ LƯỢNG</th>
               <th>TRẠNG THÁI</th>
             </tr>
           </thead>

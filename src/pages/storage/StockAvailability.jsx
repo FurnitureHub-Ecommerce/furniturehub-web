@@ -19,16 +19,27 @@ const StockAvailability = () => {
         ]);
 
         const invBody = invRes?.data || {};
-        const inventories = invBody.inventories || invBody.data?.inventories || invBody.items || invBody || [];
+        const inventories = Array.isArray(invBody) 
+          ? invBody 
+          : (invBody.inventories || invBody.data?.inventories || invBody.items || invBody.data || []);
+        
         const stockMap = new Map();
 
-        (Array.isArray(inventories) ? inventories : []).forEach(item => {
-          const variantObj = item.variantId || item.variant || {};
-          const vId = variantObj._id || variantObj.id || item._id;
-          const sku = variantObj.sku || item.sku;
-          const qty = item.quantity ?? item.stock ?? item.availableStock ?? 0;
-          if (vId) stockMap.set(String(vId), qty);
-          if (sku) stockMap.set(String(sku), qty);
+        // Mapping tồn kho vét cạn toàn bộ các trường hợp ID và SKU từ mảng inventory chung (Chuẩn ImportExportStock)
+        (Array.isArray(inventories) ? inventories : []).forEach((item) => {
+          const invObj = item.inventory || item;
+          const variantField = invObj.variantId || item.variantId;
+          
+          const vIdObj = typeof variantField === "object" && variantField !== null ? variantField : {};
+          const vId1 = vIdObj._id;
+          const vId2 = typeof variantField === "string" ? variantField : null;
+          const sku = vIdObj.sku || invObj.sku || item.sku;
+          
+          const qty = invObj.quantity ?? invObj.stock ?? invObj.availableStock ?? item.quantity ?? item.stock ?? 0;
+
+          if (vId1) stockMap.set(String(vId1).trim(), Number(qty));
+          if (vId2) stockMap.set(String(vId2).trim(), Number(qty));
+          if (sku) stockMap.set(String(sku).trim(), Number(qty));
         });
 
         const prodBody = productsRes?.data || {};
@@ -48,30 +59,65 @@ const StockAvailability = () => {
             const variants = variantBody.variants || variantBody.data || variantBody.rows || product.variants || [];
 
             if (Array.isArray(variants) && variants.length > 0) {
-              return variants.map(variant => {
-                const variantId = variant._id || variant.id;
-                const sku = variant.sku || variant.code || 'SKU';
-                const currentStock = stockMap.get(String(variantId)) ?? stockMap.get(String(sku)) ?? 0;
+              return Promise.all(
+                variants.map(async (variant) => {
+                  const variantId = variant._id || variant.id || variant.variantId;
+                  const sku = variant.sku || variant.code || 'SKU';
+                  
+                  let currentStock =
+                    stockMap.get(String(variantId).trim()) ??
+                    stockMap.get(String(sku).trim()) ??
+                    0;
 
-                return {
-                  id: sku,
-                  name: productName,
-                  image: variant.image || productImage,
-                  specs: [variant.color, variant.size, variant.material].filter(Boolean).join(' — ') || 'Tiêu chuẩn',
-                  stock: currentStock
-                };
-              });
+                  // Gọi vét cạn API chi tiết nếu chưa có trong mảng chung
+                  if (currentStock === 0 && variantId) {
+                    try {
+                      const singleInvRes = await storageAPI.getInventoryByVariantId(variantId).catch(() => null);
+                      const singleBody = singleInvRes?.data || {};
+                      const singleInv = singleBody.inventory || singleBody.data || singleBody;
+                      const fetchedQty = singleInv.quantity ?? singleInv.stock ?? singleInv.availableStock;
+                      if (fetchedQty !== undefined && fetchedQty !== null) {
+                        currentStock = Number(fetchedQty);
+                      }
+                    } catch (e) {}
+                  }
+
+                  return {
+                    id: String(sku).trim(),
+                    name: productName,
+                    image: variant.image || productImage,
+                    specs: [variant.color, variant.size, variant.material].filter(Boolean).join(' — ') || 'Tiêu chuẩn',
+                    stock: Number(currentStock)
+                  };
+                })
+              );
             }
           } catch (e) {
             console.error("Lỗi:", e);
           }
 
+          const fallbackId = String(prodId).trim();
+          const fallbackSku = String(product.sku || 'SKU').trim();
+          let fallbackStock = stockMap.get(fallbackId) ?? stockMap.get(fallbackSku) ?? 0;
+
+          if (fallbackStock === 0) {
+            try {
+              const singleInvRes = await storageAPI.getInventoryByVariantId(fallbackId).catch(() => null);
+              const singleBody = singleInvRes?.data || {};
+              const singleInv = singleBody.inventory || singleBody.data || singleBody;
+              const fetchedQty = singleInv.quantity ?? singleInv.stock ?? singleInv.availableStock;
+              if (fetchedQty !== undefined && fetchedQty !== null) {
+                fallbackStock = Number(fetchedQty);
+              }
+            } catch (e) {}
+          }
+
           return [{
-            id: product.sku || 'SKU',
+            id: fallbackSku,
             name: productName,
             image: productImage,
             specs: 'Tiêu chuẩn',
-            stock: stockMap.get(String(prodId)) ?? 0
+            stock: Number(fallbackStock)
           }];
         });
 
@@ -122,7 +168,7 @@ const StockAvailability = () => {
         </div>
 
         {loading ? (
-          <div style={{ padding: '50px', textAlign: 'center', color: '#888' }}>Đang tải dữ liệu từ API Backend...</div>
+          <div style={{ padding: '50px', textAlign: 'center', color: '#888' }}>Đang tải dữ liệu từ hệ thống...</div>
         ) : (
           <div>
             <table className="storage-table" style={{ width: '100%', borderCollapse: 'collapse', background: '#fff', borderRadius: '12px', overflow: 'hidden', border: '1px solid #eae6df' }}>

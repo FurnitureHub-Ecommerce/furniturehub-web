@@ -38,13 +38,12 @@ export function Header() {
   const [categories, setCategories] = useState([]);
   const [megaMenuOpen, setMegaMenuOpen] = useState(false);
 
-  // Trạng thái tài khoản khách hàng
-  // Đổi từ localStorage thành sessionStorage
+  // Trạng thái tài khoản khách hàng (Hỗ trợ kiểm tra cả localStorage và sessionStorage)
   const [currentUser, setCurrentUser] = useState(() => {
     try {
-      const token = sessionStorage.getItem("token");
-      const user = sessionStorage.getItem("user");
-      return token && user ? JSON.parse(user) : null;
+      const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+      const userStr = localStorage.getItem("user") || sessionStorage.getItem("user");
+      return token && userStr ? JSON.parse(userStr) : null;
     } catch {
       return null;
     }

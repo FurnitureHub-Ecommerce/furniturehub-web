@@ -22,7 +22,28 @@ const SkuManagement = () => {
         ]);
 
         const invBody = invRes?.data || {};
-        const inventories = invBody.inventories || invBody.data?.inventories || invBody.items || invBody || [];
+        const inventories = Array.isArray(invBody) 
+          ? invBody 
+          : (invBody.inventories || invBody.data?.inventories || invBody.items || invBody.data || []);
+        
+        const stockMap = new Map();
+
+        // Mapping tồn kho vét cạn toàn bộ các trường hợp ID và SKU từ mảng inventory chung (Chuẩn ImportExportStock)
+        (Array.isArray(inventories) ? inventories : []).forEach((item) => {
+          const invObj = item.inventory || item;
+          const variantField = invObj.variantId || item.variantId;
+          
+          const vIdObj = typeof variantField === "object" && variantField !== null ? variantField : {};
+          const vId1 = vIdObj._id;
+          const vId2 = typeof variantField === "string" ? variantField : null;
+          const sku = vIdObj.sku || invObj.sku || item.sku;
+          
+          const qty = invObj.quantity ?? invObj.stock ?? invObj.availableStock ?? item.quantity ?? item.stock ?? 0;
+
+          if (vId1) stockMap.set(String(vId1).trim(), Number(qty));
+          if (vId2) stockMap.set(String(vId2).trim(), Number(qty));
+          if (sku) stockMap.set(String(sku).trim(), Number(qty));
+        });
 
         const prodBody = productsRes?.data || {};
         const products = prodBody.products || prodBody.data || prodBody.rows || (Array.isArray(prodBody) ? prodBody : []);
@@ -47,30 +68,69 @@ const SkuManagement = () => {
           }
 
           if (Array.isArray(variants) && variants.length > 0) {
-            return variants.map(v => {
-              const vId = v._id || v.id;
-              const sku = v.sku || v.code || product.sku || 'SKU';
-              return {
-                id: sku,
-                vId: vId,
-                name: productName,
-                image: v.image || defaultImg,
-                color: v.color || v.attributes?.color || '—',
-                size: v.size || v.attributes?.size || '—',
-                material: v.material || v.attributes?.material || '—',
-                rawVariant: v
-              };
-            });
+            return Promise.all(
+              variants.map(async (v) => {
+                const vId = v._id || v.id || v.variantId;
+                const sku = v.sku || v.code || product.sku || 'SKU';
+                
+                let currentStock =
+                  stockMap.get(String(vId).trim()) ??
+                  stockMap.get(String(sku).trim()) ??
+                  0;
+
+                // Gọi vét cạn API chi tiết nếu chưa có trong mảng chung
+                if (currentStock === 0 && vId) {
+                  try {
+                    const singleInvRes = await storageAPI.getInventoryByVariantId(vId).catch(() => null);
+                    const singleBody = singleInvRes?.data || {};
+                    const singleInv = singleBody.inventory || singleBody.data || singleBody;
+                    const fetchedQty = singleInv.quantity ?? singleInv.stock ?? singleInv.availableStock;
+                    if (fetchedQty !== undefined && fetchedQty !== null) {
+                      currentStock = Number(fetchedQty);
+                    }
+                  } catch (e) {}
+                }
+
+                return {
+                  id: String(sku).trim(),
+                  vId: String(vId).trim(),
+                  name: productName,
+                  image: v.image || defaultImg,
+                  color: v.color || v.attributes?.color || '—',
+                  size: v.size || v.attributes?.size || '—',
+                  material: v.material || v.attributes?.material || '—',
+                  stock: Number(currentStock),
+                  rawVariant: v
+                };
+              })
+            );
+          }
+
+          const fallbackId = String(prodId).trim();
+          const fallbackSku = String(product.sku || 'SKU').trim();
+          let fallbackStock = stockMap.get(fallbackId) ?? stockMap.get(fallbackSku) ?? 0;
+
+          if (fallbackStock === 0) {
+            try {
+              const singleInvRes = await storageAPI.getInventoryByVariantId(fallbackId).catch(() => null);
+              const singleBody = singleInvRes?.data || {};
+              const singleInv = singleBody.inventory || singleBody.data || singleBody;
+              const fetchedQty = singleInv.quantity ?? singleInv.stock ?? singleInv.availableStock;
+              if (fetchedQty !== undefined && fetchedQty !== null) {
+                fallbackStock = Number(fetchedQty);
+              }
+            } catch (e) {}
           }
 
           return [{
-            id: product.sku || 'SKU',
-            vId: prodId,
+            id: fallbackSku,
+            vId: fallbackId,
             name: productName,
             image: defaultImg,
             color: product.color || '—',
             size: product.size || '—',
             material: product.material || '—',
+            stock: Number(fallbackStock),
             rawVariant: product
           }];
         });
@@ -78,29 +138,14 @@ const SkuManagement = () => {
         const nestedSkuList = await Promise.all(detailedSkuPromises);
         const allSkuMeta = nestedSkuList.flat();
 
-        // Map dữ liệu tồn kho từ API Inventory vào danh sách SKU chi tiết
-        const stockMap = new Map();
-        (Array.isArray(inventories) ? inventories : []).forEach(item => {
-          const variantObj = item.variantId || item.variant || {};
-          const vId = variantObj._id || variantObj.id || item._id;
-          const sku = variantObj.sku || item.sku;
-          const qty = item.quantity ?? item.stock ?? item.availableStock ?? 0;
-          if (vId) stockMap.set(String(vId), qty);
-          if (sku) stockMap.set(String(sku).trim(), qty);
-        });
-
-        const formatted = allSkuMeta.map(meta => {
-          const currentStock = stockMap.get(String(meta.vId)) ?? stockMap.get(String(meta.id).trim()) ?? 0;
-          return {
-            ...meta,
-            stock: currentStock,
-            specs: [
-              meta.color !== '—' ? `Màu: ${meta.color}` : '',
-              meta.size !== '—' ? `Size: ${meta.size}` : '',
-              meta.material !== '—' ? `Chất liệu: ${meta.material}` : ''
-            ].filter(Boolean).join(' — ') || 'Tiêu chuẩn'
-          };
-        });
+        const formatted = allSkuMeta.map(meta => ({
+          ...meta,
+          specs: [
+            meta.color !== '—' ? `Màu: ${meta.color}` : '',
+            meta.size !== '—' ? `Size: ${meta.size}` : '',
+            meta.material !== '—' ? `Chất liệu: ${meta.material}` : ''
+          ].filter(Boolean).join(' — ') || 'Tiêu chuẩn'
+        }));
 
         setSkuProducts(formatted);
       } catch (error) {

@@ -20,18 +20,28 @@ const InventoryStatistics = () => {
           storageAPI.getInventoryTransactions ? storageAPI.getInventoryTransactions().catch(() => ({ data: { transactions: [] } })) : Promise.resolve({ data: { transactions: [] } })
         ]);
 
-        // 1. Xử lý tồn kho
+        // 1. Xử lý tồn kho (Chuẩn hóa vét cạn giống ImportExportStock)
         const invBody = invRes?.data || {};
-        const inventories = invBody.inventories || invBody.data?.inventories || invBody.items || invBody || [];
+        const inventories = Array.isArray(invBody) 
+          ? invBody 
+          : (invBody.inventories || invBody.data?.inventories || invBody.items || invBody.data || []);
+        
         const stockMap = new Map();
 
-        (Array.isArray(inventories) ? inventories : []).forEach(item => {
-          const variantObj = item.variantId || item.variant || {};
-          const vId = variantObj._id || variantObj.id || item._id;
-          const sku = variantObj.sku || item.sku;
-          const qty = item.quantity ?? item.stock ?? item.availableStock ?? 0;
-          if (vId) stockMap.set(String(vId), qty);
-          if (sku) stockMap.set(String(sku), qty);
+        (Array.isArray(inventories) ? inventories : []).forEach((item) => {
+          const invObj = item.inventory || item;
+          const variantField = invObj.variantId || item.variantId;
+          
+          const vIdObj = typeof variantField === "object" && variantField !== null ? variantField : {};
+          const vId1 = vIdObj._id;
+          const vId2 = typeof variantField === "string" ? variantField : null;
+          const sku = vIdObj.sku || invObj.sku || item.sku;
+          
+          const qty = invObj.quantity ?? invObj.stock ?? invObj.availableStock ?? item.quantity ?? item.stock ?? 0;
+
+          if (vId1) stockMap.set(String(vId1).trim(), Number(qty));
+          if (vId2) stockMap.set(String(vId2).trim(), Number(qty));
+          if (sku) stockMap.set(String(sku).trim(), Number(qty));
         });
 
         const prodBody = productsRes?.data || {};
@@ -50,26 +60,63 @@ const InventoryStatistics = () => {
             const variants = variantBody.variants || variantBody.data || variantBody.rows || product.variants || [];
 
             if (Array.isArray(variants) && variants.length > 0) {
-              return variants.map(variant => {
-                const variantId = variant._id || variant.id;
-                const sku = variant.sku || variant.code || 'SKU';
-                const currentStock = stockMap.get(String(variantId)) ?? stockMap.get(String(sku)) ?? 0;
+              return Promise.all(
+                variants.map(async (variant) => {
+                  const variantId = variant._id || variant.id || variant.variantId;
+                  const sku = variant.sku || variant.code || 'SKU';
+                  
+                  let currentStock =
+                    stockMap.get(String(variantId).trim()) ??
+                    stockMap.get(String(sku).trim()) ??
+                    0;
 
-                return {
-                  id: sku,
-                  name: productName,
-                  stock: currentStock
-                };
-              });
+                  // Gọi vét cạn API chi tiết nếu chưa có trong mảng chung
+                  if (currentStock === 0 && variantId) {
+                    try {
+                      const singleInvRes = await storageAPI.getInventoryByVariantId(variantId).catch(() => null);
+                      const singleBody = singleInvRes?.data || {};
+                      const singleInv = singleBody.inventory || singleBody.data || singleBody;
+                      const fetchedQty = singleInv.quantity ?? singleInv.stock ?? singleInv.availableStock;
+                      if (fetchedQty !== undefined && fetchedQty !== null) {
+                        currentStock = Number(fetchedQty);
+                      }
+                    } catch (e) {}
+                  }
+
+                  return {
+                    id: String(sku).trim(),
+                    variantId: String(variantId).trim(),
+                    name: productName,
+                    stock: Number(currentStock)
+                  };
+                })
+              );
             }
           } catch (e) {
             console.error("Lỗi lấy variants:", e);
           }
 
+          const fallbackId = String(prodId).trim();
+          const fallbackSku = String(product.sku || 'SKU').trim();
+          let fallbackStock = stockMap.get(fallbackId) ?? stockMap.get(fallbackSku) ?? 0;
+
+          if (fallbackStock === 0) {
+            try {
+              const singleInvRes = await storageAPI.getInventoryByVariantId(fallbackId).catch(() => null);
+              const singleBody = singleInvRes?.data || {};
+              const singleInv = singleBody.inventory || singleBody.data || singleBody;
+              const fetchedQty = singleInv.quantity ?? singleInv.stock ?? singleInv.availableStock;
+              if (fetchedQty !== undefined && fetchedQty !== null) {
+                fallbackStock = Number(fetchedQty);
+              }
+            } catch (e) {}
+          }
+
           return [{
-            id: product.sku || 'SKU',
+            id: fallbackSku,
+            variantId: fallbackId,
             name: productName,
-            stock: stockMap.get(String(prodId)) ?? 0
+            stock: Number(fallbackStock)
           }];
         });
 
@@ -86,8 +133,7 @@ const InventoryStatistics = () => {
 
         (Array.isArray(txData) ? txData : []).forEach(tx => {
           const typeStr = String(tx.type || tx.action || '').toUpperCase();
-          // Chỉ lấy các giao dịch xuất kho (bán hàng / xuất đi)
-          if (typeStr.includes('EXPORT') || typeStr.includes('XUẤT')) {
+          if (typeStr.includes('EXPORT') || typeStr.includes('XUẤT') || typeStr.includes('DEDUCTION')) {
             const qty = Number(tx.quantity || tx.amount || 0);
             totalExpCount += qty;
 
@@ -137,7 +183,7 @@ const InventoryStatistics = () => {
     .slice(0, 5);
 
   const storageMetrics = [
-    { label: 'TỔNG SỐ SKU', value: loading ? 'Đang tải...' : totalSku, sub: 'Đồng bộ từ Database sản phẩm', icon: <Layers size={22} color="#2563eb" /> },
+    { label: 'TỔNG SỐ SKU', value: loading ? 'Đang tải...' : totalSku, sub: 'Đồng bộ từ dữ liệu sản phẩm', icon: <Layers size={22} color="#2563eb" /> },
     { label: 'HÀNG TỒN KHO (TỔNG)', value: loading ? 'Đang tải...' : totalStock.toLocaleString(), sub: 'Tổng số lượng thực tế trong kho', icon: <PackageCheck size={22} color="#16a34a" /> },
     { label: 'TỔNG ĐÃ XUẤT BÁN', value: loading ? 'Đang tải...' : totalExportedQty.toLocaleString(), sub: 'Tổng số lượng xuất kho thực tế', icon: <ArrowUpRight size={22} color="#dc2626" /> },
     { label: 'CẢNH BÁO TỒN THẤP', value: loading ? 'Đang tải...' : `${lowStockItems.length} SKU`, sub: 'Sản phẩm dưới mức tối thiểu', icon: <AlertTriangle size={22} color="#d97706" /> },
