@@ -394,7 +394,7 @@ export default function AdminMonitoring() {
                 <p>Số lượng tồn, ngưỡng an toàn và trạng thái của từng SKU.</p>
               </div>
             </div>
-            <span className="lm-pill">{inventoryPagination ? `${inventoryPagination.totalItems} INVENTORY` : "TỒN KHO"}</span>
+            <span className="lm-pill">{inventoryPagination ? `${inventoryPagination.totalItems} Hàng tồn kho` : "TỒN KHO"}</span>
           </header>
 
           {inventoryState.loading ? (
