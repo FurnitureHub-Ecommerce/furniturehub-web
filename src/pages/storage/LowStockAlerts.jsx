@@ -17,44 +17,61 @@ const LowStockAlerts = () => {
           productAPI.getProductsAdmin ? productAPI.getProductsAdmin().catch(() => ({ data: { products: [] } })) : Promise.resolve({ data: { products: [] } })
         ]);
 
-        const data = lowRes?.data?.inventories || lowRes?.data?.data?.inventories || lowRes?.data || [];
+        const lowBody = lowRes?.data || {};
+        const data = Array.isArray(lowBody) 
+          ? lowBody 
+          : (lowBody.inventories || lowBody.data?.inventories || lowBody.items || lowBody.data || []);
         
-        // Tạo Map ảnh sản phẩm từ danh sách Admin
+        // Tạo Map thông tin sản phẩm và ảnh từ danh sách Admin
         const prodBody = productsRes?.data || {};
         const products = prodBody.products || prodBody.data || prodBody.rows || (Array.isArray(prodBody) ? prodBody : []);
         const imageMap = new Map();
+        const productInfoMap = new Map();
         
         products.forEach(p => {
           const img = p.image || p.thumbnail || p.images?.[0];
-          if (p.sku && img) imageMap.set(p.sku, img);
-          if (p._id && img) imageMap.set(String(p._id), img);
+          const pId = String(p._id || p.id);
+          productInfoMap.set(pId, p);
+
+          if (p.sku && img) imageMap.set(String(p.sku).trim(), img);
+          if (p._id && img) imageMap.set(String(p._id).trim(), img);
+
           if (Array.isArray(p.variants)) {
             p.variants.forEach(v => {
-              if (v.sku && (v.image || img)) imageMap.set(v.sku, v.image || img);
-              if (v._id && (v.image || img)) imageMap.set(String(v._id), v.image || img);
+              const vId = String(v._id || v.id);
+              if (v.sku && (v.image || img)) imageMap.set(String(v.sku).trim(), v.image || img);
+              if (vId && (v.image || img)) imageMap.set(vId.trim(), v.image || img);
             });
           }
         });
 
         const formatted = (Array.isArray(data) ? data : []).map(item => {
-          const variant = item.variantId || item.variant || {};
-          const product = variant.productId || item.product || {};
-          const sku = variant.sku || item.sku || 'SKU';
-          const vId = variant._id || item._id;
-          const img = imageMap.get(sku) || imageMap.get(String(vId)) || product.image || 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=300&q=80';
+          const invObj = item.inventory || item;
+          const variantField = invObj.variantId || item.variantId || invObj.variant || item.variant;
+          
+          const vIdObj = typeof variantField === "object" && variantField !== null ? variantField : {};
+          const vId1 = vIdObj._id || vIdObj.id;
+          const vId2 = typeof variantField === "string" ? variantField : null;
+          const vId = vId1 || vId2 || invObj._id || item._id;
+
+          const sku = vIdObj.sku || invObj.sku || item.sku || 'SKU';
+          const product = vIdObj.productId || invObj.product || item.product || {};
+          
+          const qty = invObj.quantity ?? invObj.stock ?? invObj.availableStock ?? item.quantity ?? item.stock ?? 0;
+          const img = imageMap.get(String(sku).trim()) || imageMap.get(String(vId).trim()) || product.image || 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=300&q=80';
 
           return {
             ...item,
-            id: vId,
-            name: product.name || item.name || 'Sản phẩm nội thất',
-            sku: sku,
+            id: String(vId || sku).trim(),
+            name: product.name || item.name || variantField.name || 'Sản phẩm nội thất',
+            sku: String(sku).trim(),
             image: img,
             specs: [
-              variant.color ? `Màu: ${variant.color}` : '',
-              variant.size ? `Size: ${variant.size}` : '',
-              variant.material ? `Chất liệu: ${variant.material}` : ''
+              vIdObj.color ? `Màu: ${vIdObj.color}` : '',
+              vIdObj.size ? `Size: ${vIdObj.size}` : '',
+              vIdObj.material ? `Chất liệu: ${vIdObj.material}` : ''
             ].filter(Boolean).join(' — ') || 'Tiêu chuẩn',
-            quantity: item.quantity ?? variant.availableStock ?? item.stock ?? 0
+            quantity: Number(qty)
           };
         });
 
@@ -105,7 +122,6 @@ const LowStockAlerts = () => {
             <ShieldAlert size={18} color="#16a34a" />
           </div>
           <div className="metric-val" style={{ fontSize: '1.8rem', fontWeight: 700, color: '#16a34a' }}>Thành Công</div>
-         
         </div>
       </div>
 
@@ -177,7 +193,7 @@ const LowStockAlerts = () => {
                   <td colSpan="5" style={{ textAlign: 'center', padding: '50px', color: '#16a34a', fontWeight: 600 }}>
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
                       <CheckCircle2 size={36} color="#16a34a" />
-                      <span style={{ fontSize: '14px', color: '#16a34a' }}>Tuyệt vời! Không có sản phẩm nào nằm dưới ngưỡng tồn kho an toàn từ Backend.</span>
+                      <span style={{ fontSize: '14px', color: '#16a34a' }}>Tuyệt vời! Không có sản phẩm nào nằm dưới ngưỡng tồn kho an toàn từ hệ thống.</span>
                     </div>
                   </td>
                 </tr>
