@@ -112,7 +112,7 @@ export function Home() {
       )}
 
       {/* 1. Hero Section (Hiển thị ngay khi mở web) */}
-      <HeroBanner isLoading={isLoading} />
+      <HeroBanner />
 
       {/* 2. Featured Categories */}
       <div ref={categoryRef} className="scroll-fade-section">
