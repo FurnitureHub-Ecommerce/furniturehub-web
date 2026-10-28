@@ -17,40 +17,47 @@ export function HeroBanner({ isLoading = false }) {
   const [isPaused, setIsPaused] = useState(false);
   const [imagesLoaded, setImagesLoaded] = useState(false);
 
-  // Preload toàn bộ ảnh banner để triệt tiêu hiện tượng load chậm / chớp hình
+  // Tải ảnh slide đầu tiên siêu tốc (< 0.5s), sau đó preload ngầm các slide còn lại
   useEffect(() => {
-    if (isLoading) return;
     let isMounted = true;
-    const imagePromises = HERO_BANNERS.map((banner) => {
-      return new Promise((resolve, reject) => {
-        const img = new Image();
-        img.src = banner.image;
-        img.onload = resolve;
-        img.onerror = reject;
-      });
-    });
+    const firstImg = new Image();
+    firstImg.src = HERO_BANNERS[0].image;
 
-    Promise.all(imagePromises)
-      .then(() => {
-        if (isMounted) setImagesLoaded(true);
-      })
-      .catch(() => {
-        if (isMounted) setImagesLoaded(true); // Vẫn cho hiện nếu lỗi mạng nhẹ
+    const onFirstImageReady = () => {
+      if (isMounted) setImagesLoaded(true);
+      // Preload các slide tiếp theo ở background sau khi slide 0 sẵn sàng
+      HERO_BANNERS.slice(1).forEach((banner) => {
+        const nextImg = new Image();
+        nextImg.src = banner.image;
       });
+    };
+
+    if (firstImg.complete) {
+      onFirstImageReady();
+    } else {
+      firstImg.onload = onFirstImageReady;
+      firstImg.onerror = onFirstImageReady;
+    }
+
+    // Safety timeout: Tối đa 300ms luôn hiển thị giao diện, không để kẹt skeleton
+    const fallbackTimer = setTimeout(() => {
+      if (isMounted) setImagesLoaded(true);
+    }, 300);
 
     return () => {
       isMounted = false;
+      clearTimeout(fallbackTimer);
     };
-  }, [isLoading]);
+  }, []);
 
   // Bộ đếm thời gian chuyển slide tự động
   useEffect(() => {
-    if (isLoading || isPaused) return;
+    if (isPaused) return;
     const timer = setInterval(() => {
       setActiveIndex((prev) => (prev + 1) % HERO_BANNERS.length);
     }, 2500);
     return () => clearInterval(timer);
-  }, [isLoading, isPaused]);
+  }, [isPaused]);
 
   if (isLoading || !imagesLoaded) {
     return <HeroSkeleton />;

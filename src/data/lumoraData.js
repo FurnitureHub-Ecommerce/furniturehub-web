@@ -22,7 +22,7 @@ export const HERO_BANNERS = [
     ctaSecondary: "Khám phá phòng khách",
     primaryLink: "/products",
     secondaryLink: "/lookbook",
-    image: "https://megafurniture.sg/cdn/shop/articles/imperfect-elegance-incorporating-wabi-sabi-design-in-your-hdb-space-megafurniture_0d6f8ed0-0874-43a8-9865-5b031d43cd7c.jpg?v=1782809225",
+    image: "https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?auto=format&fit=crop&w=1400&q=75",
   },
   {
     id: "nordic-sanctuary",
@@ -35,7 +35,7 @@ export const HERO_BANNERS = [
     ctaSecondary: "Xem khung giường",
     primaryLink: "/category/bedroom",
     secondaryLink: "/products?category=bedroom",
-    image: "https://images.unsplash.com/photo-1616594039964-ae9021a400a0?auto=format&fit=crop&w=1800&q=85",
+    image: "https://images.unsplash.com/photo-1616594039964-ae9021a400a0?auto=format&fit=crop&w=1400&q=75",
   },
   {
     id: "architectural-dining",
@@ -48,7 +48,7 @@ export const HERO_BANNERS = [
     ctaSecondary: "Mua đèn",
     primaryLink: "/category/dining-room",
     secondaryLink: "/category/lighting-decor",
-    image: "https://images.unsplash.com/photo-1617806118233-18e1de247200?auto=format&fit=crop&w=1800&q=85",
+    image: "https://images.unsplash.com/photo-1617806118233-18e1de247200?auto=format&fit=crop&w=1400&q=75",
   },
   {
     id: "luxury-bedroom",
@@ -61,7 +61,7 @@ export const HERO_BANNERS = [
     ctaSecondary: "Xem bộ sưu tập",
     primaryLink: "/category/bedroom",
     secondaryLink: "/collections",
-    image: "https://images.unsplash.com/photo-1616594039964-ae9021a400a0?auto=format&fit=crop&w=1800&q=85",
+    image: "https://images.unsplash.com/photo-1616594039964-ae9021a400a0?auto=format&fit=crop&w=1400&q=75",
   },
   {
     id: "modern-living",
@@ -74,7 +74,7 @@ export const HERO_BANNERS = [
     ctaSecondary: "Xem lookbook",
     primaryLink: "/category/living-room",
     secondaryLink: "/lookbook",
-    image: "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=1800&q=85",
+    image: "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=1400&q=75",
   },
   {
     id: "ambient-lighting",
@@ -87,7 +87,7 @@ export const HERO_BANNERS = [
     ctaSecondary: "Khám phá tất cả",
     primaryLink: "/category/lighting-decor",
     secondaryLink: "/collections",
-    image: "https://images.unsplash.com/photo-1513519245088-0e12902e5a38?auto=format&fit=crop&w=1800&q=85",
+    image: "https://images.unsplash.com/photo-1513519245088-0e12902e5a38?auto=format&fit=crop&w=1400&q=75",
   },
 ];
 
