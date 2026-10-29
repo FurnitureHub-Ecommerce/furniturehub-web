@@ -292,20 +292,30 @@ export function ShopProvider({ children }) {
     // Guest / local fallback
     const targetProduct = productOrVariant.product || productOrVariant;
     const itemTargetId = String(targetProduct.id || targetProduct._id);
+    const itemTargetVariant = productOrVariant.variantId || targetProduct.variantId;
 
     setCart((prev) => {
-      const existing = prev.find((item) => String(item.product.id || item.product._id) === itemTargetId);
+      const existing = prev.find((item) => {
+        if (itemTargetVariant && item.variantId) {
+          return item.variantId === itemTargetVariant;
+        }
+        return String(item.product.id || item.product._id) === itemTargetId;
+      });
       if (existing) {
-        return prev.map((item) =>
-          String(item.product.id || item.product._id) === itemTargetId
+        return prev.map((item) => {
+          const match = itemTargetVariant && item.variantId
+            ? item.variantId === itemTargetVariant
+            : String(item.product.id || item.product._id) === itemTargetId;
+          return match
             ? { ...item, quantity: item.quantity + qty }
-            : item
-        );
+            : item;
+        });
       }
       return [
         ...prev,
         {
           itemId: `local-${Date.now()}`,
+          variantId: itemTargetVariant,
           quantity: qty,
           unitPrice: targetProduct.price || targetProduct.basePrice || targetProduct.minPrice || 0,
           product: {
@@ -434,7 +444,10 @@ export function ShopProvider({ children }) {
     });
   };
 
-  const cartCount = cart.reduce((total, item) => total + (item.quantity || 1), 0);
+  // Số lượng sản phẩm (mặt hàng) trong giỏ hàng (không thay đổi khi bấm +/- tăng giảm số lượng sản phẩm đó)
+  const cartCount = cart.length;
+  // Tổng số lượng đơn vị sản phẩm (tổng tất cả quantity)
+  const totalQuantity = cart.reduce((total, item) => total + (item.quantity || 1), 0);
   const cartSubtotal = cart.reduce(
     (total, item) => total + (item.unitPrice || item.product?.price || 0) * (item.quantity || 1),
     0
@@ -450,6 +463,7 @@ export function ShopProvider({ children }) {
         updateCartQuantity,
         clearCart,
         cartCount,
+        totalQuantity,
         cartSubtotal,
         isCartOpen,
         setIsCartOpen,

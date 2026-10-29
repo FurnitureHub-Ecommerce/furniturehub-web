@@ -65,7 +65,13 @@ export function AuthProvider({ children }) {
 
   const updateUser = useCallback((newUserData) => {
     setUser((prev) => {
-      const merged = { ...prev, ...newUserData };
+      if (!newUserData) return prev;
+      const isSame =
+        prev &&
+        Object.keys(newUserData).every((key) => prev[key] === newUserData[key]);
+      if (isSame) return prev;
+
+      const merged = { ...(prev || {}), ...newUserData };
       try {
         localStorage.setItem("user", JSON.stringify(merged));
       } catch (err) {

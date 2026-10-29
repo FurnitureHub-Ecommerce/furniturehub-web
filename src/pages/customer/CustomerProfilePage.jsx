@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   User,
@@ -28,15 +28,28 @@ export default function CustomerProfilePage() {
   const initialTab = searchParams.get("tab") === "addresses" ? "addresses" : "profile";
   const [activeTab, setActiveTab] = useState(initialTab);
 
-  // Profile Form States
-  const [profile, setProfile] = useState(null);
-  const [fullName, setFullName] = useState("");
-  const [phone, setPhone] = useState("");
-  const [email, setEmail] = useState("");
+  // Profile Form States (khởi tạo từ authUser hoặc localStorage để tránh flash màn hình)
+  const [profile, setProfile] = useState(() => {
+    try {
+      const stored = localStorage.getItem("user");
+      return stored ? JSON.parse(stored) : null;
+    } catch {
+      return null;
+    }
+  });
+  const [fullName, setFullName] = useState(() => profile?.fullName || profile?.name || "");
+  const [phone, setPhone] = useState(() => profile?.phone || "");
+  const [email, setEmail] = useState(() => profile?.email || "");
   const [isEditing, setIsEditing] = useState(false);
 
+  // Ref giữ trạng thái đang chỉnh sửa để ngăn background fetch ghi đè dữ liệu đang gõ
+  const isEditingRef = useRef(false);
+  useEffect(() => {
+    isEditingRef.current = isEditing;
+  }, [isEditing]);
+
   // Status States
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(() => !profile);
   const [isSaving, setIsSaving] = useState(false);
   const [errorMessage, setErrorMessage] = useState(null);
   const [successMessage, setSuccessMessage] = useState(null);
@@ -45,7 +58,8 @@ export default function CustomerProfilePage() {
 
   useEffect(() => {
     let ignore = false;
-    if (!token) {
+    const currentToken = localStorage.getItem("token");
+    if (!currentToken) {
       navigate("/login?redirect=/profile");
       return;
     }
@@ -56,26 +70,39 @@ export default function CustomerProfilePage() {
         if (ignore) return;
         const userData = res.data?.user || res.data || {};
         setProfile(userData);
-        setFullName(userData.fullName || userData.name || "");
-        setPhone(userData.phone || "");
         setEmail(userData.email || "");
+
+        // Chỉ điền họ tên và SĐT nếu người dùng đang KHÔNG trong trạng thái chỉnh sửa
+        if (!isEditingRef.current) {
+          setFullName(userData.fullName || userData.name || "");
+          setPhone(userData.phone || "");
+        }
 
         if (updateUser) {
           updateUser(userData);
         }
       } catch (err) {
         if (ignore) return;
-        if (authUser) {
-          setProfile(authUser);
-          setFullName(authUser.fullName || authUser.name || "");
-          setPhone(authUser.phone || "");
-          setEmail(authUser.email || "");
-        } else {
-          const msg = getApiErrorMessage(
-            err,
-            "Không thể tải thông tin hồ sơ. Vui lòng kiểm tra lại kết nối."
-          );
-          setErrorMessage(msg);
+        console.warn("Lỗi tải thông tin hồ sơ từ máy chủ:", err);
+        // Dùng dữ liệu đệm nếu chưa có profile
+        try {
+          const cached = JSON.parse(localStorage.getItem("user") || "null");
+          if (cached) {
+            setProfile(cached);
+            setEmail(cached.email || "");
+            if (!isEditingRef.current) {
+              setFullName(cached.fullName || cached.name || "");
+              setPhone(cached.phone || "");
+            }
+          } else {
+            const msg = getApiErrorMessage(
+              err,
+              "Không thể tải thông tin hồ sơ. Vui lòng kiểm tra lại kết nối."
+            );
+            setErrorMessage(msg);
+          }
+        } catch {
+          // ignore
         }
       } finally {
         if (!ignore) {
@@ -88,7 +115,7 @@ export default function CustomerProfilePage() {
     return () => {
       ignore = true;
     };
-  }, [token, authUser, updateUser, navigate]);
+  }, [token, navigate]); // Tuyệt đối KHÔNG đưa authUser vào đây để tránh vòng lặp re-render reset state
 
   // Handle Tab Switch
   const handleTabChange = (tab) => {
@@ -115,46 +142,51 @@ export default function CustomerProfilePage() {
     setSuccessMessage(null);
 
     const trimmedName = fullName.trim();
-    const trimmedPhone = phone.trim();
+    const cleanPhone = phone.replace(/\D/g, "");
 
     if (!trimmedName || trimmedName.length < 2) {
       setErrorMessage("Họ và tên cần có ít nhất 2 ký tự.");
       return;
     }
 
-    if (trimmedPhone && (trimmedPhone.length < 9 || trimmedPhone.length > 15)) {
-      setErrorMessage("Số điện thoại không hợp lệ (cần từ 9 đến 15 số).");
+    if (phone.trim() && cleanPhone.length !== 10) {
+      setErrorMessage("Số điện thoại không hợp lệ (cần đúng 10 số, ví dụ: 0912345678).");
       return;
     }
 
     setIsSaving(true);
     try {
-      const res = await updateUserProfile({
+      const payload = {
         fullName: trimmedName,
-        phone: trimmedPhone,
-      });
+      };
+      if (cleanPhone) {
+        payload.phone = cleanPhone;
+      }
+
+      const res = await updateUserProfile(payload);
 
       const updatedData = res.data?.user || res.data || {
         ...profile,
         fullName: trimmedName,
-        phone: trimmedPhone,
+        phone: cleanPhone || phone.trim(),
       };
 
       setProfile(updatedData);
       setFullName(updatedData.fullName || trimmedName);
-      setPhone(updatedData.phone || trimmedPhone);
+      setPhone(updatedData.phone || cleanPhone || "");
+      setIsEditing(false);
 
       if (updateUser) {
         updateUser(updatedData);
       }
 
-      setIsEditing(false);
       setSuccessMessage("Hồ sơ cá nhân của quý khách đã được cập nhật thành công.");
       setTimeout(() => setSuccessMessage(null), 4000);
     } catch (err) {
+      console.error("Lỗi cập nhật hồ sơ:", err);
       const msg = getApiErrorMessage(
         err,
-        "Không thể cập nhật hồ sơ vào lúc này. Vui lòng thử lại sau."
+        "Không thể cập nhật hồ sơ vào lúc này. Vui lòng kiểm tra lại thông tin."
       );
       setErrorMessage(msg);
     } finally {
