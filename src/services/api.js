@@ -143,8 +143,15 @@ export const updateUserProfile = async (data = {}) => {
   try {
     // Backend chỉ chấp nhận fullName, phone (email read-only, cấm role/id/các field khác)
     const cleanData = {};
-    if (data.fullName !== undefined) cleanData.fullName = String(data.fullName).trim();
-    if (data.phone !== undefined) cleanData.phone = String(data.phone).trim();
+    if (data.fullName !== undefined && String(data.fullName).trim()) {
+      cleanData.fullName = String(data.fullName).trim();
+    }
+    if (data.phone !== undefined) {
+      const cleanPhone = String(data.phone).replace(/\D/g, "");
+      if (cleanPhone.length > 0) {
+        cleanData.phone = cleanPhone;
+      }
+    }
 
     const res = await api.patch("/api/users/profile", cleanData);
     return res;
