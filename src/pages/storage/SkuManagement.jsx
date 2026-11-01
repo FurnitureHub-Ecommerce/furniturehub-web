@@ -144,7 +144,7 @@ const SkuManagement = () => {
             meta.color !== '—' ? `Màu: ${meta.color}` : '',
             meta.size !== '—' ? `Size: ${meta.size}` : '',
             meta.material !== '—' ? `Chất liệu: ${meta.material}` : ''
-          ].filter(Boolean).join(' — ') || 'Tiêu chuẩn'
+          ].filter(Boolean)
         }));
 
         setSkuProducts(formatted);
@@ -231,7 +231,7 @@ const SkuManagement = () => {
           <table style={{ width: '100%', minWidth: '700px', borderCollapse: 'collapse' }}>
             <thead>
               <tr style={{ background: '#faf8f5', color: '#78716c', fontSize: '11px', fontWeight: 700, textAlign: 'left' }}>
-                <th style={{ padding: '12px 14px', width: '70px' }}>HÌNH ẢNH</th>
+                <th style={{ padding: '12px 14px', width: '90px' }}>HÌNH ẢNH</th>
                 <th style={{ padding: '12px 14px' }}>MÃ SKU & TÊN SẢN PHẨM</th>
                 <th style={{ padding: '12px 14px' }}>QUY CÁCH & THUỘC TÍNH</th>
                 <th style={{ padding: '12px 14px', textAlign: 'center' }}>TỒN KHO</th>
@@ -259,9 +259,15 @@ const SkuManagement = () => {
                         {prod.name}
                       </div>
                     </td>
-                    <td style={{ padding: '12px 14px', fontSize: '12px', color: '#57534e' }}>
-                      {prod.specs}
-                    </td>
+                    <td style={{ padding: '12px 14px', fontSize: '12px', color: '#57534e', lineHeight: '1.5' }}>
+  {prod.specs ? (
+    String(prod.specs).split(' — ').map((specLine, idx) => (
+      <div key={idx}>{specLine}</div>
+    ))
+  ) : (
+    <div>Tiêu chuẩn</div>
+  )}
+</td>
                     <td style={{ padding: '12px 14px', textAlign: 'center', whiteSpace: 'nowrap' }}>
                       <strong style={{ fontSize: '13px', color: prod.stock > 0 ? '#16a34a' : '#dc2626' }}>
                         {prod.stock.toLocaleString()}

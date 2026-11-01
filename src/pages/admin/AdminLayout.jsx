@@ -9,7 +9,6 @@ import {
   SlidersHorizontal,
   Folder,
   DraftingCompass,
-  Menu,
   X,
   LogOut,
   Settings,
@@ -119,11 +118,6 @@ export default function AdminLayout() {
     );
   }
 
-  const currentPage = navigation
-    .flatMap((group) => group.items)
-    .find(([, , to]) => isCurrent(to));
-  const currentPageLabel = currentPage?.[1] || "Không Gian Quản Trị";
-
   useLayoutEffect(() => {
     const element = content.current;
     if (!element) return;
@@ -160,7 +154,6 @@ export default function AdminLayout() {
           <X size={18} />
         </button>
 
-        {/* Logo */}
         {/* Logo Atelier */}
         <div className="brand-logo">
           <img src={logo} alt="LUMORA Atelier" />
@@ -191,19 +184,10 @@ export default function AdminLayout() {
           ))}
         </nav>
 
-        {/* Profile Card ở đáy Sidebar (giống Staff) */}
+        {/* Profile Card ở đáy Sidebar */}
         <div className="la-sidebar-footer" ref={dropdownRef}>
           {showDropdown && (
             <div className="la-profile-popup-menu">
-              {/* <button
-                type="button"
-                onClick={() => {
-                  setShowDropdown(false);
-                  navigate("/admin/dashboard");
-                }}
-              >
-                <Settings size={15} /> Cài Đặt Hệ Thống
-              </button> */}
               <button
                 type="button"
                 className="la-logout-option"

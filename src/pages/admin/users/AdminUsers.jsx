@@ -305,7 +305,24 @@ export default function AdminUsers() {
 
   return (
     <div className="lu-page">
-      <div className="lu-intro">
+      <style>{`
+        @keyframes fadeInDownSmooth {
+          from {
+            opacity: 0;
+            transform: translateY(-16px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        .lu-anim-1 { animation: fadeInDownSmooth 0.45s cubic-bezier(0.16, 1, 0.3, 1) 0.05s both; }
+        .lu-anim-2 { animation: fadeInDownSmooth 0.45s cubic-bezier(0.16, 1, 0.3, 1) 0.12s both; }
+        .lu-anim-3 { animation: fadeInDownSmooth 0.45s cubic-bezier(0.16, 1, 0.3, 1) 0.19s both; }
+        .lu-anim-4 { animation: fadeInDownSmooth 0.45s cubic-bezier(0.16, 1, 0.3, 1) 0.26s both; }
+      `}</style>
+
+      <div className="lu-intro lu-anim-1">
         <p className="lu-context">
           <span>QUẢN LÝ TÀI KHOẢN</span>
         </p>
@@ -335,14 +352,14 @@ export default function AdminUsers() {
       </div>
 
       {notice && (
-        <p className="lu-api-notice" role="status">
+        <p className="lu-api-notice lu-anim-1" role="status">
           <CircleCheck size={16} aria-hidden="true" />
           {notice}
         </p>
       )}
 
       {!state.loading && !state.error && (
-        <section className="lu-kpis" aria-label="Thống kê">
+        <section className="lu-kpis lu-anim-2" aria-label="Thống kê">
           {metrics.map(([label, value]) => (
             <article className="lu-card lu-kpi" key={label}>
               <h2>{label}</h2>
@@ -352,7 +369,7 @@ export default function AdminUsers() {
         </section>
       )}
 
-      <section className="lu-filters" aria-label="Bộ lọc">
+      <section className="lu-filters lu-anim-3" aria-label="Bộ lọc">
         <label className="lu-search">
           <Search size={16} />
           <input
@@ -385,7 +402,7 @@ export default function AdminUsers() {
         </div>
       </section>
 
-      <section className="lu-card lu-user-list" aria-labelledby="lu-list-title">
+      <section className="lu-card lu-user-list lu-anim-4" aria-labelledby="lu-list-title">
         <div className="lu-list-header">
           <h2 id="lu-list-title">Danh Sách Người Dùng</h2>
           {!state.loading && !state.error && (

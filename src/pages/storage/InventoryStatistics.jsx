@@ -20,7 +20,7 @@ const InventoryStatistics = () => {
           storageAPI.getInventoryTransactions ? storageAPI.getInventoryTransactions().catch(() => ({ data: { transactions: [] } })) : Promise.resolve({ data: { transactions: [] } })
         ]);
 
-        // 1. Xử lý tồn kho (Chuẩn hóa vét cạn giống ImportExportStock)
+        // 1. Xử lý tồn kho
         const invBody = invRes?.data || {};
         const inventories = Array.isArray(invBody) 
           ? invBody 
@@ -47,6 +47,9 @@ const InventoryStatistics = () => {
         const prodBody = productsRes?.data || {};
         const products = prodBody.products || prodBody.data || prodBody.rows || (Array.isArray(prodBody) ? prodBody : []);
 
+        // Tạo map tra cứu tên sản phẩm theo Variant ID hoặc SKU để phục vụ hiển thị bán chạy
+        const productNameMap = new Map();
+
         const variantPromises = (Array.isArray(products) ? products : []).map(async (product) => {
           const prodId = product._id || product.id;
           const productName = product.name || 'Sản phẩm nội thất';
@@ -65,12 +68,14 @@ const InventoryStatistics = () => {
                   const variantId = variant._id || variant.id || variant.variantId;
                   const sku = variant.sku || variant.code || 'SKU';
                   
+                  if (variantId) productNameMap.set(String(variantId).trim(), { name: productName, sku: String(sku).trim() });
+                  if (sku) productNameMap.set(String(sku).trim(), { name: productName, sku: String(sku).trim() });
+
                   let currentStock =
                     stockMap.get(String(variantId).trim()) ??
                     stockMap.get(String(sku).trim()) ??
                     0;
 
-                  // Gọi vét cạn API chi tiết nếu chưa có trong mảng chung
                   if (currentStock === 0 && variantId) {
                     try {
                       const singleInvRes = await storageAPI.getInventoryByVariantId(variantId).catch(() => null);
@@ -92,25 +97,14 @@ const InventoryStatistics = () => {
                 })
               );
             }
-          } catch (e) {
-            console.error("Lỗi lấy variants:", e);
-          }
+          } catch (e) {}
 
           const fallbackId = String(prodId).trim();
           const fallbackSku = String(product.sku || 'SKU').trim();
-          let fallbackStock = stockMap.get(fallbackId) ?? stockMap.get(fallbackSku) ?? 0;
+          productNameMap.set(fallbackId, { name: productName, sku: fallbackSku });
+          productNameMap.set(fallbackSku, { name: productName, sku: fallbackSku });
 
-          if (fallbackStock === 0) {
-            try {
-              const singleInvRes = await storageAPI.getInventoryByVariantId(fallbackId).catch(() => null);
-              const singleBody = singleInvRes?.data || {};
-              const singleInv = singleBody.inventory || singleBody.data || singleBody;
-              const fetchedQty = singleInv.quantity ?? singleInv.stock ?? singleInv.availableStock;
-              if (fetchedQty !== undefined && fetchedQty !== null) {
-                fallbackStock = Number(fetchedQty);
-              }
-            } catch (e) {}
-          }
+          let fallbackStock = stockMap.get(fallbackId) ?? stockMap.get(fallbackSku) ?? 0;
 
           return [{
             id: fallbackSku,
@@ -124,29 +118,40 @@ const InventoryStatistics = () => {
         const allVariants = nestedVariants.flat().filter(Boolean);
         setSkuProducts(allVariants);
 
-        // 2. Xử lý thống kê sản phẩm bán được nhiều nhất từ lịch sử giao dịch (transactions)
+        // 2. Xử lý thống kê sản phẩm xuất bán (Mở rộng điều kiện quét để không bỏ sót giao dịch)
         const txBody = txRes?.data || {};
-        const txData = txBody.transactions || txBody.data || txBody.rows || (Array.isArray(txBody) ? txBody : []);
+        const txData = txBody.transactions || txBody.data?.transactions || txBody.data?.rows || txBody.data || txBody.rows || (Array.isArray(txBody) ? txBody : []);
         
         const exportMap = new Map();
         let totalExpCount = 0;
 
         (Array.isArray(txData) ? txData : []).forEach(tx => {
-          const typeStr = String(tx.type || tx.action || '').toUpperCase();
-          if (typeStr.includes('EXPORT') || typeStr.includes('XUẤT') || typeStr.includes('DEDUCTION')) {
-            const qty = Number(tx.quantity || tx.amount || 0);
+          const typeStr = String(tx.type || tx.action || tx.category || '').toUpperCase();
+          
+          // Nới lỏng bộ lọc: Bắt tất cả các giao dịch xuất kho hoặc không phải nhập kho
+          const isExport = typeStr.includes('EXPORT') || 
+                           typeStr.includes('XUẤT') || 
+                           typeStr.includes('DEDUCTION') || 
+                           typeStr.includes('OUT') || 
+                           typeStr.includes('SALE') ||
+                           (!typeStr.includes('IMPORT') && !typeStr.includes('NHẬP') && !typeStr.includes('RESTORE'));
+
+          if (isExport) {
+            const qty = Number(tx.quantity || tx.amount || tx.qty || 1);
             totalExpCount += qty;
 
             const variant = tx.variantId || tx.variant || {};
+            const vId = typeof variant === 'object' ? (variant._id || variant.id) : variant;
             const product = variant.productId || tx.product || {};
-            const sku = variant.sku || 'SKU-001';
-            const prodName = product.name || tx.productName || variant.name || 'Sản phẩm nội thất';
+            
+            const sku = variant.sku || tx.sku || (vId && productNameMap.get(String(vId).trim())?.sku) || 'SKU-LUMORA';
+            const prodName = product.name || tx.productName || variant.name || (vId && productNameMap.get(String(vId).trim())?.name) || 'Sản phẩm nội thất';
 
-            const key = sku;
+            const key = String(sku).trim();
             if (exportMap.has(key)) {
               exportMap.set(key, { ...exportMap.get(key), sold: exportMap.get(key).sold + qty });
             } else {
-              exportMap.set(key, { id: sku, name: prodName, sold: qty });
+              exportMap.set(key, { id: key, name: prodName, sold: qty });
             }
           }
         });
@@ -155,6 +160,7 @@ const InventoryStatistics = () => {
         const sortedBestSellers = Array.from(exportMap.values())
           .sort((a, b) => b.sold - a.sold)
           .slice(0, 5);
+        
         setBestSellers(sortedBestSellers);
 
       } catch (error) {
@@ -334,7 +340,7 @@ const InventoryStatistics = () => {
 
       </div>
 
-      {/* Hàng 2: Top 5 Tồn Kho & Top 5 Sản Phẩm Bán Chạy (Bán Được Nhiều Nhất) */}
+      {/* Hàng 2: Top 5 Tồn Kho & Top 5 Sản Phẩm Bán Chạy */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
         
         {/* 1. Biểu đồ Top 5 Tồn Kho Nhiều Nhất */}
@@ -388,7 +394,7 @@ const InventoryStatistics = () => {
           </div>
         </section>
 
-        {/* 2. Thống kê Top 5 Sản Phẩm Bán Được Nhiều Nhất (Bán Chạy) */}
+        {/* 2. Thống kê Top 5 Sản Phẩm Bán Chạy (Đã mở rộng bộ lọc giao dịch) */}
         <section className="sku-section" style={{ margin: 0, background: '#fff', padding: '24px', borderRadius: '12px', border: '1px solid #eae6df', display: 'flex', flexDirection: 'column' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
             <ArrowUpRight size={20} color="#dc2626" />

@@ -66,7 +66,7 @@ const StorageLayout = () => {
             <p className="nav-label" style={{ fontFamily: "math", fontWeight: 600 }}>Quản lí kho</p>
             <ul style={{ fontFamily: "math" , fontWeight: 600, fontSize: '17px' }}>
               <li><NavLink to="/storage/skus">Quản Lý SKU & Biến Thể</NavLink></li>
-              <li><NavLink to="/storage/alerts">Cảnh Báo Tồn Thấp</NavLink></li>
+              {/* <li><NavLink to="/storage/alerts">Cảnh Báo Tồn Thấp</NavLink></li> */}
               {/* <li><NavLink to="/storage/search">Tìm Kiếm & Bộ Lọc</NavLink></li> */}
               <li><NavLink to="/storage/history">Lịch Sử Biến Động Kho</NavLink></li>
             </ul>

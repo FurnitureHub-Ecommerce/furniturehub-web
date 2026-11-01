@@ -804,3 +804,16 @@
   50% { opacity: 1; }
   100% { opacity: 0.5; }
 }
+
+@keyframes lvRotate {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.lv-spin {
+  animation: lvRotate 1s linear infinite;
+}

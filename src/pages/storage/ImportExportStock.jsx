@@ -277,7 +277,7 @@ const ImportExportStock = () => {
     setIsOpenDetailModal(true);
   };
 
-  const handleThaoTacKho = async (e) => {
+ const handleThaoTacKho = async (e) => {
     e.preventDefault();
     if (!selectedProduct) return;
 
@@ -308,40 +308,50 @@ const ImportExportStock = () => {
         await storageAPI.exportInventory(selectedProduct.variantId, payload);
       }
 
-      // Lấy lại tồn kho chuẩn xác từ API chi tiết sau khi thao tác
-      let latestStock = selectedProduct.stock + (modalType === "import" ? qtyNum : -qtyNum);
-      try {
-        const singleRes = await storageAPI.getInventoryByVariantId(selectedProduct.variantId);
-        const singleBody = singleRes?.data || {};
-        const singleInv = singleBody.inventory || singleBody.data || singleBody;
-        const fetchedQty = singleInv.quantity ?? singleInv.stock ?? singleInv.availableStock;
-        if (fetchedQty !== undefined && fetchedQty !== null) {
-          latestStock = Number(fetchedQty);
-        }
-      } catch (err) {
-        console.error("Không thể lấy tồn kho chi tiết:", err);
-      }
+      // 1. Tính toán ngay lập tức số lượng tồn kho mới tại client (cộng dồn hoặc trừ đi)
+      const updatedStock = selectedProduct.stock + (modalType === "import" ? qtyNum : -qtyNum);
 
-      // Cập nhật ngay lập tức vào state danh sách sản phẩm
+      // 2. Cập nhật thẳng vào state danh sách sản phẩm NGAY LẬP TỨC để UI đổi số lượng liền tay
       setDanhSachSanPham((prevList) =>
         prevList.map((item) => {
           const isMatch =
             String(item.variantId).trim() === String(selectedProduct.variantId).trim() ||
             String(item.sku).trim() === String(selectedProduct.sku).trim();
-          return isMatch ? { ...item, stock: Number(latestStock) } : item;
+          return isMatch ? { ...item, stock: Number(updatedStock) } : item;
         })
       );
+
+      // Cập nhật luôn state của sản phẩm đang chọn trong modal
+      setSelectedProduct((prev) => prev ? { ...prev, stock: Number(updatedStock) } : null);
+
+      // 3. Thêm mới một dòng lịch sử giả lập (hoặc cập nhật mảng chứng từ) ngay vào tab Lịch sử 
+      // để không phải gọi lại toàn bộ API lịch sử nặng nề
+      const newTransactionItem = {
+        date: new Date().toLocaleString("vi-VN"),
+        productName: selectedProduct.name,
+        quantity: qtyNum,
+        note: payload.note,
+        status: "Hoàn Thành",
+      };
+
+      setChungTu((prevChungTu) => ({
+        ...prevChungTu,
+        [modalType === "import" ? "import" : "export"]: [
+          newTransactionItem,
+          ...(prevChungTu[modalType === "import" ? "import" : "export"] || [])
+        ]
+      }));
 
       setThongBaoThanhCong(
         `Tạo phiếu ${modalType === "import" ? "nhập" : "xuất"} kho thành công!`,
       );
-      
-      fetchData();
 
+      // Đóng modal ngay lập tức mà không gọi lại fetchData() gây đứng hình
       setTimeout(() => {
         setThongBaoThanhCong("");
         setIsOpenModal(false);
-      }, 1200);
+      }, 800);
+
     } catch (err) {
       console.error("Lỗi thao tác kho:", err);
       setErrorMessage(
@@ -608,23 +618,28 @@ const ImportExportStock = () => {
                             {item.sku}
                           </span>
                         </td>
-                        <td style={{ padding: "14px 16px" }}>
-                          <strong
-                            onClick={() => handleOpenDetailModal(item)}
-                            style={{
-                              fontSize: "13px",
-                              display: "block",
-                              color: "#1a1a1a",
-                              cursor: "pointer",
-                            }}
-                            title="Nhấp để xem chi tiết"
-                          >
-                            {item.name}
-                          </strong>
-                          <span style={{ fontSize: "11px", color: "#78716c" }}>
-                            Màu: {item.color} | Size: {item.size}
-                          </span>
-                        </td>
+                        <td style={{ padding: "14px 16px", maxWidth: "350px" }}>
+  <strong
+    onClick={() => handleOpenDetailModal(item)}
+    style={{
+      fontSize: "13px",
+      display: "block",
+      color: "#1a1a1a",
+      cursor: "pointer",
+      lineHeight: "1.4",
+      wordBreak: "break-word",
+      marginBottom: "4px"
+    }}
+    title="Nhấp để xem chi tiết"
+  >
+    {item.name}
+  </strong>
+  
+  <div style={{ fontSize: "11px", color: "#78716c", display: "flex", flexDirection: "column", gap: "2px" }}>
+    <div><strong>Màu:</strong> {item.color || "—"}</div>
+    <div><strong>Size:</strong> {item.size || "—"}</div>
+  </div>
+</td>
                         <td
                           style={{ padding: "14px 16px", textAlign: "center" }}
                         >
