@@ -60,13 +60,29 @@ export default function OrderTrackingModal({
     setLoadError(null);
     try {
       const res = await orderAPI.getMyOrderById(activeOrderId);
-      const fetched = res.data?.order || res.data || null;
+      const fetched = res.data?.order || res.data?.data || res.data || null;
       if (fetched) {
+        const resolvedCancelReason =
+          fetched.cancelReason ||
+          fetched.cancellationReason ||
+          fetched.reason ||
+          fetched.cancelNote ||
+          fetched.rejectReason;
         setFetchedOrder((prev) => ({
           ...prev,
           ...fetched,
-          reason: fetched.reason || fetched.cancelReason || prev?.reason || prev?.cancelReason,
-          cancelReason: fetched.cancelReason || fetched.reason || prev?.cancelReason || prev?.reason,
+          reason:
+            resolvedCancelReason ||
+            prev?.cancelReason ||
+            prev?.cancellationReason ||
+            prev?.reason ||
+            prev?.cancelNote,
+          cancelReason:
+            resolvedCancelReason ||
+            prev?.cancelReason ||
+            prev?.cancellationReason ||
+            prev?.reason ||
+            prev?.cancelNote,
         }));
         return fetched;
       }
@@ -99,7 +115,14 @@ export default function OrderTrackingModal({
   const items = order?.items || [];
   const statusLower = String(order?.status || "").toLowerCase();
   const canCancel = statusLower === "pending";
-  const isCancelled = statusLower === "cancelled";
+  const isCancelled = statusLower === "cancelled" || statusLower === "rejected";
+  const cancelReasonText =
+    order?.cancelReason ||
+    order?.cancellationReason ||
+    order?.reason ||
+    order?.cancelNote ||
+    order?.rejectReason ||
+    "Đơn hàng đã được hủy bởi cửa hàng";
 
   const formattedDate = order?.createdAt
     ? new Date(order.createdAt).toLocaleDateString("vi-VN", {
@@ -216,8 +239,8 @@ export default function OrderTrackingModal({
                   variant="full"
                   createdAt={order?.createdAt}
                   updatedAt={order?.updatedAt}
-                  reason={order?.reason || order?.cancelReason}
-                  cancelReason={order?.cancelReason || order?.reason}
+                  reason={cancelReasonText}
+                  cancelReason={cancelReasonText}
                 />
               </div>
 
@@ -292,7 +315,12 @@ export default function OrderTrackingModal({
           <div className="lumora-track-modal__footer-left">
             {isCancelled ? (
               <div style={{ fontSize: "0.85rem", color: "#DC2626", fontWeight: 500 }}>
-                Lý do: {order?.reason || order?.cancelReason || "Người mua yêu cầu hủy"}
+                Lý do:{" "}
+                {order?.cancelReason ||
+                  order?.cancellationReason ||
+                  order?.reason ||
+                  order?.cancelNote ||
+                  "Đơn hàng đã được hủy bởi cửa hàng"}
               </div>
             ) : (
               canCancel && (

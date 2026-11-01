@@ -80,6 +80,104 @@ function OrderItemCard({ item }) {
   );
 }
 
+// Hàm bóc tách lý do từ chối / hủy đơn hàng từ object đơn hàng hoặc lịch sử tiến trình (timeline/statusHistory/history)
+function extractCancelOrRejectReason(orderObj, trackingObj) {
+  const pickValidText = (...candidates) => {
+    for (const val of candidates) {
+      if (typeof val === "string" && val.trim()) {
+        return val.trim();
+      }
+    }
+    return "";
+  };
+
+  const extractFromHistoryArrays = (source) => {
+    if (!source || typeof source !== "object") return "";
+    const arrays = [
+      source.timeline,
+      source.statusHistory,
+      source.history,
+      source.logs,
+      source.tracking?.timeline,
+      source.tracking?.statusHistory,
+      source.tracking?.history,
+    ];
+
+    for (const arr of arrays) {
+      if (!Array.isArray(arr) || arr.length === 0) continue;
+      for (let i = arr.length - 1; i >= 0; i--) {
+        const step = arr[i];
+        if (!step || typeof step !== "object") continue;
+        const stepStatus = String(
+          step.status || step.state || step.title || step.action || ""
+        ).toLowerCase();
+        const isRejectedOrCancelledStep =
+          stepStatus.includes("reject") ||
+          stepStatus.includes("cancel") ||
+          stepStatus.includes("từ chối") ||
+          stepStatus.includes("hủy");
+
+        if (isRejectedOrCancelledStep) {
+          const stepReason = pickValidText(
+            step.rejectReason,
+            step.rejectionReason,
+            step.cancelReason,
+            step.cancellationReason,
+            step.reason,
+            step.cancelNote,
+            step.note,
+            step.comment,
+            step.message
+          );
+          if (stepReason) return stepReason;
+        }
+      }
+
+      // Fallback: quét bất kỳ bước nào trong lịch sử có gắn reason/note
+      for (let i = arr.length - 1; i >= 0; i--) {
+        const step = arr[i];
+        if (!step || typeof step !== "object") continue;
+        const stepReason = pickValidText(
+          step.rejectReason,
+          step.rejectionReason,
+          step.cancelReason,
+          step.cancellationReason,
+          step.reason,
+          step.cancelNote,
+          step.note
+        );
+        if (stepReason) return stepReason;
+      }
+    }
+    return "";
+  };
+
+  const directReason = pickValidText(
+    orderObj?.rejectReason,
+    orderObj?.rejectionReason,
+    orderObj?.cancelReason,
+    orderObj?.cancellationReason,
+    orderObj?.reason,
+    orderObj?.cancelNote,
+    orderObj?.note,
+    trackingObj?.rejectReason,
+    trackingObj?.rejectionReason,
+    trackingObj?.cancelReason,
+    trackingObj?.cancellationReason,
+    trackingObj?.reason,
+    trackingObj?.cancelNote,
+    trackingObj?.note
+  );
+
+  if (directReason) return directReason;
+
+  return (
+    extractFromHistoryArrays(orderObj) ||
+    extractFromHistoryArrays(trackingObj) ||
+    ""
+  );
+}
+
 export default function OrderDetailModal({
   isOpen,
   onClose,
@@ -89,6 +187,7 @@ export default function OrderDetailModal({
   onOrderCancelled,
 }) {
   const [order, setOrder] = useState(initialOrder);
+  const [trackingInfo, setTrackingInfo] = useState(null);
   const [payment, setPayment] = useState(initialOrder?.payment || null);
   const [isLoading, setIsLoading] = useState(false);
   const [loadError, setLoadError] = useState(null);
@@ -121,15 +220,36 @@ export default function OrderDetailModal({
     setIsLoading(true);
     setLoadError(null);
     try {
-      const ordRes = await orderAPI.getMyOrderById(activeOrderId);
+      const [ordRes, trackRes] = await Promise.all([
+        orderAPI.getMyOrderById(activeOrderId),
+        orderAPI.getOrderTracking
+          ? orderAPI.getOrderTracking(activeOrderId).catch(() => null)
+          : Promise.resolve(null),
+      ]);
+
+      const trackData = trackRes?.data?.tracking || trackRes?.data?.data || trackRes?.data || null;
+      if (trackData) {
+        setTrackingInfo(trackData);
+      }
+
       if (ordRes?.data) {
-        const fetchedOrder = ordRes.data.order || ordRes.data;
-        setOrder((prev) => ({
-          ...prev,
-          ...fetchedOrder,
-          reason: fetchedOrder.reason || fetchedOrder.cancelReason || prev?.reason || prev?.cancelReason,
-          cancelReason: fetchedOrder.cancelReason || fetchedOrder.reason || prev?.cancelReason || prev?.reason,
-        }));
+        const fetchedOrder = ordRes.data.order || ordRes.data.data || ordRes.data;
+        const resolvedCancelReason = extractCancelOrRejectReason(fetchedOrder, trackData);
+        setOrder((prev) => {
+          const prevReason = extractCancelOrRejectReason(prev, null);
+          const finalReason = resolvedCancelReason || prevReason;
+          return {
+            ...prev,
+            ...fetchedOrder,
+            ...(finalReason
+              ? {
+                  reason: finalReason,
+                  cancelReason: finalReason,
+                  rejectReason: fetchedOrder?.rejectReason || finalReason,
+                }
+              : {}),
+          };
+        });
 
         // Chỉ gọi API lấy payment nếu đơn chọn chuyển khoản ngân hàng
         const method = fetchedOrder.paymentMethod;
@@ -169,7 +289,9 @@ export default function OrderDetailModal({
 
   const statusLower = String(order?.status || "").toLowerCase();
   const isPending = statusLower === "pending";
-  const isCancelled = statusLower === "cancelled";
+  const isCancelled = statusLower === "cancelled" || statusLower === "rejected";
+  const extractedReason = extractCancelOrRejectReason(order, trackingInfo);
+  const cancelReasonText = extractedReason || "Đơn hàng đã được hủy bởi cửa hàng";
   const shipping = order?.shippingAddress || {};
   const items = order?.items || [];
 
@@ -281,12 +403,16 @@ export default function OrderDetailModal({
                 </span>
                 <OrderTrackingTimeline
                   orderId={activeOrderId}
+                  trackingData={trackingInfo}
                   status={order?.status || "pending"}
                   variant="full"
                   createdAt={order?.createdAt}
                   updatedAt={order?.updatedAt}
-                  reason={order?.reason || order?.cancelReason}
-                  cancelReason={order?.cancelReason || order?.reason}
+                  reason={cancelReasonText}
+                  cancelReason={cancelReasonText}
+                  onRefresh={(data) => {
+                    if (data) setTrackingInfo(data);
+                  }}
                 />
               </div>
 
@@ -469,23 +595,17 @@ export default function OrderDetailModal({
         {/* Footer */}
         <div className="order-modal__footer">
           <div className="order-modal__footer-left">
-            {isCancelled ? (
-              <div style={{ fontSize: "0.86rem", color: "#DC2626", fontWeight: 500 }}>
-                Lý do: {order?.reason || order?.cancelReason || "Người mua yêu cầu hủy"}
-              </div>
-            ) : (
-              isPending && (
-                <button
-                  type="button"
-                  className="order-modal__btn-cancel"
-                  onClick={() => {
-                    // CHỈ mở Modal lý do, không gọi API hay hiện thông báo thành công trước
-                    setCancelModalVisible(true);
-                  }}
-                >
-                  Hủy đơn hàng
-                </button>
-              )
+            {!isCancelled && isPending && (
+              <button
+                type="button"
+                className="order-modal__btn-cancel"
+                onClick={() => {
+                  // CHỈ mở Modal lý do, không gọi API hay hiện thông báo thành công trước
+                  setCancelModalVisible(true);
+                }}
+              >
+                Hủy đơn hàng
+              </button>
             )}
           </div>
           <div className="order-modal__footer-right">
