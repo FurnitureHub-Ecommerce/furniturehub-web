@@ -21,34 +21,81 @@ const Login = () => {
   const { login } = useAuth();
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
+    const email = formData.email.trim();
+    const password = formData.password;
+    console.log("Submitting login...", { email, password });
+
+    if (e && typeof e.preventDefault === "function") {
+      e.preventDefault();
+    }
+
+    if (loading) return;
+
+    if (!email || !password) {
+      setNotification({
+        type: "error",
+        message: "Vui lòng nhập đầy đủ email và mật khẩu!",
+      });
+      return;
+    }
+
     setNotification({ type: "", message: "" });
     setLoading(true);
 
     const payload = {
-      email: formData.email.trim(),
-      password: formData.password,
+      email,
+      password,
     };
 
     try {
       const response = await authAPI.login(payload);
-      
-      const token = response.token || response.data?.token;
-      const user = response.user || response.data?.user;
+      const resData = response?.data || response;
 
-      if (!token || !user) {
+      const token =
+        response?.token ||
+        resData?.token ||
+        resData?.accessToken ||
+        resData?.data?.token ||
+        resData?.data?.accessToken;
+
+      const rawUser =
+        response?.user ||
+        resData?.user ||
+        resData?.data?.user ||
+        resData?.account;
+
+      if (!token || !rawUser) {
         throw new Error("Cấu trúc phản hồi từ Server không đúng định dạng!");
       }
 
-      const fromPath = location.state?.from?.pathname || location.state?.from;
-      if (login) {
-        login(user, token, fromPath);
-      } else {
-        localStorage.setItem("token", token);
-        localStorage.setItem("user", JSON.stringify(user));
+      let resolvedRole = rawUser?.role;
+      if (!resolvedRole && token) {
+        try {
+          const payloadBase64 = token.split(".")[1];
+          if (payloadBase64) {
+            const decoded = JSON.parse(
+              atob(payloadBase64.replace(/-/g, "+").replace(/_/g, "/")),
+            );
+            resolvedRole = decoded?.role || decoded?.user?.role;
+          }
+        } catch {
+          // ignore JWT decode fallback error
+        }
       }
 
-      const userRole = user?.role?.toUpperCase();
+      const userRole = String(resolvedRole || "CUSTOMER").trim().toUpperCase();
+      const user = {
+        ...rawUser,
+        role: userRole,
+      };
+
+      const fromPath = location.state?.from?.pathname || location.state?.from;
+      localStorage.setItem("token", token);
+      localStorage.setItem("user", JSON.stringify(user));
+
+      if (login) {
+        login(user, token, fromPath);
+      }
 
       setNotification({
         type: "success",
@@ -56,26 +103,39 @@ const Login = () => {
       });
 
       // Khách hàng: chuyển hướng về trang trước đó HOẶC Trang Chủ ("/"), tuyệt đối không ép nhảy vào /products
-      const customerDestination = (fromPath && fromPath !== "/login" && fromPath !== "/register" && fromPath !== "/products")
-        ? fromPath
-        : "/";
+      const customerDestination =
+        fromPath &&
+        fromPath !== "/login" &&
+        fromPath !== "/register" &&
+        fromPath !== "/products"
+          ? fromPath
+          : "/";
 
       setTimeout(() => {
         if (userRole === "ADMIN") {
-          navigate("/admin/dashboard");
-        } else if (userRole === "STORAGE" || userRole === "STORAGE_MANAGER") {
-          navigate("/storage");
+          navigate("/admin/dashboard", { replace: true });
+        } else if (
+          userRole === "STORAGE" ||
+          userRole === "STORAGE_MANAGER" ||
+          userRole === "MANAGER"
+        ) {
+          navigate("/storage", { replace: true });
         } else if (userRole === "STAFF") {
-          navigate("/staff");
+          navigate("/staff", { replace: true });
         } else {
-          navigate(customerDestination);
+          navigate(customerDestination, { replace: true });
         }
-      }, 1000);
+      }, 500);
     } catch (err) {
       console.error("Lỗi đăng nhập:", err);
+      const serverMsg =
+        err?.response?.data?.message ||
+        err?.response?.data?.errors?.[0]?.message;
       setNotification({
         type: "error",
-        message: "Đăng nhập thất bại. Vui lòng kiểm tra lại email hoặc mật khẩu!",
+        message:
+          serverMsg ||
+          "Đăng nhập thất bại. Vui lòng kiểm tra lại email hoặc mật khẩu!",
       });
     } finally {
       setLoading(false);
@@ -148,7 +208,7 @@ const Login = () => {
               </div>
             )}
 
-            <form onSubmit={handleSubmit}>
+            <form onSubmit={handleSubmit} noValidate>
               <div className="form-group">
                 <label>Email</label>
                 <input
@@ -204,7 +264,12 @@ const Login = () => {
                 </div>
               </div>
 
-              <button type="submit" className="btn-submit" disabled={loading}>
+              <button
+                type="submit"
+                onClick={handleSubmit}
+                className="btn-submit"
+                disabled={loading}
+              >
                 {loading ? "Đang xử lý..." : "Đăng Nhập"}
               </button>
             </form>
