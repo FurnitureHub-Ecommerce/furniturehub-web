@@ -1,6 +1,4 @@
-﻿import { productAPI } from "../api.js";
-
-import { storageAPI } from "../api.js";
+﻿import { productAPI, storageAPI } from "../api.js";
 
 export function recordsFrom(data, key) {
   const candidates = [data, data?.[key], data?.data?.[key], data?.items, data?.data];
@@ -15,7 +13,6 @@ export const entityId = entity => typeof entity === "object" && entity !== null
   ? entity._id ?? entity.id ?? entity.productId ?? entity.categoryId ?? entity.brandId : entity;
 
 export function realNumber(value) {
-  // null, chuỗi rỗng và boolean không phải giá trị 0 từ Backend.
   if (typeof value !== "number" && typeof value !== "string") return null;
   if (typeof value === "string" && !value.trim()) return null;
   const parsed = Number(value);
@@ -31,7 +28,6 @@ export function activeState(record) {
 
 export async function loadProductVariants(products) {
   const result = [];
-  // Chia lô hữu hạn để không đồng thời gửi request cho toàn bộ danh sách Product.
   for (let offset = 0; offset < products.length; offset += 4) {
     const batch = await Promise.all(products.slice(offset, offset + 4).map(async product => {
       const productId = entityId(product);
@@ -55,11 +51,19 @@ export async function loadProductVariants(products) {
   return result;
 }
 
-export async function getVariants({ search = "", material = "", status = "" } = {}) {
+// Hàm chỉ gọi API một lần duy nhất để lấy toàn bộ dữ liệu thô và biến thể
+export async function loadAllVariantsData() {
   const response = await productAPI.getProductsAdmin();
   const products = recordsFrom(response.data, "products");
   const groups = await loadProductVariants(products);
   const variants = groups.flat();
+  const materials = [...new Set(variants.map(variant => variant.material).filter(value => typeof value === "string" && value.trim()))].sort((a, b) => a.localeCompare(b, "vi"));
+  
+  return { variants, products, materials };
+}
+
+// Hàm lọc thuần túy chạy trực tiếp trên RAM (cực kỳ nhanh)
+export function filterVariants(variants, products, materials, { search = "", material = "", status = "" } = {}) {
   const query = search.trim().toLocaleLowerCase("vi");
   const rows = variants.filter(variant => {
     const matchSearch = [variant.sku, variant.product?.name, variant.material]
@@ -67,12 +71,12 @@ export async function getVariants({ search = "", material = "", status = "" } = 
     return (!query || matchSearch) && (!material || variant.material === material)
       && (!status || variant.isActive === (status === "active"));
   });
+
   return {
     rows,
     products,
     loaded: variants.length,
-    materials: [...new Set(variants.map(variant => variant.material).filter(value => typeof value === "string" && value.trim()))].sort((a, b) => a.localeCompare(b, "vi")),
-    // Chưa xác minh pagination của Product/Variant API, không coi tập đã tải là toàn hệ thống.
+    materials,
     totals: { variants: null, products: null, active: null },
   };
 }
@@ -84,14 +88,13 @@ function requireId(id) {
 export async function getVariantForEdit(id) {
   requireId(id);
   const response = await storageAPI.getVariantById(id);
-  // Giữ các envelope đã được Inventory Detail hỗ trợ; không coi là contract Swagger.
   const body = response.data;
   const variant = body?.variant ?? body?.data ?? body;
   if (!variant || typeof variant !== "object" || Array.isArray(variant)
     || (variant._id ?? variant.id) !== id || typeof variant.sku !== "string" || !variant.sku.trim()
     || realNumber(variant.price) === null
     || ["color", "size", "material"].some(field => variant[field] != null && typeof variant[field] !== "string")) {
-    throw new Error("Chi tiết Variant không đủ hoặc không đúng định dạng để chỉnh sửa. Vui lòng tải lại hoặc liên hệ quản trị.");
+    throw new Error("Chi tiết Variant không đủ hoặc không đúng định dạng để chỉnh sửa.");
   }
   return { sku: variant.sku, price: realNumber(variant.price), color: variant.color ?? "", size: variant.size ?? "", material: variant.material ?? "" };
 }
@@ -107,7 +110,6 @@ export async function saveVariant({ id, productId, sku, price, color, size, mate
       payload[field] = value;
     }
   }
-  // Không đọc success envelope chưa được Swagger mô tả; danh sách sẽ được tải lại.
   if (id) await storageAPI.updateVariant(id, payload);
   else await productAPI.createVariant(productId, payload);
 }

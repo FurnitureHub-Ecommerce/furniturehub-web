@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   X,
   Truck,
@@ -14,12 +14,9 @@ import {
 } from "lucide-react";
 import { orderAPI, getApiErrorMessage } from "../../services/api";
 import OrderStatusBadge from "../order/OrderStatusbadge/OrderStatusBadge";
+import CancelOrderModal from "../order/CancelOrderModal/CancelOrderModal";
 import OrderTrackingTimeline from "./OrderTrackingTimeline";
-import { PRODUCT_IMAGE_OVERRIDES } from "../../utils/formatters";
 import "./OrderTrackingModal.css";
-
-const FALLBACK_PRODUCT_IMAGE =
-  "https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?auto=format&fit=crop&w=600&q=80";
 
 export default function OrderTrackingModal({
   isOpen,
@@ -28,14 +25,20 @@ export default function OrderTrackingModal({
   orderId: propOrderId,
   onViewFullDetail,
   onCancelClick,
+  onOrderCancelled,
 }) {
   const [fetchedOrder, setFetchedOrder] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [loadError, setLoadError] = useState(null);
   const [copiedId, setCopiedId] = useState(false);
+  const [cancelModalVisible, setCancelModalVisible] = useState(false);
 
-  const order = initialOrder || fetchedOrder || null;
-  const activeOrderId = order?._id || order?.id || propOrderId;
+  const order = fetchedOrder || initialOrder || null;
+  const activeOrderId = order?._id || order?.id || initialOrder?._id || initialOrder?.id || propOrderId;
+
+  useEffect(() => {
+    setFetchedOrder(initialOrder || null);
+  }, [initialOrder]);
 
   // Khóa scroll body khi mở modal
   useEffect(() => {
@@ -43,46 +46,45 @@ export default function OrderTrackingModal({
       document.body.style.overflow = "hidden";
     } else {
       document.body.style.overflow = "unset";
+      setCancelModalVisible(false);
     }
     return () => {
       document.body.style.overflow = "unset";
     };
   }, [isOpen]);
 
-  // Fetch dữ liệu nếu cần
+  // Hàm tải lại chi tiết đơn hàng từ Backend
+  const fetchOrderDetail = useCallback(async () => {
+    if (!activeOrderId) return null;
+    setIsLoading(true);
+    setLoadError(null);
+    try {
+      const res = await orderAPI.getMyOrderById(activeOrderId);
+      const fetched = res.data?.order || res.data || null;
+      if (fetched) {
+        setFetchedOrder((prev) => ({
+          ...prev,
+          ...fetched,
+          reason: fetched.reason || fetched.cancelReason || prev?.reason || prev?.cancelReason,
+          cancelReason: fetched.cancelReason || fetched.reason || prev?.cancelReason || prev?.reason,
+        }));
+        return fetched;
+      }
+    } catch (err) {
+      setLoadError(
+        getApiErrorMessage(err, "Không thể tải thông tin tiến trình đơn hàng.")
+      );
+    } finally {
+      setIsLoading(false);
+    }
+    return null;
+  }, [activeOrderId]);
+
+  // Fetch dữ liệu từ API thực tế của Backend khi mở modal
   useEffect(() => {
     if (!isOpen || !activeOrderId) return;
-
-    let isMounted = true;
-    async function fetchOrderInfo() {
-      // Nếu đã có đủ thông tin order và shippingAddress thì không cần fetch lại
-      if (order?.shippingAddress && order?.items) return;
-
-      setIsLoading(true);
-      setLoadError(null);
-      try {
-        const res = await orderAPI.getMyOrderById(activeOrderId);
-        if (!isMounted) return;
-        const fetched = res.data?.order || res.data || null;
-        if (fetched) {
-          setFetchedOrder(fetched);
-        }
-      } catch (err) {
-        if (isMounted) {
-          setLoadError(
-            getApiErrorMessage(err, "Không thể tải thông tin tiến trình đơn hàng.")
-          );
-        }
-      } finally {
-        if (isMounted) setIsLoading(false);
-      }
-    }
-
-    fetchOrderInfo();
-    return () => {
-      isMounted = false;
-    };
-  }, [isOpen, activeOrderId, order]);
+    fetchOrderDetail();
+  }, [isOpen, activeOrderId, fetchOrderDetail]);
 
   if (!isOpen) return null;
 
@@ -95,7 +97,9 @@ export default function OrderTrackingModal({
 
   const shipping = order?.shippingAddress || {};
   const items = order?.items || [];
-  const canCancel = order?.status === "pending";
+  const statusLower = String(order?.status || "").toLowerCase();
+  const canCancel = statusLower === "pending";
+  const isCancelled = statusLower === "cancelled";
 
   const formattedDate = order?.createdAt
     ? new Date(order.createdAt).toLocaleDateString("vi-VN", {
@@ -106,6 +110,26 @@ export default function OrderTrackingModal({
         minute: "2-digit",
       })
     : "Đang cập nhật";
+
+  const handleCancelledSuccess = async (updatedOrder) => {
+    setCancelModalVisible(false);
+    setFetchedOrder((prev) => ({
+      ...prev,
+      ...updatedOrder,
+      status: updatedOrder.status || "cancelled",
+      reason: updatedOrder.reason || updatedOrder.cancelReason,
+      cancelReason: updatedOrder.cancelReason || updatedOrder.reason,
+    }));
+    const refreshed = await fetchOrderDetail();
+    if (onOrderCancelled) {
+      onOrderCancelled({
+        ...updatedOrder,
+        ...(refreshed || {}),
+        reason: refreshed?.reason || refreshed?.cancelReason || updatedOrder.reason || updatedOrder.cancelReason,
+        cancelReason: refreshed?.cancelReason || refreshed?.reason || updatedOrder.cancelReason || updatedOrder.reason,
+      });
+    }
+  };
 
   return (
     <div
@@ -122,8 +146,8 @@ export default function OrderTrackingModal({
         <div className="lumora-track-modal__header">
           <div className="lumora-track-modal__header-left">
             <span className="lumora-track-modal__badge">
-              <Truck size={13} className="text-amber-800 shrink-0" />
-              THEO DÕI VẬN ĐƠN WHITE-GLOVE
+              <Truck size={18} className="text-amber-800 shrink-0" />
+              Theo dõi đơn hàng
             </span>
             <div className="lumora-track-modal__id-row">
               <h2 className="lumora-track-modal__title">
@@ -172,7 +196,7 @@ export default function OrderTrackingModal({
           {isLoading && !order ? (
             <div className="lumora-track-modal__loading">
               <div className="lumora-track-modal__spinner" />
-              <span>Đang kết nối hệ thống định vị vận đơn LUMORA...</span>
+              <span>Đang kết nối hệ thống định vị vận đơn...</span>
             </div>
           ) : loadError && !order ? (
             <div className="lumora-track-modal__alert lumora-track-modal__alert--error">
@@ -192,7 +216,8 @@ export default function OrderTrackingModal({
                   variant="full"
                   createdAt={order?.createdAt}
                   updatedAt={order?.updatedAt}
-                  cancelReason={order?.cancelReason}
+                  reason={order?.reason || order?.cancelReason}
+                  cancelReason={order?.cancelReason || order?.reason}
                 />
               </div>
 
@@ -220,7 +245,7 @@ export default function OrderTrackingModal({
                     </p>
                     <div className="lumora-track-modal__perk-badge">
                       <ShieldCheck size={13} className="text-amber-800" />
-                      <span>Dịch vụ giao nhận White-Glove chuẩn Châu Âu</span>
+                      <span>Dịch vụ giao nhận tiêu chuẩn</span>
                     </div>
                   </div>
                 </div>
@@ -233,40 +258,27 @@ export default function OrderTrackingModal({
                   </div>
                   <div className="lumora-track-modal__card-body">
                     <div className="lumora-track-modal__items-preview">
-                      {items.map((it, idx) => {
-                        const fallbackImg =
-                          PRODUCT_IMAGE_OVERRIDES[it.productName]?.[0] ||
-                          FALLBACK_PRODUCT_IMAGE;
-                        const itemImg =
-                          it.image ||
-                          it.productImage ||
-                          it.product?.images?.[0] ||
-                          fallbackImg;
-
-                        return (
-                          <div
-                            key={it._id || idx}
-                            className="lumora-track-modal__item-row"
-                          >
-                            <img
-                              src={itemImg}
-                              alt={it.productName || "Sản phẩm"}
-                              className="lumora-track-modal__item-thumb"
-                              onError={(e) => {
-                                e.currentTarget.src = FALLBACK_PRODUCT_IMAGE;
-                              }}
-                            />
-                            <div className="lumora-track-modal__item-info">
-                              <span className="lumora-track-modal__item-title">
-                                {it.productName || "Nội thất cao cấp LUMORA"}
-                              </span>
-                              <span className="lumora-track-modal__item-qty">
-                                Số lượng: <strong>x{it.quantity || 1}</strong>
-                              </span>
-                            </div>
+                      {items.map((it, idx) => (
+                        <div
+                          key={it._id || idx}
+                          className="lumora-track-modal__item-row"
+                        >
+                          <div className="lumora-track-modal__item-thumb">
+                            <Package size={24} strokeWidth={1.5} className="text-amber-800" />
                           </div>
-                        );
-                      })}
+                          <div className="lumora-track-modal__item-info">
+                            <span className="lumora-track-modal__item-title">
+                              {it.productName || "Sản phẩm nội thất"}
+                            </span>
+                            <div className="lumora-track-modal__item-sku">
+                              SKU: {it.sku || it.variantId || "N/A"}
+                            </div>
+                            <span className="lumora-track-modal__item-qty">
+                              Số lượng: <strong>x{it.quantity || 1}</strong>
+                            </span>
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   </div>
                 </div>
@@ -278,17 +290,23 @@ export default function OrderTrackingModal({
         {/* Footer Actions */}
         <div className="lumora-track-modal__footer">
           <div className="lumora-track-modal__footer-left">
-            {canCancel && onCancelClick && (
-              <button
-                type="button"
-                className="lumora-track-modal__btn-cancel-order"
-                onClick={() => {
-                  onClose();
-                  onCancelClick(order);
-                }}
-              >
-                Hủy Đơn Hàng
-              </button>
+            {isCancelled ? (
+              <div style={{ fontSize: "0.85rem", color: "#DC2626", fontWeight: 500 }}>
+                Lý do: {order?.reason || order?.cancelReason || "Người mua yêu cầu hủy"}
+              </div>
+            ) : (
+              canCancel && (
+                <button
+                  type="button"
+                  className="lumora-track-modal__btn-cancel-order"
+                  onClick={() => {
+                    // CHỈ mở Modal lý do, không gọi API hay hiện thông báo thành công trước
+                    setCancelModalVisible(true);
+                  }}
+                >
+                  Hủy đơn hàng
+                </button>
+              )
             )}
           </div>
 
@@ -315,6 +333,14 @@ export default function OrderTrackingModal({
             </button>
           </div>
         </div>
+
+        {/* Modal nhập lý do hủy đơn hàng */}
+        <CancelOrderModal
+          isOpen={cancelModalVisible}
+          onClose={() => setCancelModalVisible(false)}
+          order={order}
+          onCancelled={handleCancelledSuccess}
+        />
       </div>
     </div>
   );

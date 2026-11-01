@@ -99,7 +99,8 @@ export default function QuickOrderTrack({
               if (errorMsg) setErrorMsg(null);
             }}
             placeholder="Nhập mã đơn hàng (ví dụ: 6512abcd34ef56...)"
-            className="w-full pl-11 pr-10 py-3 bg-white border border-[#DED5C8] rounded-xl text-xs sm:text-sm text-[#252525] placeholder:text-[#A8A096] focus:outline-none focus:ring-2 focus:ring-[#8A6A48]/30 focus:border-[#8A6A48] transition-all shadow-inner"
+            style={{ paddingLeft: "3rem" }}
+            className="w-full pl-12 pr-10 py-3 bg-white border border-[#DED5C8] rounded-xl text-xs sm:text-sm text-[#252525] placeholder:text-[#A8A096] focus:outline-none focus:ring-2 focus:ring-[#8A6A48]/30 focus:border-[#8A6A48] transition-all shadow-inner"
           />
 
           {searchCode && (

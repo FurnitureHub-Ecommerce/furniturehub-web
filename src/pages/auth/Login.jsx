@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import { authAPI } from "../../services/api";
+import { useAuth } from "../../context/AuthContext";
 import { Eye, EyeOff, ArrowLeft, CheckCircle2, AlertCircle } from "lucide-react";
 import bgImage from "../../assets/background.jpg";
 import "./Login.css";
@@ -17,6 +18,7 @@ const Login = () => {
 
   const navigate = useNavigate();
   const location = useLocation();
+  const { login } = useAuth();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -38,8 +40,13 @@ const Login = () => {
         throw new Error("Cấu trúc phản hồi từ Server không đúng định dạng!");
       }
 
-      localStorage.setItem("token", token);
-      localStorage.setItem("user", JSON.stringify(user));
+      const fromPath = location.state?.from?.pathname || location.state?.from;
+      if (login) {
+        login(user, token, fromPath);
+      } else {
+        localStorage.setItem("token", token);
+        localStorage.setItem("user", JSON.stringify(user));
+      }
 
       const userRole = user?.role?.toUpperCase();
 
@@ -48,8 +55,6 @@ const Login = () => {
         message: "Đăng nhập thành công! Đang chuyển hướng...",
       });
 
-      // Lấy trang trước đó nếu có (ví dụ: đang ở /cart, /wishlist, /checkout hoặc trang chi tiết sản phẩm)
-      const fromPath = location.state?.from?.pathname || location.state?.from;
       // Khách hàng: chuyển hướng về trang trước đó HOẶC Trang Chủ ("/"), tuyệt đối không ép nhảy vào /products
       const customerDestination = (fromPath && fromPath !== "/login" && fromPath !== "/register" && fromPath !== "/products")
         ? fromPath
@@ -109,7 +114,7 @@ const Login = () => {
             <div className="auth-header">
               <h2
                 style={{
-                  fontFamily: "Bodoni Moda",
+                  fontFamily: "'Montserrat', sans-serif " ,
                   fontSize: "clamp(2rem, 2.5vw, 2.7rem)",
                   color: "#1a1a1a",
                   letterSpacing: "-0.02em",
@@ -205,7 +210,7 @@ const Login = () => {
             </form>
 
             <div className="auth-footer">
-              Chưa có tài khoản Customer? <Link to="/register">Đăng ký ngay</Link>
+              Chưa có tài khoản ? <Link to="/register">Đăng ký ngay</Link>
             </div>
           </div>
         </div>

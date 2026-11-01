@@ -132,6 +132,11 @@ export function SearchModal() {
                     src={product.image}
                     alt={product.name}
                     className="search-result-thumb"
+                    onError={(e) => {
+                      e.currentTarget.onerror = null;
+                      e.currentTarget.src =
+                        'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=400&q=80';
+                    }}
                   />
                   <div className="search-result-info">
                     <span className="search-result-name">{product.name}</span>

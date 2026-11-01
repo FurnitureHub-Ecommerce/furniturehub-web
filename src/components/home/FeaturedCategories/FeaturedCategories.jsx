@@ -1,40 +1,99 @@
-import { useRef } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowUpRight, ChevronLeft, ChevronRight, AlertCircle, RefreshCw, FolderX } from 'lucide-react';
-import { CATEGORIES as MOCK_CATEGORIES } from '../../../data/lumoraData';
+import { ChevronLeft, ChevronRight, AlertCircle, RefreshCw, FolderX, ArrowRight, Sparkles } from 'lucide-react';
 import { Skeleton } from '../../common/Skeleton/Skeleton';
 import { formatCategoryName } from '../../../utils/formatters';
+import { categoryAPI, productAPI, getApiErrorMessage } from '../../../services/api';
 import './FeaturedCategories.css';
 
 export function FeaturedCategories({
-  isLoading = false,
-  error = null,
-  categories = null,
+  categories: initialCategories = null,
+  isLoading: initialLoading = false,
+  error: initialError = null,
   onRetry = null,
 }) {
   const scrollRef = useRef(null);
+  const [categories, setCategories] = useState([]);
+  const [categoryImages, setCategoryImages] = useState({});
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const displayCategories =
-    categories && categories.length > 0
-      ? categories
-      : MOCK_CATEGORIES;
+  const fetchBackendData = async () => {
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      // Gọi đồng thời API Danh mục và API Sản phẩm với limit: 100 (tối đa theo quy định backend <=100)
+      const [catRes, prodRes] = await Promise.all([
+        categoryAPI.getCategories(),
+        productAPI.getProducts ? productAPI.getProducts({ limit: 100 }) : productAPI.getProducts(),
+      ]);
+
+      const catList = Array.isArray(catRes)
+        ? catRes
+        : (catRes?.data?.categories || catRes?.data || []);
+
+      const prodList = Array.isArray(prodRes)
+        ? prodRes
+        : (prodRes?.data?.products || prodRes?.data || prodRes?.rows || []);
+
+      // Xây dựng kho lưu trữ ảnh từ danh sách sản phẩm trả về
+      const imageMap = {};
+      
+      (Array.isArray(prodList) ? prodList : []).forEach((product) => {
+        const rawCatId = product.categoryId?._id || product.categoryId?.id || product.categoryId;
+        const catIdStr = rawCatId ? String(rawCatId) : null;
+
+        if (catIdStr && Array.isArray(product.images) && product.images.length > 0) {
+          const firstImg = product.images.find((img) => typeof img === 'string' && img.trim() !== '');
+          // Ưu tiên lưu ảnh đầu tiên tìm được cho danh mục này
+          if (firstImg && !imageMap[catIdStr]) {
+            imageMap[catIdStr] = firstImg;
+          }
+        }
+      });
+
+      setCategoryImages(imageMap);
+      setCategories(catList);
+    } catch (err) {
+      console.error('Lỗi tải danh mục từ API:', err);
+      setError(getApiErrorMessage(err, 'Không thể kết nối máy chủ để tải danh mục.'));
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  useEffect(() => {
+    if (initialCategories !== null) {
+      const list = Array.isArray(initialCategories)
+        ? initialCategories
+        : initialCategories?.categories || initialCategories?.data || [];
+      setCategories(list);
+      setIsLoading(initialLoading);
+      setError(initialError);
+    } else {
+      fetchBackendData();
+    }
+  }, [initialCategories, initialLoading, initialError]);
 
   const handleScroll = (direction) => {
     if (!scrollRef.current) return;
-    const scrollAmount = direction === 'left' ? -340 : 340;
+    const scrollAmount = direction === 'left' ? -360 : 360;
     scrollRef.current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
   };
 
   return (
-    <section className="section categories-section" aria-label="Danh mục nổi bật">
+    <section className="section categories-section" aria-label="Khám phá theo không gian">
       <div className="container">
         {/* Section Header */}
         <div className="categories__header">
-          <div>
-            <span className="section-heading__badge">Không gian kiến trúc</span>
-            <h2 className="categories__title">Danh mục nổi bật</h2>
+          <div className="categories__header-text">
+            <span className="section-heading__badge">
+              <Sparkles size={11} style={{ display: 'inline', marginRight: 6 }} />
+              Bộ sưu tập theo không gian
+            </span>
+            <h2 className="categories__title">Khám Phá Theo Không Gian</h2>
             <p className="categories__subtitle">
-              Khám phá bộ sưu tập nội thất được chế tác tỉ mỉ, thiết kế cho không gian sống hài hòa.
+              Mỗi không gian sống là một tác phẩm nghệ thuật với đường nét kiến trúc tinh tế, hòa hợp thiên nhiên.
             </p>
           </div>
 
@@ -42,7 +101,7 @@ export function FeaturedCategories({
             <button
               className="categories__arrow-btn"
               onClick={() => handleScroll('left')}
-              aria-label="Cuộn danh mục sang trái"
+              aria-label="Cuộn sang trái"
               type="button"
             >
               <ChevronLeft size={20} />
@@ -50,7 +109,7 @@ export function FeaturedCategories({
             <button
               className="categories__arrow-btn"
               onClick={() => handleScroll('right')}
-              aria-label="Cuộn danh mục sang phải"
+              aria-label="Cuộn sang phải"
               type="button"
             >
               <ChevronRight size={20} />
@@ -58,77 +117,101 @@ export function FeaturedCategories({
           </div>
         </div>
 
-        {/* UI State Conditionals */}
+        {/* Trạng thái Lỗi API */}
         {error ? (
-          <div className="ui-state-card ui-state-card--error" style={{ textAlign: 'center', padding: '40px 20px', border: '1px solid var(--lumora-border)', borderRadius: 'var(--radius-lg)', backgroundColor: '#FFFBFB' }}>
-            <AlertCircle size={36} color="#D93838" style={{ marginBottom: '12px' }} />
-            <h3 style={{ fontSize: '1.2rem', fontFamily: 'var(--font-serif)', marginBottom: '8px' }}>Không thể tải danh mục từ API</h3>
-            <p style={{ color: 'var(--lumora-text-muted)', fontSize: '0.9rem', marginBottom: '16px' }}>{error}</p>
-            {onRetry && (
-              <button onClick={onRetry} style={{ padding: '10px 20px', backgroundColor: 'var(--lumora-text-main)', color: '#FFF', borderRadius: 'var(--radius-md)', gap: '8px', cursor: 'pointer' }}>
-                <RefreshCw size={16} />
-                <span>Thử Lại API</span>
-              </button>
-            )}
+          <div className="ui-state-card ui-state-card--error">
+            <AlertCircle size={38} color="#D93838" style={{ marginBottom: '12px' }} />
+            <h3 style={{ fontSize: '1.2rem', fontWeight: 600, marginBottom: '8px', color: '#2C221E' }}>Không thể tải danh mục từ Backend</h3>
+            <p style={{ color: '#6E615B', fontSize: '0.9rem', marginBottom: '20px' }}>{error}</p>
+            <button
+              onClick={onRetry || fetchBackendData}
+              className="ui-state-retry-btn"
+              type="button"
+            >
+              <RefreshCw size={16} />
+              <span>Thử Lại Kết Nối API</span>
+            </button>
           </div>
-        ) : displayCategories.length === 0 && !isLoading ? (
-          <div className="ui-state-card ui-state-card--empty" style={{ textAlign: 'center', padding: '40px 20px', border: '1px solid var(--lumora-border)', borderRadius: 'var(--radius-lg)' }}>
-            <FolderX size={36} color="var(--lumora-text-light)" style={{ marginBottom: '12px' }} />
-            <h3 style={{ fontSize: '1.2rem', fontFamily: 'var(--font-serif)', marginBottom: '4px' }}>Chưa có danh mục nào từ API</h3>
-            <p style={{ color: 'var(--lumora-text-muted)', fontSize: '0.9rem' }}>Dữ liệu từ máy chủ hiện đang rỗng.</p>
+        ) : categories.length === 0 && !isLoading ? (
+          /* Trạng thái trống */
+          <div className="ui-state-card ui-state-card--empty">
+            <FolderX size={38} color="#A3968C" style={{ marginBottom: '12px' }} />
+            <h3 style={{ fontSize: '1.2rem', fontWeight: 600, marginBottom: '8px', color: '#2C221E' }}>Chưa có danh mục nào từ máy chủ</h3>
+            <p style={{ color: '#6E615B', fontSize: '0.9rem' }}>Hiện chưa có danh mục sản phẩm nào trong hệ thống Backend.</p>
           </div>
         ) : (
+          /* Render dữ liệu thực từ API */
           <div className="categories__track-wrapper">
             <div className="categories__track" ref={scrollRef}>
               {isLoading
-                ? Array.from({ length: 5 }).map((_, idx) => (
+                ? Array.from({ length: 4 }).map((_, idx) => (
                     <div key={idx} className="category-card-skeleton">
-                      <Skeleton height="380px" borderRadius="var(--radius-md)" />
+                      <Skeleton height="380px" borderRadius="16px" />
                     </div>
                   ))
-                : displayCategories.map((category, idx) => {
-                    const fallbackImg = [
-                      'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=800&q=80',
-                      'https://images.unsplash.com/photo-1617806118233-18e1de247200?auto=format&fit=crop&w=800&q=80',
-                      'https://images.unsplash.com/photo-1616594039964-ae9021a400a0?auto=format&fit=crop&w=800&q=80',
-                      'https://images.unsplash.com/photo-1524758631624-e2822e304c36?auto=format&fit=crop&w=800&q=80',
-                      'https://images.unsplash.com/photo-1507473885765-e6ed057f782c?auto=format&fit=crop&w=800&q=80',
-                      'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?auto=format&fit=crop&w=800&q=80',
-                    ][idx % 6];
+                : categories.map((cat, idx) => {
+                    const catIdStr = String(cat._id || cat.id || '');
+                    const rawName = cat.name || '';
+                    const displayName = formatCategoryName(rawName) || rawName;
+
+                    const categoryImage =
+                      (Array.isArray(cat.images) && cat.images[0]) ||
+                      cat.image ||
+                      cat.imageUrl ||
+                      categoryImages[catIdStr];
 
                     return (
                       <Link
-                        key={category.id || category._id}
-                        to={category.link || `/category/${category.id || category._id}`}
+                        key={catIdStr || idx}
+                        to={`/category/${cat.slug || catIdStr}`}
                         className="category-card"
-                        aria-label={`Khám phá bộ sưu tập ${category.name}`}
+                        aria-label={`Khám phá không gian ${displayName}`}
                       >
                         <div className="category-card__image-wrap">
-                          <img
-                            src={category.image || fallbackImg}
-                            alt={category.name}
-                            className="category-card__image"
-                            loading="lazy"
-                          />
+                          {categoryImage ? (
+                            <img
+                              src={categoryImage}
+                              alt={displayName}
+                              className="category-card__image"
+                              loading="lazy"
+                            />
+                          ) : (
+                            <div className="category-card__no-image">
+                              <span>Chưa có ảnh sản phẩm</span>
+                            </div>
+                          )}
                           <div className="category-card__overlay" />
                         </div>
 
-                      <div className="category-card__content">
-                        <div className="category-card__top">
-                          <span className="category-card__count">{category.itemCount || 'Thiết kế cao cấp'}</span>
-                          <div className="category-card__icon-btn">
-                            <ArrowUpRight size={18} />
+                        <div className="category-card__content">
+                          <div>
+                            <span className="category-card__item-tag">
+                              {cat.itemCount ? `${cat.itemCount} sản phẩm` : 'Bộ sưu tập tuyển chọn'}
+                            </span>
+                            <h3 className="category-card__name">
+                              {displayName}
+                            </h3>
+                            <p className="category-card__desc">
+                              {cat.description || 'Chưa có mô tả cho danh mục này.'}
+                            </p>
+                          </div>
+
+                          <div className="category-card__footer">
+                            <span className="category-card__cta-text">
+                              Khám phá không gian
+                            </span>
+
+                            <div
+                              className="category-card__action-btn"
+                              title={`Xem bộ sưu tập ${displayName}`}
+                            >
+                              <ArrowRight size={16} />
+                            </div>
                           </div>
                         </div>
-
-                        <div className="category-card__bottom">
-                          <h3 className="category-card__name">{formatCategoryName(category.name)}</h3>
-                          <p className="category-card__desc">{category.description || 'Nội thất sang trọng Wabi-Sabi & Bắc Âu.'}</p>
-                        </div>
-                      </div>
-                    </Link>
-                  );
-                })}
+                      </Link>
+                    );
+                  })}
             </div>
           </div>
         )}

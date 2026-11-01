@@ -51,7 +51,7 @@
 }
 
 .address-page__title {
-  font-family: var(--font-serif, "Cormorant Garamond", serif);
+  font-family: 'Playfair Display', serif;
   font-size: 2.4rem;
   font-weight: 600;
   color: var(--lumora-text-main, #252525);

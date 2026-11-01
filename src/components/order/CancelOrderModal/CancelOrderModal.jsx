@@ -3,20 +3,17 @@ import {
   AlertTriangle,
   X,
   Loader2,
-  CheckCircle,
-  HelpCircle,
-  Package,
 } from "lucide-react";
-import { orderAPI, getApiErrorMessage } from "../../../services/api";
+import { cancelOrder, getApiErrorMessage } from "../../../services/api";
 import { formatCurrency } from "../../../utils/formatters";
 import "./CancelOrderModal.css";
 
 const CANCEL_REASONS = [
-  "Muốn thay đổi địa chỉ giao hàng hoặc thông tin liên hệ",
+  "Đổi ý không mua nữa",
+  "Thời gian giao hàng lâu",
+  "Muốn đổi địa chỉ nhận hàng",
   "Muốn thay đổi sản phẩm, số lượng hoặc phiên bản màu sắc",
   "Đặt nhầm hoặc phát sinh đơn hàng trùng lặp",
-  "Thời gian giao hàng dự kiến không phù hợp",
-  "Thay đổi kế hoạch tài chính / chưa có nhu cầu sử dụng",
   "Lý do khác",
 ];
 
@@ -26,14 +23,14 @@ export default function CancelOrderModal({
   order,
   onCancelled,
 }) {
-  const [selectedReason, setSelectedReason] = useState(CANCEL_REASONS[0]);
+  const [selectedReason, setSelectedReason] = useState("");
   const [customReason, setCustomReason] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState(null);
 
   useEffect(() => {
     if (isOpen) {
-      setSelectedReason(CANCEL_REASONS[0]);
+      setSelectedReason("");
       setCustomReason("");
       setErrorMsg(null);
       setIsSubmitting(false);
@@ -55,7 +52,12 @@ export default function CancelOrderModal({
   if (!isOpen || !order) return null;
 
   const orderId = order._id || order.id;
-  const isPending = String(order.status).toLowerCase() === "pending";
+  const isPending = String(order.status || "").toLowerCase() === "pending";
+  const isOtherSelected = selectedReason === "Lý do khác";
+  const resolvedReason = isOtherSelected
+    ? customReason.trim()
+    : selectedReason.trim();
+  const isReasonValid = Boolean(resolvedReason);
 
   const handleConfirmCancel = async () => {
     if (!orderId) return;
@@ -65,30 +67,34 @@ export default function CancelOrderModal({
       return;
     }
 
-    const finalReason =
-      selectedReason === "Lý do khác"
-        ? customReason.trim() || "Khách hàng yêu cầu hủy đơn."
-        : selectedReason;
+    if (!isReasonValid) {
+      setErrorMsg("Vui lòng chọn hoặc nhập lý do hủy đơn hàng.");
+      return;
+    }
 
     setIsSubmitting(true);
     setErrorMsg(null);
 
     try {
-      const res = await orderAPI.cancelOrder(orderId, {
-        reason: finalReason,
-        status: "cancelled",
-      });
+      // Payload chuẩn: CHỈ truyền duy nhất trường reason, tuyệt đối KHÔNG gửi kèm status
+      const payload = {
+        reason: resolvedReason,
+      };
+      const res = await cancelOrder(orderId, payload);
 
-      const updatedOrder = res?.data?.order || res?.data || {
+      const apiOrder = res?.data?.order || res?.data || {};
+      const updatedOrder = {
         ...order,
-        status: "cancelled",
-        cancelReason: finalReason,
+        ...apiOrder,
+        status: apiOrder.status || "cancelled",
+        reason: apiOrder.reason || apiOrder.cancelReason || payload.reason,
+        cancelReason: apiOrder.cancelReason || apiOrder.reason || payload.reason,
       };
 
-      if (onCancelled) {
-        onCancelled(updatedOrder);
-      }
       onClose();
+      if (onCancelled) {
+        await onCancelled(updatedOrder);
+      }
     } catch (err) {
       const msg = getApiErrorMessage(
         err,
@@ -143,7 +149,7 @@ export default function CancelOrderModal({
             </div>
             <div className="cancel-modal__summary-row">
               <span>Số lượng sản phẩm:</span>
-              <strong>{order.items?.length || 0} mục</strong>
+              <strong>{order.items?.length || 0} sản phẩm</strong>
             </div>
             <div className="cancel-modal__summary-row">
               <span>Tổng giá trị đơn:</span>
@@ -156,7 +162,7 @@ export default function CancelOrderModal({
           {/* Chọn lý do hủy */}
           <div className="cancel-modal__field">
             <label className="cancel-modal__label">
-              Vui lòng cho LUMORA biết lý do quý khách hủy đơn:
+              Vui lòng chọn lý do hủy đơn hàng: <span style={{ color: "#DC2626" }}>*</span>
             </label>
             <div className="cancel-modal__reasons">
               {CANCEL_REASONS.map((reason) => (
@@ -173,7 +179,10 @@ export default function CancelOrderModal({
                     name="cancel_reason"
                     value={reason}
                     checked={selectedReason === reason}
-                    onChange={() => setSelectedReason(reason)}
+                    onChange={() => {
+                      setSelectedReason(reason);
+                      if (errorMsg) setErrorMsg(null);
+                    }}
                     disabled={isSubmitting}
                     className="cancel-modal__radio"
                   />
@@ -182,16 +191,25 @@ export default function CancelOrderModal({
               ))}
             </div>
 
-            {selectedReason === "Lý do khác" && (
-              <textarea
-                className="cancel-modal__textarea"
-                rows={3}
-                placeholder="Nhập chi tiết lý do hủy đơn của quý khách (tùy chọn)..."
-                value={customReason}
-                onChange={(e) => setCustomReason(e.target.value)}
-                disabled={isSubmitting}
-                maxLength={300}
-              />
+            {isOtherSelected && (
+              <div style={{ marginTop: "8px", display: "flex", flexDirection: "column", gap: "6px" }}>
+                <label className="cancel-modal__label" style={{ fontSize: "0.82rem" }}>
+                  Nhập chi tiết lý do hủy đơn (bắt buộc): <span style={{ color: "#DC2626" }}>*</span>
+                </label>
+                <textarea
+                  className="cancel-modal__textarea"
+                  rows={3}
+                  placeholder="Vui lòng nhập chi tiết lý do hủy đơn hàng của quý khách..."
+                  value={customReason}
+                  onChange={(e) => {
+                    setCustomReason(e.target.value);
+                    if (errorMsg) setErrorMsg(null);
+                  }}
+                  disabled={isSubmitting}
+                  maxLength={300}
+                  required
+                />
+              </div>
             )}
           </div>
 
@@ -217,14 +235,14 @@ export default function CancelOrderModal({
             type="button"
             className="cancel-modal__btn-danger"
             onClick={handleConfirmCancel}
-            disabled={isSubmitting}
+            disabled={isSubmitting || !isReasonValid}
           >
             {isSubmitting ? (
               <>
                 <Loader2 size={16} className="cancel-modal__spinner" /> Đang Xử Lý Hủy...
               </>
             ) : (
-              "Xác Nhận Hủy Đơn"
+              "Xác nhận hủy"
             )}
           </button>
         </div>

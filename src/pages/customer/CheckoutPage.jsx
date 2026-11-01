@@ -1,8 +1,7 @@
-import React, { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import {
   ShoppingBag,
-  CreditCard,
   Truck,
   ShieldCheck,
   CheckCircle2,
@@ -14,7 +13,6 @@ import {
   Banknote,
   Sparkles,
   Info,
-  Clock,
   Copy,
   Check,
 } from "lucide-react";
@@ -24,6 +22,7 @@ import {
   checkoutAPI,
   orderAPI,
   paymentAPI,
+  productAPI,
   getApiErrorMessage,
 } from "../../services/api";
 import { formatCurrency } from "../../utils/formatters";
@@ -38,14 +37,6 @@ export default function CheckoutPage() {
 
   // Authentication check
   const token = localStorage.getItem("token");
-  const currentUser = (() => {
-    try {
-      const u = localStorage.getItem("user");
-      return u ? JSON.parse(u) : null;
-    } catch {
-      return null;
-    }
-  })();
 
   // State
   const [addresses, setAddresses] = useState([]);
@@ -67,8 +58,8 @@ export default function CheckoutPage() {
   const [createdOrder, setCreatedOrder] = useState(null);
   const [copiedField, setCopiedField] = useState(null);
 
-  // 1. Fetch addresses
-  const loadAddresses = useCallback(async () => {
+// 1. Fetch addresses chuẩn xác không bị mất lựa chọn hiện tại
+  const loadAddresses = useCallback(async (preferId = null) => {
     if (!token) return;
     setIsAddressLoading(true);
     try {
@@ -77,10 +68,19 @@ export default function CheckoutPage() {
       const safeList = Array.isArray(list) ? list : [];
       setAddresses(safeList);
 
-      // Default selection
       if (safeList.length > 0) {
-        const def = safeList.find((a) => a.isDefault);
-        setSelectedAddressId((prev) => prev || (def ? def._id || def.id : safeList[0]._id || safeList[0].id));
+        setSelectedAddressId((currentId) => {
+          // Nếu có ID ưu tiên vừa thêm/sửa, chọn luôn ID đó
+          if (preferId && safeList.some(a => (a._id || a.id) === preferId)) {
+            return preferId;
+          }
+          // Nếu hiện tại chưa có selection, chọn địa chỉ mặc định hoặc cái đầu tiên
+          if (!currentId || !safeList.some(a => (a._id || a.id) === currentId)) {
+            const def = safeList.find((a) => a.isDefault);
+            return def ? def._id || def.id : safeList[0]._id || safeList[0].id;
+          }
+          return currentId;
+        });
       }
     } catch (err) {
       console.warn("Could not load addresses:", err.message);
@@ -90,10 +90,17 @@ export default function CheckoutPage() {
   }, [token]);
 
   useEffect(() => {
-    if (token) {
+    let isCancelled = false;
+    const initCheckout = async () => {
+      await Promise.resolve();
+      if (isCancelled || !token) return;
       loadAddresses();
       fetchCart();
-    }
+    };
+    initCheckout();
+    return () => {
+      isCancelled = true;
+    };
   }, [token, loadAddresses, fetchCart]);
 
   // 2. Validate Cart & Address via checkoutAPI.validate({ addressId })
@@ -162,6 +169,46 @@ export default function CheckoutPage() {
     if (cart.length === 0) {
       setSubmitError("Giỏ hàng của bạn đang trống.");
       return;
+    }
+
+    // Kiểm tra tồn kho của toàn bộ sản phẩm trong giỏ trước khi đặt hàng
+    for (const item of cart) {
+      const prod = item.product || {};
+      const prodName = prod.name || item.name || "Sản phẩm";
+      let stock =
+        item.stock ??
+        item.inventoryQuantity ??
+        item.availableStock ??
+        prod.stock ??
+        prod.inventoryQuantity ??
+        prod.availableStock ??
+        prod.stockCount;
+
+      if (stock === undefined || stock === null) {
+        const prodId = prod.id || prod._id || item.productId;
+        const varId = item.variantId || prod.variantId;
+        if (prodId && productAPI.getProductVariants) {
+          try {
+            const res = await productAPI.getProductVariants(prodId);
+            const variants = res?.data?.variants || res?.data || [];
+            if (Array.isArray(variants) && variants.length > 0) {
+              const matched = varId
+                ? variants.find((v) => String(v._id || v.id) === String(varId)) || variants[0]
+                : variants[0];
+              stock = matched?.stock ?? matched?.inventoryQuantity ?? matched?.availableStock;
+            }
+          } catch {
+            // ignore fallback error
+          }
+        }
+      }
+
+      if (stock !== undefined && stock !== null && Number(item.quantity) > Number(stock)) {
+        const alertMsg = `Sản phẩm ${prodName} chỉ còn ${Number(stock)} cái trong kho`;
+        window.alert(alertMsg);
+        setSubmitError(alertMsg);
+        return;
+      }
     }
 
     setIsSubmitting(true);
@@ -282,7 +329,7 @@ export default function CheckoutPage() {
           </Link>
         </div>
         <div className="checkout-header__titles">
-          <span className="checkout-badge">SECURE WHITE-GLOVE CHECKOUT</span>
+          <span className="checkout-badge">TIÊU CHUẨN GIAO HÀNG WHITE-GLOVE</span>
           <h1 className="checkout-title">Xác Nhận & Thanh Toán Đơn Hàng</h1>
           <p className="checkout-subtitle">
             Hoàn tất các bước dưới đây để chúng tôi chuẩn bị chế tác và giao nhận sản phẩm tận nhà quý khách.
@@ -355,32 +402,66 @@ export default function CheckoutPage() {
 
                 return (
                   <div key={item.itemId || prod.id} className="checkout-item-card">
-                    <img
-                      src={prod.image}
-                      alt={prod.name}
-                      className="checkout-item-card__img"
-                      onError={(e) => {
-                        e.currentTarget.onerror = null;
-                        e.currentTarget.src =
-                          "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=300&q=80";
-                      }}
-                    />
+                    <div className="checkout-item-card__img-wrapper">
+                      <img
+                        src={prod.image || prod.images?.[0]}
+                        alt={prod.name}
+                        className="checkout-item-card__img"
+                        onError={(e) => {
+                          e.currentTarget.onerror = null;
+                          e.currentTarget.src =
+                            "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=300&q=80";
+                        }}
+                      />
+                      <span className="checkout-item-card__badge-qty">x{item.quantity}</span>
+                    </div>
+
                     <div className="checkout-item-card__details">
+                      <span className="checkout-item-card__brand">
+                        {prod.brand?.name || prod.categoryName || "LUMORA DESIGN"}
+                      </span>
                       <h4 className="checkout-item-card__name">{prod.name}</h4>
-                      <p className="checkout-item-card__variant">
-                        Phiên bản: {prod.variantLabel || "Tiêu chuẩn nghệ nhân"}
-                      </p>
-                      <div className="checkout-item-card__meta">
-                        <span className="checkout-item-card__unit-price">
-                          {formatVND(itemPrice)}
-                        </span>
-                        <span className="checkout-item-card__qty">
-                          Số lượng: <strong>x{item.quantity}</strong>
-                        </span>
+                      
+                     
+                      {/* Hiển thị chi tiết phiên bản tách dòng rõ ràng */}
+                      <div className="checkout-item-card__variants-stack">
+                        {prod.variantLabel ? (
+                          // Nếu chuỗi phân loại có chứa dấu gạch chéo '/', ta tự động tách thành các dòng riêng biệt
+                          prod.variantLabel.split("/").map((part, idx) => {
+                            const trimmed = part.trim();
+                            if (!trimmed) return null;
+                            
+                            // Gắn nhãn thông minh dựa vào nội dung hoặc vị trí
+                            let label = "Chi tiết";
+                            if (idx === 0) label = "Màu sắc";
+                            else if (idx === 1 && /[\d–xXmm]+/.test(trimmed)) label = "Kích thước";
+                            else if (idx >= 2 || /mặt|khung|gỗ|đá|chất liệu/i.test(trimmed)) label = "Chất liệu";
+
+                            return (
+                              <div key={idx} className="checkout-variant-row">
+                                <span className="checkout-variant-label">{label}:</span> 
+                                <strong className="checkout-variant-val">{trimmed}</strong>
+                              </div>
+                            );
+                          })
+                        ) : (
+                          <div className="checkout-variant-row">
+                            <span className="checkout-variant-label">Phiên bản:</span> 
+                            <strong className="checkout-variant-val">Tiêu chuẩn nghệ nhân thủ công</strong>
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="checkout-item-card__unit-price">
+                        Đơn giá: <strong>{formatVND(itemPrice)} / sản phẩm</strong>
                       </div>
                     </div>
-                    <div className="checkout-item-card__subtotal">
-                      {formatVND(subtotal)}
+
+                    <div className="checkout-item-card__right">
+                      <span className="checkout-item-card__subtotal-label">Thành tiền</span>
+                      <div className="checkout-item-card__subtotal">
+                        {formatVND(subtotal)}
+                      </div>
                     </div>
                   </div>
                 );
@@ -403,7 +484,7 @@ export default function CheckoutPage() {
             </div>
           </section>
 
-          {/* STEP 3: Payment Method Selection (Task 8) */}
+          {/* STEP 3: Payment Method Selection */}
           <section className="checkout-section">
             <div className="checkout-section__header">
               <span className="checkout-step-number">3</span>
@@ -503,7 +584,7 @@ export default function CheckoutPage() {
               <div className="checkout-summary-row">
                 <span className="flex items-center gap-1">
                   Vận chuyển White-Glove
-                  <span className="checkout-pill">VIP</span>
+                  <span className="checkout-pill">CAO CẤP</span>
                 </span>
                 <span className="text-emerald-700 font-semibold">Miễn phí</span>
               </div>
@@ -571,6 +652,7 @@ export default function CheckoutPage() {
       {showBankModal && createdOrder && (
         <div className="vietqr-modal-overlay">
           <div className="vietqr-modal">
+            <img src={`https://img.vietqr.io/image/MB-0912345678-compact2.png?amount=...`} />
             <div className="vietqr-modal__header">
               <div className="vietqr-modal__badge">THANH TOÁN VIETQR 24/7</div>
               <h2 className="vietqr-modal__title">Thông Tin Chuyển Khoản Ngân Hàng</h2>
@@ -586,8 +668,14 @@ export default function CheckoutPage() {
                   src={`https://img.vietqr.io/image/MB-0912345678-compact2.png?amount=${
                     createdOrder.totalAmount || finalAmount
                   }&addInfo=DH${(createdOrder._id || "").slice(-6).toUpperCase()}&accountName=CONG%20TY%20NOI%20THAT%20LUMORA`}
-                  alt="VietQR Code"
+                  alt="Mã thanh toán VietQR"
                   className="vietqr-card__img"
+                  onError={(e) => {
+                    e.currentTarget.onerror = null;
+                    e.currentTarget.src =
+                      "https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=" +
+                      encodeURIComponent(`https://lumora.vn/pay/${createdOrder._id || ""}`);
+                  }}
                 />
                 <span className="vietqr-card__hint">
                   Quét bằng ứng dụng ngân hàng hoặc VNPAY

@@ -1,13 +1,38 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+/* eslint-disable react-refresh/only-export-components */
+import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { cartAPI, wishlistAPI, productAPI } from '../services/api';
+import { useAuth } from './AuthContext';
 
 const ShopContext = createContext();
 
 const WISHLIST_STORAGE_KEY = 'furniturehub_wishlist';
 const CART_STORAGE_KEY = 'furniturehub_cart';
 
+function pickDefinedStock(...values) {
+  for (const val of values) {
+    if (val !== undefined && val !== null && val !== '' && !Number.isNaN(Number(val))) {
+      return Number(val);
+    }
+  }
+  return undefined;
+}
+
+export function getCartItemStock(item) {
+  if (!item) return undefined;
+  const prod = item.product || {};
+  return pickDefinedStock(
+    item.stock,
+    item.inventoryQuantity,
+    item.availableStock,
+    prod.stock,
+    prod.inventoryQuantity,
+    prod.availableStock,
+    prod.stockCount,
+  );
+}
+
 export function ShopProvider({ children }) {
-  const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+  const { token } = useAuth();
 
   // Initial guest state from localStorage (starts empty if no saved data, NO MOCK DATA)
   const [cart, setCart] = useState(() => {
@@ -48,7 +73,7 @@ export function ShopProvider({ children }) {
   }, []);
 
   // Helper to normalize Backend Cart Item into UI friendly structure
-  const normalizeCartItem = (item) => {
+  const normalizeCartItem = useCallback((item, fallbackStockMap = {}) => {
     const variant = typeof item.variantId === 'object' && item.variantId !== null ? item.variantId : {};
     const prod = typeof variant.productId === 'object' && variant.productId !== null ? variant.productId : {};
     const prodId = prod._id || prod.id || variant.productId || item._id;
@@ -57,12 +82,33 @@ export function ShopProvider({ children }) {
     const image = prod.images?.[0] || prod.image || 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=600&q=80';
     const variantLabel = [variant.color, variant.size, variant.material].filter(Boolean).join(' / ') || 'Tiêu chuẩn';
 
+    const stock = pickDefinedStock(
+      item.stock,
+      item.inventoryQuantity,
+      item.availableStock,
+      variant.stock,
+      variant.inventoryQuantity,
+      variant.availableStock,
+      prod.stock,
+      prod.inventoryQuantity,
+      prod.availableStock,
+      variantId ? fallbackStockMap[String(variantId)] : undefined,
+      prodId ? fallbackStockMap[String(prodId)] : undefined,
+    );
+
     return {
       itemId: item._id,
       variantId,
       quantity: item.quantity || 1,
       unitPrice: price,
       itemSubtotal: item.itemSubtotal || price * (item.quantity || 1),
+      ...(stock !== undefined
+        ? {
+            stock,
+            inventoryQuantity: stock,
+            availableStock: stock,
+          }
+        : {}),
       product: {
         id: prodId,
         _id: prodId,
@@ -71,28 +117,108 @@ export function ShopProvider({ children }) {
         image,
         variantLabel,
         slug: prod.slug || prodId,
+        ...(stock !== undefined
+          ? {
+              stock,
+              inventoryQuantity: stock,
+              availableStock: stock,
+              stockCount: stock,
+            }
+          : {}),
       },
     };
-  };
+  }, []);
+
+  // Enrich cart items with real-time variant stock from Backend
+  const enrichCartItemsWithStock = useCallback(async (items) => {
+    if (!Array.isArray(items) || items.length === 0) return items;
+
+    const prodIdsToFetch = [
+      ...new Set(
+        items
+          .map((it) => String(it.product?.id || it.product?._id || ''))
+          .filter(Boolean)
+      ),
+    ];
+
+    if (prodIdsToFetch.length === 0) return items;
+
+    const variantStockByKey = {};
+    await Promise.all(
+      prodIdsToFetch.map(async (pId) => {
+        try {
+          const res = await productAPI.getProductVariants(pId);
+          const variants = res.data?.variants || res.data || [];
+          if (Array.isArray(variants)) {
+            variants.forEach((v) => {
+              const vId = String(v._id || v.id || '');
+              const vStock = pickDefinedStock(v.stock, v.inventoryQuantity, v.availableStock);
+              if (vId && vStock !== undefined) {
+                variantStockByKey[vId] = vStock;
+              }
+            });
+            if (variants.length > 0 && variantStockByKey[pId] === undefined) {
+              const firstStock = pickDefinedStock(
+                variants[0].stock,
+                variants[0].inventoryQuantity,
+                variants[0].availableStock,
+              );
+              if (firstStock !== undefined) {
+                variantStockByKey[pId] = firstStock;
+              }
+            }
+          }
+        } catch {
+          // ignore error for individual product
+        }
+      })
+    );
+
+    return items.map((it) => {
+      const vKey = it.variantId ? String(it.variantId) : '';
+      const pKey = String(it.product?.id || it.product?._id || '');
+      const resolvedStock = pickDefinedStock(
+        vKey ? variantStockByKey[vKey] : undefined,
+        getCartItemStock(it),
+        pKey ? variantStockByKey[pKey] : undefined,
+      );
+
+      if (resolvedStock === undefined) return it;
+
+      return {
+        ...it,
+        stock: resolvedStock,
+        inventoryQuantity: resolvedStock,
+        availableStock: resolvedStock,
+        product: {
+          ...(it.product || {}),
+          stock: resolvedStock,
+          inventoryQuantity: resolvedStock,
+          availableStock: resolvedStock,
+          stockCount: resolvedStock,
+        },
+      };
+    });
+  }, []);
 
   // Fetch real Cart from Backend if logged in
-  const fetchCart = useCallback(async () => {
+  const fetchCart = useCallback(async (showSpinner = false) => {
     const currentToken = localStorage.getItem('token');
     if (!currentToken) return;
 
-    setIsCartLoading(true);
+    if (showSpinner) setIsCartLoading(true);
     setCartError(null);
     try {
       const res = await cartAPI.getCart();
       const rawCart = res.data?.cart;
       if (rawCart && Array.isArray(rawCart.items)) {
-        const normalized = rawCart.items.map(normalizeCartItem);
-        setCart(normalized);
-        localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(normalized));
+        const normalized = rawCart.items.map((it) => normalizeCartItem(it));
+        const enriched = await enrichCartItemsWithStock(normalized);
+        setCart(enriched);
+        localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(enriched));
       }
     } catch (err) {
       console.warn('Không thể đồng bộ giỏ hàng với máy chủ, tự động dùng dữ liệu đã lưu:', err.message);
-      // Fallback êm dịu: lấy dữ liệu từ localStorage để không làm gián đoạn trải nghiệm người dùng
       try {
         const saved = localStorage.getItem(CART_STORAGE_KEY);
         if (saved) {
@@ -106,16 +232,16 @@ export function ShopProvider({ children }) {
       }
       setCartError(null);
     } finally {
-      setIsCartLoading(false);
+      if (showSpinner) setIsCartLoading(false);
     }
-  }, []);
+  }, [normalizeCartItem, enrichCartItemsWithStock]);
 
   // Fetch real Wishlist from Backend if logged in
-  const fetchWishlist = useCallback(async () => {
+  const fetchWishlist = useCallback(async (showSpinner = false) => {
     const currentToken = localStorage.getItem('token');
     if (!currentToken) return;
 
-    setIsWishlistLoading(true);
+    if (showSpinner) setIsWishlistLoading(true);
     setWishlistError(null);
     try {
       const res = await wishlistAPI.getWishlist();
@@ -124,24 +250,51 @@ export function ShopProvider({ children }) {
       const detailed = [];
 
       rawList.forEach((item) => {
-        const p = typeof item.productId === 'object' && item.productId !== null ? item.productId : null;
-        const pId = p ? (p._id || p.id) : item.productId;
+        const p =
+          typeof item.productId === 'object' && item.productId !== null
+            ? item.productId
+            : typeof item.product === 'object' && item.product !== null
+            ? item.product
+            : typeof item === 'object' && item !== null && (item.name || item._id)
+            ? item
+            : null;
+
+        const pId = p ? (p._id || p.id) : (item.productId || item.product || item._id || item.id);
+        const price =
+          item.product?.price ||
+          item.product?.minPrice ||
+          item.productId?.price ||
+          item.productId?.minPrice ||
+          item.price ||
+          item.minPrice ||
+          p?.price ||
+          p?.minPrice ||
+          0;
+
+        const name = p?.name || item.product?.name || item.productId?.name || item.name || 'Sản phẩm nội thất';
+        const image =
+          p?.images?.[0] ||
+          p?.image ||
+          item.product?.images?.[0] ||
+          item.product?.image ||
+          item.images?.[0] ||
+          item.image ||
+          'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=600&q=80';
+
         if (pId) {
           ids.push(String(pId));
-          if (p) {
-            detailed.push({
-              id: p._id || p.id,
-              _id: p._id || p.id,
-              name: p.name || 'Sản phẩm',
-              price: p.minPrice || p.price || 0,
-              image: p.images?.[0] || p.image || '',
-              description: p.description || '',
-              slug: p.slug || p._id || p.id,
-              variantLabel: 'Bộ sưu tập độc bản',
-              rating: 4.9,
-              reviewCount: 18,
-            });
-          }
+          detailed.push({
+            id: String(pId),
+            _id: String(pId),
+            name,
+            price: Number(price) || 0,
+            image,
+            description: p?.description || item.description || '',
+            slug: p?.slug || item.slug || String(pId),
+            variantLabel: 'Bộ sưu tập độc bản',
+            rating: 4.9,
+            reviewCount: 18,
+          });
         }
       });
 
@@ -150,7 +303,6 @@ export function ShopProvider({ children }) {
       localStorage.setItem(WISHLIST_STORAGE_KEY, JSON.stringify(ids));
     } catch (err) {
       console.warn('Không thể đồng bộ danh sách yêu thích với máy chủ, tự động dùng dữ liệu đã lưu:', err.message);
-      // Fallback êm dịu: lấy dữ liệu từ localStorage để không làm gián đoạn trải nghiệm người dùng
       try {
         const saved = localStorage.getItem(WISHLIST_STORAGE_KEY);
         if (saved) {
@@ -164,18 +316,47 @@ export function ShopProvider({ children }) {
       }
       setWishlistError(null);
     } finally {
-      setIsWishlistLoading(false);
+      if (showSpinner) setIsWishlistLoading(false);
     }
   }, []);
 
-  // Sync on mount or token changes
+  // Sync on mount or token changes reactively
   useEffect(() => {
-    const currentToken = localStorage.getItem('token');
-    if (currentToken) {
-      fetchCart();
-      fetchWishlist();
-    }
-  }, [fetchCart, fetchWishlist]);
+    let isCancelled = false;
+
+    const performSync = async () => {
+      await Promise.resolve();
+      if (isCancelled) return;
+
+      if (token) {
+        fetchCart(false);
+        fetchWishlist(false);
+      } else {
+        try {
+          const savedCart = localStorage.getItem(CART_STORAGE_KEY);
+          const parsedCart = savedCart ? JSON.parse(savedCart) : [];
+          if (Array.isArray(parsedCart) && parsedCart.length > 0) {
+            const enriched = await enrichCartItemsWithStock(parsedCart);
+            if (!isCancelled) setCart(enriched);
+          } else {
+            setCart([]);
+          }
+          const savedWishlist = localStorage.getItem(WISHLIST_STORAGE_KEY);
+          setWishlist(savedWishlist ? JSON.parse(savedWishlist) : []);
+        } catch {
+          setCart([]);
+          setWishlist([]);
+        }
+        setWishlistProducts([]);
+      }
+    };
+
+    performSync();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [token, fetchCart, fetchWishlist, enrichCartItemsWithStock]);
 
   // Persist guest cart & wishlist to localStorage
   useEffect(() => {
@@ -197,37 +378,79 @@ export function ShopProvider({ children }) {
   // Add to Cart
   const addToCart = async (productOrVariant, qty = 1) => {
     const currentToken = localStorage.getItem('token');
-    
-    // Find variantId if available
-    let variantId = productOrVariant.variantId || productOrVariant.defaultVariantId;
-    const prodId = String(productOrVariant.id || productOrVariant._id || productOrVariant.product?.id || productOrVariant.product?._id);
+    const targetProduct = productOrVariant.product || productOrVariant;
+    let variantId = productOrVariant.variantId || productOrVariant.defaultVariantId || targetProduct.variantId;
+    const prodId = String(productOrVariant.id || productOrVariant._id || targetProduct.id || targetProduct._id);
 
-    // If authenticated, send to Backend API
-    if (currentToken) {
-      setIsCartLoading(true);
+    let knownStock = pickDefinedStock(
+      productOrVariant.stock,
+      productOrVariant.inventoryQuantity,
+      productOrVariant.availableStock,
+      productOrVariant.stockCount,
+      targetProduct.stock,
+      targetProduct.inventoryQuantity,
+      targetProduct.availableStock,
+      targetProduct.stockCount,
+    );
+
+    if ((!variantId || knownStock === undefined) && prodId) {
       try {
-        // If variantId is not directly known, try to fetch first variant of product
-        if (!variantId && prodId) {
-          try {
-            const varRes = await productAPI.getProductVariants(prodId);
-            const varList = varRes.data?.variants || [];
-            if (varList.length > 0) {
-              variantId = varList[0]._id;
-            }
-          } catch {
-            // ignore
+        const varRes = await productAPI.getProductVariants(prodId);
+        const varList = varRes.data?.variants || [];
+        if (varList.length > 0) {
+          const matchedVar = variantId
+            ? varList.find((v) => String(v._id || v.id) === String(variantId)) || varList[0]
+            : varList.find((v) => (v.availableStock ?? v.stock ?? 0) > 0) || varList[0];
+          if (!variantId && matchedVar) {
+            variantId = matchedVar._id || matchedVar.id;
+          }
+          if (knownStock === undefined && matchedVar) {
+            knownStock = pickDefinedStock(
+              matchedVar.stock,
+              matchedVar.inventoryQuantity,
+              matchedVar.availableStock,
+            );
           }
         }
+      } catch {
+        // ignore
+      }
+    }
 
-        if (variantId) {
-          const res = await cartAPI.addItem({ variantId, quantity: qty });
-          const rawCart = res.data?.cart;
-          if (rawCart && Array.isArray(rawCart.items)) {
-            setCart(rawCart.items.map(normalizeCartItem));
-            showToast(`Đã thêm vào giỏ hàng`, 'bag');
-            setIsCartLoading(false);
-            return;
+    // Kiểm tra số lượng cộng dồn so với tồn kho
+    const existingCartItem = cart.find((item) => {
+      if (variantId && item.variantId) {
+        return String(item.variantId) === String(variantId);
+      }
+      return String(item.product?.id || item.product?._id) === prodId;
+    });
+    const currentInCartQty = existingCartItem?.quantity || 0;
+    const effectiveStock = pickDefinedStock(knownStock, getCartItemStock(existingCartItem));
+
+    if (effectiveStock !== undefined && currentInCartQty + qty > effectiveStock) {
+      const prodName = targetProduct.name || productOrVariant.name || 'Sản phẩm';
+      window.alert(`Sản phẩm ${prodName} chỉ còn ${effectiveStock} cái trong kho`);
+      return;
+    }
+
+    // If authenticated, send to Backend API
+    if (currentToken && variantId) {
+      setIsCartLoading(true);
+      try {
+        const res = await cartAPI.addItem({ variantId, quantity: qty });
+        const rawCart = res.data?.cart;
+        if (rawCart && Array.isArray(rawCart.items)) {
+          const fallbackStockMap = {};
+          if (effectiveStock !== undefined) {
+            fallbackStockMap[String(variantId)] = effectiveStock;
+            fallbackStockMap[prodId] = effectiveStock;
           }
+          const normalized = rawCart.items.map((it) => normalizeCartItem(it, fallbackStockMap));
+          const enriched = await enrichCartItemsWithStock(normalized);
+          setCart(enriched);
+          showToast(`Đã thêm vào giỏ hàng`, 'bag');
+          setIsCartLoading(false);
+          return;
         }
       } catch (err) {
         console.warn('Backend cart add failed, falling back to local:', err.message);
@@ -237,24 +460,53 @@ export function ShopProvider({ children }) {
     }
 
     // Guest / local fallback
-    const targetProduct = productOrVariant.product || productOrVariant;
     const itemTargetId = String(targetProduct.id || targetProduct._id);
+    const itemTargetVariant = variantId;
 
     setCart((prev) => {
-      const existing = prev.find((item) => String(item.product.id || item.product._id) === itemTargetId);
+      const existing = prev.find((item) => {
+        if (itemTargetVariant && item.variantId) {
+          return String(item.variantId) === String(itemTargetVariant);
+        }
+        return String(item.product.id || item.product._id) === itemTargetId;
+      });
       if (existing) {
-        return prev.map((item) =>
-          String(item.product.id || item.product._id) === itemTargetId
-            ? { ...item, quantity: item.quantity + qty }
-            : item
-        );
+        return prev.map((item) => {
+          const match = itemTargetVariant && item.variantId
+            ? String(item.variantId) === String(itemTargetVariant)
+            : String(item.product.id || item.product._id) === itemTargetId;
+          if (!match) return item;
+          const nextStock = pickDefinedStock(effectiveStock, getCartItemStock(item));
+          const nextQty = nextStock !== undefined ? Math.min(nextStock, item.quantity + qty) : item.quantity + qty;
+          return {
+            ...item,
+            quantity: nextQty,
+            ...(nextStock !== undefined
+              ? { stock: nextStock, inventoryQuantity: nextStock, availableStock: nextStock }
+              : {}),
+            product: {
+              ...item.product,
+              ...(nextStock !== undefined
+                ? { stock: nextStock, inventoryQuantity: nextStock, availableStock: nextStock, stockCount: nextStock }
+                : {}),
+            },
+          };
+        });
       }
       return [
         ...prev,
         {
           itemId: `local-${Date.now()}`,
+          variantId: itemTargetVariant,
           quantity: qty,
           unitPrice: targetProduct.price || targetProduct.basePrice || targetProduct.minPrice || 0,
+          ...(effectiveStock !== undefined
+            ? {
+                stock: effectiveStock,
+                inventoryQuantity: effectiveStock,
+                availableStock: effectiveStock,
+              }
+            : {}),
           product: {
             id: itemTargetId,
             _id: itemTargetId,
@@ -263,6 +515,14 @@ export function ShopProvider({ children }) {
             image: targetProduct.image || targetProduct.images?.[0] || '',
             variantLabel: targetProduct.variantLabel || 'Tiêu chuẩn',
             slug: targetProduct.slug || itemTargetId,
+            ...(effectiveStock !== undefined
+              ? {
+                  stock: effectiveStock,
+                  inventoryQuantity: effectiveStock,
+                  availableStock: effectiveStock,
+                  stockCount: effectiveStock,
+                }
+              : {}),
           },
         },
       ];
@@ -276,7 +536,6 @@ export function ShopProvider({ children }) {
     const currentToken = localStorage.getItem('token');
     const targetKey = String(itemIdOrProdId);
 
-    // Find the item
     const targetItem = cart.find(
       (item) => item.itemId === targetKey || String(item.product.id || item.product._id) === targetKey
     );
@@ -314,6 +573,11 @@ export function ShopProvider({ children }) {
 
     if (newQty <= 0) {
       removeFromCart(itemIdOrProdId);
+      return;
+    }
+
+    const itemStock = getCartItemStock(targetItem);
+    if (delta > 0 && itemStock !== undefined && newQty > itemStock) {
       return;
     }
 
@@ -381,7 +645,8 @@ export function ShopProvider({ children }) {
     });
   };
 
-  const cartCount = cart.reduce((total, item) => total + (item.quantity || 1), 0);
+  const cartCount = cart.length;
+  const totalQuantity = cart.reduce((total, item) => total + (item.quantity || 1), 0);
   const cartSubtotal = cart.reduce(
     (total, item) => total + (item.unitPrice || item.product?.price || 0) * (item.quantity || 1),
     0
@@ -397,6 +662,7 @@ export function ShopProvider({ children }) {
         updateCartQuantity,
         clearCart,
         cartCount,
+        totalQuantity,
         cartSubtotal,
         isCartOpen,
         setIsCartOpen,

@@ -40,7 +40,7 @@ export function CartDrawer() {
         <div className="cart-drawer-header">
           <h2
             className="cart-drawer-title"
-            style={{ fontFamily: '"Bodoni Moda", serif', fontSize: "1.8rem" }}
+            style={{ fontFamily: "'Playfair Display', serif", fontSize: "1.8rem" }}
           >
             <span>Giỏ Hàng</span>
             <span className="cart-drawer-badge">{cartCount}</span>
@@ -81,7 +81,7 @@ export function CartDrawer() {
           {cart.length === 0 ? (
             <div className="cart-drawer-empty">
               <ShoppingBag size={48} className="cart-empty-icon" />
-              <p style={{ fontFamily: '"Bodoni Moda", serif' }}>
+              <p style={{ fontFamily: "'Playfair Display', serif" }}>
                 Giỏ hàng của bạn đang trống
               </p>
             </div>
@@ -90,12 +90,28 @@ export function CartDrawer() {
               const product = item.product || {};
               const itemPrice = item.unitPrice || product.price || 0;
               const itemId = item.itemId || product.id;
+              const itemStock =
+                item.stock ??
+                item.inventoryQuantity ??
+                item.availableStock ??
+                product.stock ??
+                product.inventoryQuantity ??
+                product.availableStock ??
+                product.stockCount;
+              const isMaxStockReached =
+                itemStock !== undefined &&
+                itemStock !== null &&
+                Number(item.quantity) >= Number(itemStock);
 
               return (
                 <div key={itemId} className="cart-item">
                   <img
-                    src={product.image}
+                    src={product.image || 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=300&q=80'}
                     alt={product.name}
+                    onError={(e) => {
+                      e.currentTarget.onerror = null;
+                      e.currentTarget.src = 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=300&q=80';
+                    }}
                     className="cart-item-image"
                   />
                   <div className="cart-item-details">
@@ -103,7 +119,7 @@ export function CartDrawer() {
                       <div>
                         <h3
                           className="cart-item-title"
-                          style={{ fontFamily: '"Bodoni Moda", serif' }}
+                          style={{ fontFamily: "'Montserrat', sans-serif" }}
                         >
                           <Link 
                             to={`/product/${product.slug || product.id}`}
@@ -141,6 +157,11 @@ export function CartDrawer() {
                         <button
                           className="cart-qty-btn"
                           onClick={() => updateCartQuantity(itemId, 1)}
+                          disabled={isMaxStockReached}
+                          style={{
+                            cursor: isMaxStockReached ? "not-allowed" : "pointer",
+                            opacity: isMaxStockReached ? 0.35 : 1,
+                          }}
                           aria-label="Tăng số lượng"
                           type="button"
                         >
@@ -165,7 +186,7 @@ export function CartDrawer() {
             <div className="cart-summary-row">
               <span
                 style={{
-                  fontFamily: '"Bodoni Moda", serif',
+                  fontFamily: "'Montserrat', sans-serif",
                   fontSize: "1.3rem",
                 }}
               >
@@ -173,7 +194,7 @@ export function CartDrawer() {
               </span>
               <span
                 className="cart-total-price"
-                style={{ fontFamily: '"Bodoni Moda", serif' }}
+                style={{ fontFamily: "'Montserrat', sans-serif" }}
               >
                 {formatVND(cartSubtotal)}
               </span>
@@ -184,7 +205,7 @@ export function CartDrawer() {
                 className="cart-checkout-btn"
                 onClick={() => setIsCartOpen(false)}
               >
-                <span>Xem Giỏ Hàng & Thanh Toán</span>
+                <span >Xem giỏ hàng</span>
                 <ArrowRight size={16} />
               </Link>
             </div>

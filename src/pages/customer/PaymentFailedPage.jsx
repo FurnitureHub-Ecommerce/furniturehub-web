@@ -1,4 +1,3 @@
-import React from "react";
 import { Link, useSearchParams, useLocation, useParams } from "react-router-dom";
 import {
   AlertTriangle,
@@ -6,7 +5,6 @@ import {
   ShoppingBag,
   Headphones,
   ShieldAlert,
-  ArrowRight,
   HelpCircle,
 } from "lucide-react";
 import "./PaymentResult.css";

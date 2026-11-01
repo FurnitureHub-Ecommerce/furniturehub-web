@@ -1,35 +1,47 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, useParams, Link } from "react-router-dom";
 import {
-  ArrowLeft,
   ShoppingBag,
   Heart,
-  Check,
-  ShieldCheck,
-  Truck,
   Trash2,
   Plus,
   Minus,
   ArrowRight,
-  AlertTriangle,
-  RefreshCw,
-  Wifi,
+  Sparkles,
+  Compass,
+  Star,
 } from "lucide-react";
 import { useShop } from "../../context/ShopContext";
-import { categoryAPI, productAPI, orderAPI } from "../../services/api";
-import Rating from "../../components/common/Rating/Rating";
-import { 
-  formatCurrency, 
-  formatCategoryName, 
-  PRODUCT_IMAGE_OVERRIDES, 
-  getProductMetrics 
-} from "../../utils/formatters";
+import { categoryAPI, productAPI } from "../../services/api";
 import "./Wishlist.css";
 
-const formatVND = (price) => formatCurrency(price);
+// ==========================================
+// CÁC HÀM FORMATTER ĐỘC LẬP TẠI CHỖ
+// ==========================================
+const formatVND = (price) => {
+  if (price == null || isNaN(price)) return "0 đ";
+  return Number(price).toLocaleString("vi-VN") + " đ";
+};
+
+// Từ điển dịch chuẩn xác tên các danh mục từ Backend sang Tiếng Việt
+const CATEGORY_TRANSLATIONS = {
+  "Home Decor & Lighting": "Trang Trí & Đèn",
+  "TV Units & Media": "Kệ Tivi & Giải Trí",
+  "Bookshelves & Shelving": "Kệ Sách & Tủ Kệ",
+  "Coffee & Side Tables": "Bàn Trà & Bàn Góc",
+  "Wardrobes & Cabinets": "Tủ Quần Áo & Tủ Lớn",
+  "Office Desks & Chairs": "Bàn Ghế Làm Việc",
+  "Dining Tables & Chairs": "Bàn Ghế Ăn",
+  "Beds & Mattresses": "Giường Ngủ & Nệm",
+  "Sofa & Armchair": "Sofa & Ghế Thư Giãn",
+};
+
+const getProductMetrics = () => {
+  return { rating: 5.0, reviewCount: 12 };
+};
 
 // ==========================================
-// 1. CATEGORY PAGE
+// 1. CATEGORY PAGE (Tối ưu hóa UI gọn gàng, chuyển trang tức thì)
 // ==========================================
 export function CategoryPage() {
   const { id } = useParams();
@@ -37,103 +49,169 @@ export function CategoryPage() {
 
   const [isLoading, setIsLoading] = useState(true);
   const [apiError, setApiError] = useState(null);
-  const [categoryInfo, setCategoryInfo] = useState(null);
+  const [categoryInfo, setCategoryInfo] = useState({
+    name: 'Danh Mục Sản Phẩm',
+    description: 'Tuyển tập các thiết kế kiến trúc đương đại được tuyển chọn từ LUMORA.',
+  });
   const [products, setProducts] = useState([]);
 
   useEffect(() => {
     let isMounted = true;
-    async function loadCategoryData() {
-      setIsLoading(true);
-      setApiError(null);
+    
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    setIsLoading(true);
+    setApiError(null);
 
+    async function fetchCategoryDataFast() {
       try {
-        const [catRes, prodRes] = await Promise.allSettled([
+        // Tăng limit lên 500 để lấy trọn vẹn toàn bộ sản phẩm từ cũ đến mới
+        const [categoriesRes, productsRes] = await Promise.all([
           categoryAPI.getCategories(),
-          productAPI.getProducts(),
+          productAPI.getProducts({ limit: 100 })
         ]);
 
         if (!isMounted) return;
 
-        const allCats = catRes.status === 'fulfilled' && catRes.value?.data
-          ? (Array.isArray(catRes.value.data) ? catRes.value.data : catRes.value.data.categories || [])
-          : [];
+        const categoriesList = categoriesRes?.data?.categories || categoriesRes?.data || [];
+        const productsList = productsRes?.data?.products || productsRes?.data || [];
 
-        const allProds = prodRes.status === 'fulfilled' && prodRes.value?.data
-          ? (Array.isArray(prodRes.value.data) ? prodRes.value.data : prodRes.value.data.products || [])
-          : [];
+        // Tìm chính xác danh mục đang được chọn trên URL
+        const matchedCategory = categoriesList.find((cat) => {
+          const catId = String(cat._id || cat.id || "").trim();
+          const catSlug = (cat.slug || "").toLowerCase().trim();
+          const catName = (cat.name || "").toLowerCase().trim();
+          const targetId = String(id || "").toLowerCase().trim();
 
-        // Find current category
-        const matchedCat = allCats.find((c) => c._id === id || c.id === id || c.name?.toLowerCase().includes(id?.toLowerCase())) || {
-          _id: id,
-          name: id ? id.replace(/-/g, ' ').toUpperCase() : 'BỘ SƯU TẬP NỘI THẤT',
-          description: 'Tuyển tập các thiết kế kiến trúc đương đại được tuyển chọn từ LUMORA.',
-        };
-        setCategoryInfo(matchedCat);
-
-        // Filter products for this category
-        const filtered = allProds.filter((p) => {
-          if (!id) return true;
-          const pCatId = typeof p.categoryId === 'object' ? p.categoryId?._id : p.categoryId;
-          return pCatId === id || pCatId === matchedCat._id;
+          return (
+            catId === String(id).trim() ||
+            catSlug === targetId ||
+            catName === targetId ||
+            Object.keys(CATEGORY_TRANSLATIONS).some(
+              (key) => key.toLowerCase() === catName && CATEGORY_TRANSLATIONS[key].toLowerCase() === targetId
+            )
+          );
         });
 
-        setProducts(filtered.length > 0 ? filtered : allProds);
+        if (matchedCategory) {
+          const rawName = matchedCategory.name || '';
+          const translatedName = CATEGORY_TRANSLATIONS[rawName] || rawName;
+
+          setCategoryInfo({
+            name: translatedName,
+            description: matchedCategory.description || 'Tuyển tập các thiết kế kiến trúc đương đại được tuyển chọn từ LUMORA.',
+          });
+        } else {
+          setCategoryInfo({
+            name: "Bộ Sưu Tập Nội Thất",
+            description: 'Tuyển tập các thiết kế kiến trúc đương đại được tuyển chọn từ LUMORA.',
+          });
+        }
+
+        const matchedCatId = String(matchedCategory?._id || matchedCategory?.id || "").trim();
+        const targetSlug = String(id || "").toLowerCase().trim();
+        const matchedCatName = String(matchedCategory?.name || "").toLowerCase().trim();
+
+        // Lọc chuẩn xác tuyệt đối: Chỉ lấy sản phẩm thuộc đúng ID danh mục hoặc đúng tên/slug danh mục đó
+        const filteredProducts = productsList.filter((product) => {
+          if (!id) return true;
+          
+          const rawProdCat = product.categoryId;
+          
+          // Lấy ID danh mục của sản phẩm
+          const productCatId = typeof rawProdCat === 'object' && rawProdCat !== null
+            ? String(rawProdCat._id || rawProdCat.id || "").trim() 
+            : String(rawProdCat || "").trim();
+            
+          // Lấy tên danh mục của sản phẩm
+          const productCategoryName = typeof rawProdCat === 'object' && rawProdCat !== null
+            ? String(rawProdCat.name || "").toLowerCase().trim()
+            : String(product.categoryName || "").toLowerCase().trim();
+
+          // Lấy slug danh mục của sản phẩm
+          const productCategorySlug = String(product.categorySlug || "").toLowerCase().trim();
+
+          // So sánh khít sao cho không bị lẫn lộn giữa các danh mục khác nhau
+          const isIdMatch = (matchedCatId && productCatId === matchedCatId) || productCatId === targetSlug;
+          const isSlugMatch = productCategorySlug === targetSlug;
+          const isNameMatch = productCategoryName === targetSlug || (matchedCatName && productCategoryName === matchedCatName);
+
+          return isIdMatch || isSlugMatch || isNameMatch;
+        });
+
+        // Sắp xếp sản phẩm từ cũ đến mới (hoặc từ mới đến cũ tùy ý, ở đây xếp từ cũ đến mới theo createdAt)
+        filteredProducts.sort((a, b) => new Date(a.createdAt || 0) - new Date(b.createdAt || 0));
+
+        setProducts(filteredProducts);
       } catch (err) {
-        if (isMounted) setApiError(err.message || 'Lỗi khi tải danh mục');
+        console.error("Lỗi tải dữ liệu danh mục:", err);
+        if (isMounted) {
+          setApiError('Không thể tải dữ liệu sản phẩm từ hệ thống.');
+        }
       } finally {
         if (isMounted) setIsLoading(false);
       }
     }
 
-    loadCategoryData();
+    fetchCategoryDataFast();
+
+    return () => {
+      isMounted = false;
+    };
   }, [id]);
 
   return (
-    <div className="section container" style={{ paddingTop: "40px", paddingBottom: "80px" }}>
-      <div style={{ marginBottom: "40px", textAlign: "center" }}>
-        <span className="section-heading__badge" style={{ fontFamily: '"Bodoni Moda", serif', fontSize: "0.8rem" }}>
-          Bộ Sưu Tập LUMORA
+    <div className="section container" style={{ paddingTop: "32px", paddingBottom: "64px", maxWidth: "1280px" }}>
+      {/* Tiêu đề danh mục gọn gàng */}
+      <div style={{ marginBottom: "32px", textAlign: "center" }}>
+        <span className="section-heading__badge" style={{ fontSize: "0.75rem", letterSpacing: "0.15em" }}>
+          BỘ SƯU TẬP LUMORA
         </span>
-        <h1 style={{ fontFamily: '"Bodoni Moda", serif', fontSize: "3rem", textTransform: "capitalize", margin: "12px 0" }}>
-          {formatCategoryName(categoryInfo?.name) || 'Danh mục sản phẩm'}
+        <h1 style={{ fontFamily: "'Playfair Display', serif", fontSize: "2.4rem", margin: "8px 0 10px" }}>
+          {categoryInfo?.name}
         </h1>
-        <p style={{ color: "var(--lumora-text-muted)", marginTop: "8px", maxWidth: "600px", marginInline: "auto" }}>
-          {categoryInfo?.description || 'Khám phá các thiết kế nội thất cao cấp chế tác tinh xảo.'}
+        <p style={{ color: "var(--lumora-text-muted)", fontSize: "0.9rem", maxWidth: "550px", marginInline: "auto", lineHeight: 1.5 }}>
+          {categoryInfo?.description}
         </p>
       </div>
 
       {isLoading ? (
-        <div style={{ textAlign: "center", padding: "60px", color: "var(--lumora-text-muted)" }}>
-          Đang tải sản phẩm từ hệ thống LUMORA...
+        <div style={{ textAlign: "center", padding: "60px 0", color: "var(--lumora-text-muted)", fontSize: "0.95rem" }}>
+          Đang tải sản phẩm...
         </div>
       ) : apiError ? (
-        <div style={{ textAlign: "center", padding: "40px", backgroundColor: "#fff5f5", borderRadius: "12px", border: "1px solid #feb2b2" }}>
-          <p style={{ color: "#c53030", fontWeight: "600" }}>{apiError}</p>
+        <div style={{ textAlign: "center", padding: "30px", backgroundColor: "#fff5f5", borderRadius: "10px", border: "1px solid #feb2b2" }}>
+          <p style={{ color: "#c53030", fontWeight: "600", fontSize: "0.9rem" }}>{apiError}</p>
         </div>
       ) : products.length === 0 ? (
-        <div style={{ textAlign: "center", padding: "60px 20px" }}>
-          <p style={{ fontSize: "1.1rem", color: "var(--lumora-text-muted)" }}>Chưa có sản phẩm nào trong danh mục này.</p>
-          <Link to="/products" className="wishlist-page__primary-btn" style={{ marginTop: "16px", display: "inline-flex" }}>
+        <div style={{ textAlign: "center", padding: "50px 20px" }}>
+          <p style={{ fontSize: "1rem", color: "var(--lumora-text-muted)" }}>Chưa có sản phẩm nào trong danh mục này.</p>
+          <Link to="/products" className="wishlist-page__primary-btn" style={{ marginTop: "14px", display: "inline-flex", fontSize: "0.85rem" }}>
             Khám phá tất cả sản phẩm
           </Link>
         </div>
       ) : (
-        <div className="product-showcase__grid">
+        /* Grid sản phẩm tối ưu cân đối 4 cột, không bị bự chảng */
+        <div style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))",
+          gap: "24px",
+        }}>
           {products.map((product) => {
             const prodId = String(product._id || product.id);
             const isWishlisted = wishlist.includes(prodId);
-            const price = product.minPrice ?? product.price ?? 0;
-            const overrideImages = PRODUCT_IMAGE_OVERRIDES[product.name];
-            const img = overrideImages?.[0] || product.images?.[0] || product.image || 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=600&q=80';
-            const metrics = getProductMetrics(product.name, product.rating, product.reviewCount);
+            const price = product.minPrice ?? product.price ?? product.unitPrice ?? 0;
+            const img = product.images?.[0] || product.image || 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=600&q=80';
+            const metrics = getProductMetrics();
 
             return (
-              <article key={prodId} className="product-card">
-                <div className="product-card__image-container">
+              <article key={prodId} className="product-card" style={{ borderRadius: "10px", overflow: "hidden", border: "1px solid var(--lumora-border, #E2DBD0)", backgroundColor: "#fff", display: "flex", flexDirection: "column" }}>
+                {/* Phần ảnh card gọn gàng vừa mắt */}
+                <div className="product-card__image-container" style={{ position: "relative", height: "220px", overflow: "hidden", backgroundColor: "#f9f8f6" }}>
                   <img 
                     src={img} 
                     alt={product.name} 
                     className="product-card__image product-card__image--primary"
+                    style={{ width: "100%", height: "100%", objectFit: "cover", transition: "transform 0.4s ease" }}
                     onError={(e) => {
                       e.currentTarget.onerror = null;
                       e.currentTarget.src = 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=600&q=80';
@@ -144,26 +222,32 @@ export function CategoryPage() {
                     onClick={() => toggleWishlist(prodId)}
                     type="button"
                     title={isWishlisted ? "Xóa khỏi yêu thích" : "Lưu yêu thích"}
+                    style={{ position: "absolute", top: "10px", right: "10px", background: "rgba(255,255,255,0.85)", border: "none", borderRadius: "50%", width: "32px", height: "32px", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", boxShadow: "0 2px 8px rgba(0,0,0,0.08)" }}
                   >
-                    <Heart size={18} fill={isWishlisted ? "#8A6A48" : "none"} color={isWishlisted ? "#8A6A48" : "currentColor"} />
+                    <Heart size={16} fill={isWishlisted ? "#8A6A48" : "none"} color={isWishlisted ? "#8A6A48" : "currentColor"} />
                   </button>
                 </div>
 
-                <div className="product-card__details">
-                  <div className="product-card__meta">
-                    <span className="product-card__variant">
-                      {product.brandId?.name || "LUMORA"}
-                    </span>
-                    <Rating score={metrics.rating} reviewCount={metrics.reviewCount} />
+                {/* Chi tiết thông tin sản phẩm */}
+                <div className="product-card__details" style={{ padding: "16px", display: "flex", flexDirection: "column", flex: 1, justifyContent: "space-between" }}>
+                  <div>
+                    <div className="product-card__meta" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "6px" }}>
+                      <span className="product-card__variant" style={{ fontSize: "0.72rem", textTransform: "uppercase", letterSpacing: "0.08em", color: "#888" }}>
+                        {typeof product.brandId === 'object' ? product.brandId?.name : "LUMORA"}
+                      </span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '3px', fontSize: '0.78rem', color: '#666' }}>
+                        <Star size={12} fill="#8A6A48" color="#8A6A48" /> {metrics.rating}
+                      </div>
+                    </div>
+
+                    <h3 className="product-card__title" style={{ fontSize: "0.92rem", fontWeight: "600", margin: "0 0 10px 0", lineHeight: 1.4, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
+                      <Link to={`/product/${product.slug || prodId}`} style={{ textDecoration: "none", color: "inherit" }}>{product.name}</Link>
+                    </h3>
                   </div>
 
-                  <h3 className="product-card__title">
-                    <Link to={`/product/${product.slug || prodId}`}>{product.name}</Link>
-                  </h3>
-
-                  <div className="product-card__footer">
+                  <div className="product-card__footer" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", paddingTop: "10px", borderTop: "1px solid #f0eee9" }}>
                     <div className="product-card__pricing">
-                      <span className="product-card__price">{formatVND(price)}</span>
+                      <span className="product-card__price" style={{ fontSize: "0.95rem", fontWeight: "700", color: "#8A6A48" }}>{formatVND(price)}</span>
                     </div>
 
                     <button
@@ -171,8 +255,9 @@ export function CategoryPage() {
                       onClick={() => addToCart(product)}
                       type="button"
                       aria-label={`Thêm ${product.name} vào giỏ`}
+                      style={{ background: "#1a1a1a", color: "#fff", border: "none", borderRadius: "6px", width: "32px", height: "32px", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", transition: "background 0.2s" }}
                     >
-                      <ShoppingBag size={18} />
+                      <ShoppingBag size={15} />
                     </button>
                   </div>
                 </div>
@@ -207,6 +292,47 @@ export function CartPage() {
     fetchCart();
   }, [fetchCart]);
 
+  const handleProceedToCheckout = async () => {
+    for (const item of cart) {
+      const prod = item.product || {};
+      const prodName = prod.name || item.name || "Sản phẩm";
+      let stock =
+        item.stock ??
+        item.inventoryQuantity ??
+        item.availableStock ??
+        prod.stock ??
+        prod.inventoryQuantity ??
+        prod.availableStock ??
+        prod.stockCount;
+
+      if (stock === undefined || stock === null) {
+        const prodId = prod.id || prod._id || item.productId;
+        const varId = item.variantId || prod.variantId;
+        if (prodId && productAPI.getProductVariants) {
+          try {
+            const res = await productAPI.getProductVariants(prodId);
+            const variants = res?.data?.variants || res?.data || [];
+            if (Array.isArray(variants) && variants.length > 0) {
+              const matched = varId
+                ? variants.find((v) => String(v._id || v.id) === String(varId)) || variants[0]
+                : variants[0];
+              stock = matched?.stock ?? matched?.inventoryQuantity ?? matched?.availableStock;
+            }
+          } catch {
+            // ignore fallback error
+          }
+        }
+      }
+
+      if (stock !== undefined && stock !== null && Number(item.quantity) > Number(stock)) {
+        window.alert(`Sản phẩm ${prodName} chỉ còn ${Number(stock)} cái trong kho`);
+        return;
+      }
+    }
+
+    navigate("/checkout");
+  };
+
   return (
     <div
       className="section container"
@@ -231,14 +357,14 @@ export function CartPage() {
           <ShoppingBag size={28} color="var(--lumora-accent-wood)" />
           <h1
             style={{
-              fontFamily: '"Bodoni Moda", serif',
+              fontFamily: "'Playfair Display', serif",
               fontSize: "2.2rem",
               margin: 0,
               color: "var(--lumora-text-main)",
             }}
           >
             Giỏ Hàng Của Bạn{" "}
-            <span style={{ fontSize: "1.3rem", color: "var(--lumora-text-muted)" }}>
+            <span style={{ fontSize: "1.3rem", fontFamily: "'Montserrat', sans-serif"}}>
               ({cartCount} sản phẩm)
             </span>
           </h1>
@@ -266,14 +392,12 @@ export function CartPage() {
         )}
       </div>
 
-      {/* Loading Indicator */}
       {isCartLoading && (
         <div style={{ padding: "12px 16px", backgroundColor: "#F3F4F6", borderRadius: "8px", marginBottom: "20px", fontSize: "0.85rem", color: "#4B5563" }}>
-          Đang đồng bộ với hệ thống giỏ hàng Backend...
+          Đang đồng bộ với hệ thống giỏ hàng ...
         </div>
       )}
 
-      {/* Cart Error */}
       {cartError && (
         <div style={{ padding: "12px 16px", backgroundColor: "#FEF2F2", border: "1px solid #FECACA", borderRadius: "8px", marginBottom: "20px", fontSize: "0.85rem", color: "#991B1B" }}>
           {cartError}
@@ -326,7 +450,6 @@ export function CartPage() {
             alignItems: "start",
           }}
         >
-          {/* Cột trái: Danh sách sản phẩm trong giỏ */}
           <div
             style={{
               backgroundColor: "#ffffff",
@@ -338,7 +461,19 @@ export function CartPage() {
           >
             {cart.map((item) => {
               const prod = item.product || {};
-              const itemPrice = item.unitPrice || prod.price || 0;
+              const itemPrice = item.unitPrice || prod.price || prod.minPrice || 0;
+              const itemStock =
+                item.stock ??
+                item.inventoryQuantity ??
+                item.availableStock ??
+                prod.stock ??
+                prod.inventoryQuantity ??
+                prod.availableStock ??
+                prod.stockCount;
+              const isMaxStockReached =
+                itemStock !== undefined &&
+                itemStock !== null &&
+                Number(item.quantity) >= Number(itemStock);
 
               return (
                 <div
@@ -352,8 +487,12 @@ export function CartPage() {
                   }}
                 >
                   <img
-                    src={prod.image}
+                    src={prod.image || 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=300&q=80'}
                     alt={prod.name}
+                    onError={(e) => {
+                      e.currentTarget.onerror = null;
+                      e.currentTarget.src = 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=300&q=80';
+                    }}
                     style={{
                       width: "90px",
                       height: "90px",
@@ -366,10 +505,9 @@ export function CartPage() {
                   <div style={{ flex: 1 }}>
                     <h3
                       style={{
-                        fontFamily: '"Bodoni Moda", serif',
+                        fontFamily: "'Montserrat', sans-serif",
                         fontSize: "1.1rem",
                         marginBottom: "4px",
-                        color: "var(--lumora-text-main)",
                       }}
                     >
                       <Link to={`/product/${prod.slug || prod.id}`} style={{ textDecoration: "none", color: "inherit" }}>
@@ -396,7 +534,6 @@ export function CartPage() {
                     </p>
                   </div>
 
-                  {/* Quantity & Remove Buttons */}
                   <div
                     style={{
                       display: "flex",
@@ -459,11 +596,13 @@ export function CartPage() {
                       </span>
                       <button
                         onClick={() => updateCartQuantity(item.itemId || prod.id, 1)}
+                        disabled={isMaxStockReached}
                         style={{
                           padding: "6px 10px",
                           background: "none",
                           border: "none",
-                          cursor: "pointer",
+                          cursor: isMaxStockReached ? "not-allowed" : "pointer",
+                          opacity: isMaxStockReached ? 0.35 : 1,
                           display: "flex",
                           alignItems: "center",
                         }}
@@ -478,7 +617,6 @@ export function CartPage() {
             })}
           </div>
 
-          {/* Cột phải: Tóm tắt đơn hàng thanh toán */}
           <div
             style={{
               padding: "28px",
@@ -491,7 +629,7 @@ export function CartPage() {
           >
             <h2
               style={{
-                fontFamily: '"Bodoni Moda", serif',
+                fontFamily: "'Playfair Display', serif",
                 fontSize: "1.4rem",
                 marginBottom: "20px",
                 paddingBottom: "12px",
@@ -549,7 +687,7 @@ export function CartPage() {
             </div>
 
             <button
-              onClick={() => navigate("/checkout")}
+              onClick={handleProceedToCheckout}
               style={{
                 width: "100%",
                 padding: "16px",
@@ -580,22 +718,61 @@ export function CartPage() {
 // ==========================================
 export function WishlistPage() {
   const navigate = useNavigate();
-  const { wishlist, wishlistProducts, toggleWishlist, addToCart, isWishlistLoading, wishlistError, fetchWishlist } = useShop();
+  const { wishlistProducts, toggleWishlist, addToCart, isWishlistLoading, wishlistError, fetchWishlist } = useShop();
   
-  const [selectedIds, setSelectedIds] = useState(() => new Set());
+  const [unselectedIds, setUnselectedIds] = useState(() => new Set());
+  const [variantPricesMap, setVariantPricesMap] = useState({});
 
   useEffect(() => {
     fetchWishlist();
   }, [fetchWishlist]);
 
-  // Sync selected IDs
   useEffect(() => {
-    setSelectedIds(new Set(wishlistProducts.map((p) => String(p.id || p._id))));
+    let isMounted = true;
+    async function fetchVariantPrices() {
+      if (!wishlistProducts || wishlistProducts.length === 0) return;
+
+      const newPricesMap = {};
+
+      await Promise.all(
+        wishlistProducts.map(async (item) => {
+          const prodId = String(item.id || item._id || item.productId || item.product?._id);
+          if (!prodId) return;
+
+          const directPrice = Number(item.price ?? item.minPrice ?? item.unitPrice ?? item.product?.price ?? item.product?.minPrice ?? 0);
+          if (directPrice > 0) {
+            newPricesMap[prodId] = directPrice;
+            return;
+          }
+
+          try {
+            const response = productAPI.getProductVariants 
+              ? await productAPI.getProductVariants(prodId) 
+              : await fetch(`/api/products/${prodId}/variants`).then(res => res.json());
+
+            const variantsList = response?.data?.variants || response?.data || response || [];
+            
+            if (Array.isArray(variantsList) && variantsList.length > 0) {
+              const firstVariantPrice = Number(variantsList[0].price || variantsList[0].unitPrice || 0);
+              newPricesMap[prodId] = firstVariantPrice;
+            }
+          } catch (err) {
+            console.warn(`Không thể lấy variants cho sản phẩm ${prodId}:`, err);
+          }
+        })
+      );
+
+      if (isMounted) {
+        setVariantPricesMap(newPricesMap);
+      }
+    }
+
+    fetchVariantPrices();
   }, [wishlistProducts]);
 
   const toggleSelected = (productId) => {
     const target = String(productId);
-    setSelectedIds((current) => {
+    setUnselectedIds((current) => {
       const next = new Set(current);
       if (next.has(target)) next.delete(target);
       else next.add(target);
@@ -603,8 +780,27 @@ export function WishlistPage() {
     });
   };
 
-  const selectedProducts = wishlistProducts.filter((p) => selectedIds.has(String(p.id || p._id)));
-  const selectedTotal = selectedProducts.reduce((sum, p) => sum + (p.price || 0), 0);
+  const getProductPrice = (item) => {
+    const prodId = String(item.id || item._id || item.productId || item.product?._id);
+    const directPrice = Number(
+      item.price ?? 
+      item.minPrice ?? 
+      item.unitPrice ?? 
+      item.product?.price ?? 
+      item.product?.minPrice ?? 
+      item.product?.basePrice ?? 
+      0
+    );
+
+    if (directPrice > 0) return directPrice;
+    return variantPricesMap[prodId] || 0;
+  };
+
+  const selectedProducts = wishlistProducts.filter((p) => !unselectedIds.has(String(p.id || p._id || p.product?._id || p.productId)));
+  
+  const selectedTotal = selectedProducts.reduce((sum, p) => {
+    return sum + getProductPrice(p);
+  }, 0);
 
   const handleCheckout = () => {
     selectedProducts.forEach((p) => addToCart(p));
@@ -614,9 +810,9 @@ export function WishlistPage() {
   return (
     <div className="section container wishlist-page">
       <div className="wishlist-page__header">
-        <span className="section-heading__badge">LUMORA CURATED</span>
-        <h1 style={{ fontFamily: '"Bodoni Moda", serif' }}>Danh Sách Yêu Thích</h1>
-        <p>Lưu lại những thiết kế bạn yêu thích và đồng bộ trực tiếp với tài khoản LUMORA.</p>
+        <span className="section-heading__badge" style={{ fontFamily: "'Playfair Display', serif" }}>LUMORA CURATED</span>
+        <h1 style={{ fontFamily: "'Playfair Display', serif" }}>Danh Sách Yêu Thích</h1>
+        <p style={{fontStyle: "italic", fontSize: "15px"}}>Lưu lại những thiết kế bạn yêu thích và đồng bộ trực tiếp với tài khoản LUMORA.</p>
       </div>
 
       {isWishlistLoading && (
@@ -634,7 +830,7 @@ export function WishlistPage() {
       {!isWishlistLoading && wishlistProducts.length === 0 ? (
         <div className="wishlist-empty">
           <Heart size={42} strokeWidth={1.4} />
-          <h2 style={{ fontFamily: '"Bodoni Moda", serif' }}>Danh sách yêu thích đang trống</h2>
+          <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: "2.5rem" }}>Danh sách yêu thích đang trống</h2>
           <p>Hãy bấm biểu tượng trái tim trên sản phẩm để lưu lại thiết kế yêu thích.</p>
           <Link to="/products" className="wishlist-page__primary-btn">
             Khám phá bộ sưu tập <ArrowRight size={17} />
@@ -648,19 +844,26 @@ export function WishlistPage() {
               <div className="wishlist-products__selection-actions">
                 <button
                   type="button"
-                  onClick={() => setSelectedIds(new Set(wishlistProducts.map((p) => String(p.id || p._id))))}
+                  onClick={() => setUnselectedIds(new Set())}
                 >
                   Chọn tất cả
                 </button>
-                <button type="button" onClick={() => setSelectedIds(new Set())}>
+                <button
+                  type="button"
+                  onClick={() => setUnselectedIds(new Set(wishlistProducts.map((p) => String(p.id || p._id || p.product?._id || p.productId))))}
+                >
                   Bỏ chọn
                 </button>
               </div>
             </div>
 
-            {wishlistProducts.map((product) => {
-              const prodId = String(product.id || product._id);
-              const isChecked = selectedIds.has(prodId);
+            {wishlistProducts.map((item) => {
+              const prodId = String(item.id || item._id || item.product?._id || item.productId);
+              const isChecked = !unselectedIds.has(prodId);
+              const price = getProductPrice(item);
+              const productName = item.name || item.product?.name || "Sản phẩm cao cấp";
+              const productSlug = item.slug || item.product?.slug || prodId;
+              const imgUrl = item.image || item.product?.images?.[0] || item.product?.image || 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=600&q=80';
 
               return (
                 <article className="wishlist-item" key={prodId}>
@@ -669,23 +872,30 @@ export function WishlistPage() {
                       type="checkbox"
                       checked={isChecked}
                       onChange={() => toggleSelected(prodId)}
-                      aria-label={`Chọn ${product.name} để mua`}
+                      aria-label={`Chọn ${productName} để mua`}
                     />
                     <span />
                   </label>
-                  <img src={product.image} alt={product.name} />
+                  <img
+                    src={imgUrl}
+                    alt={productName}
+                    onError={(e) => {
+                      e.currentTarget.onerror = null;
+                      e.currentTarget.src = 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=600&q=80';
+                    }}
+                  />
                   <div className="wishlist-item__details">
-                    <span>{product.variantLabel || "Phiên bản thủ công"}</span>
-                    <h2 style={{ fontFamily: '"Bodoni Moda", serif' }}>
-                      <Link to={`/product/${product.slug || prodId}`}>{product.name}</Link>
+                    <span>{item.variantLabel || item.product?.categoryName || "Phiên bản thủ công"}</span>
+                    <h2 style={{ fontFamily: "'Montserrat', sans-serif" }}>
+                      <Link to={`/product/${productSlug}`}>{productName}</Link>
                     </h2>
-                    <strong>{formatVND(product.price)}</strong>
+                    <strong>{formatVND(price)}</strong>
                   </div>
                   <button
                     type="button"
                     className="wishlist-item__remove"
                     onClick={() => toggleWishlist(prodId)}
-                    aria-label={`Xóa ${product.name} khỏi danh sách yêu thích`}
+                    aria-label={`Xóa ${productName} khỏi danh sách yêu thích`}
                   >
                     <Trash2 size={17} />
                   </button>
@@ -695,7 +905,7 @@ export function WishlistPage() {
           </div>
 
           <aside className="wishlist-summary">
-            <h2 style={{ fontFamily: '"Bodoni Moda", serif' }}>Tóm Tắt Lựa Chọn</h2>
+            <h2 style={{ fontFamily: "'Playfair Display', serif" }}>Tóm Tắt Lựa Chọn</h2>
             <div><span>Sản phẩm đã chọn</span><strong>{selectedProducts.length}</strong></div>
             <div><span>Tạm tính</span><strong>{formatVND(selectedTotal)}</strong></div>
             <p>Phí giao hàng White-Glove miễn phí cho mọi đơn hàng.</p>
@@ -715,7 +925,7 @@ export function WishlistPage() {
 }
 
 // ==========================================
-// 4. CHECKOUT PAGE (Tasks 6, 7, 8)
+// 4. CHECKOUT PAGE & OTHER ROUTES EXPORTS
 // ==========================================
 export { default as CheckoutPage } from "./CheckoutPage";
 export { default as PaymentSuccessPage } from "./PaymentSuccessPage";
@@ -727,9 +937,5 @@ export { default as OrderTrackingTimeline } from "./OrderTrackingTimeline";
 export { default as QuickOrderTrack } from "./QuickOrderTrack";
 
 export function CollectionsPage() {
-  return <CategoryPage />;
-}
-
-export function LookbookPage() {
   return <CategoryPage />;
 }

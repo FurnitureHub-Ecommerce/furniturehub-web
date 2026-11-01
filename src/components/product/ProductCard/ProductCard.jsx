@@ -4,6 +4,7 @@ import Rating from './Rating';
 import { formatCurrency, PRODUCT_IMAGE_OVERRIDES, getProductMetrics } from '../../../utils/formatters';
 import './ProductCard.css';
 
+
 const DEFAULT_FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=800&q=80';
 
 /**
@@ -28,7 +29,7 @@ function ProductCard({ product }) {
   return (
     <article className="product-card group" aria-label={name}>
       {/* ---- Image ---- */}
-      <div className="aspect-[4/3] w-full overflow-hidden bg-gray-50 rounded-t-xl relative">
+      <div className="aspect-4/3 w-full overflow-hidden bg-gray-50 rounded-t-xl relative">
         <img
           src={finalImage}
           alt={name}
@@ -51,13 +52,13 @@ function ProductCard({ product }) {
         )}
 
         {/* Hover action buttons */}
-        <div className="product-card__actions" role="group" aria-label="Quick actions">
+        <div className="product-card__actions" role="group" aria-label="Thao tác nhanh">
           <button
             id={`add-to-cart-${id}`}
             className="product-card__action-btn"
             type="button"
-            aria-label={`Add ${name} to cart`}
-            title="Add to cart"
+            aria-label={`Thêm ${name} vào giỏ hàng`}
+            title="Thêm vào giỏ hàng"
           >
             <ShoppingCart size={15} strokeWidth={1.5} />
           </button>
@@ -65,8 +66,8 @@ function ProductCard({ product }) {
             id={`wishlist-${id}`}
             className="product-card__action-btn"
             type="button"
-            aria-label={`Add ${name} to wishlist`}
-            title="Add to wishlist"
+            aria-label={`Lưu ${name} vào yêu thích`}
+            title="Lưu yêu thích"
           >
             <Heart size={15} strokeWidth={1.5} fill="none" />
           </button>
@@ -74,8 +75,8 @@ function ProductCard({ product }) {
             id={`quick-view-${id}`}
             className="product-card__action-btn"
             type="button"
-            aria-label={`Quick view ${name}`}
-            title="Quick view"
+            aria-label={`Xem nhanh ${name}`}
+            title="Xem nhanh"
           >
             <Eye size={15} strokeWidth={1.5} />
           </button>

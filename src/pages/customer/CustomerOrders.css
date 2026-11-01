@@ -16,8 +16,8 @@
   position: fixed;
   bottom: 2rem;
   right: 2rem;
-  background-color: #1E1A17;
-  color: #FFFFFF;
+  background-color: #1e1a17;
+  color: #ffffff;
   padding: 0.9rem 1.4rem;
   border-radius: 10px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
@@ -32,7 +32,7 @@
 }
 
 .orders-toast__icon {
-  color: #34D399;
+  color: #34d399;
 }
 
 @keyframes ordersToastSlide {
@@ -50,21 +50,19 @@
 .orders-header {
   margin-bottom: 2rem;
   padding-bottom: 1.5rem;
-  border-bottom: 1px solid var(--lumora-border, #E2DBD0);
+  border-bottom: 1px solid var(--lumora-border, #e2dbd0);
 }
 
 .orders-header__badge {
-  font-size: 0.72rem;
+  font-size: 0.92rem;
   font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--lumora-accent-wood, #8A6A48);
+  color: var(--lumora-accent-wood, #3a1f02);
   display: block;
   margin-bottom: 0.35rem;
 }
 
 .orders-header__title {
-  font-family: var(--font-serif, "Cormorant Garamond", serif);
+  font-family: "Playfair Display", serif;
   font-size: 2.4rem;
   font-weight: 600;
   color: var(--lumora-text-main, #252525);
@@ -73,7 +71,7 @@
 
 .orders-header__subtitle {
   font-size: 0.95rem;
-  color: var(--lumora-text-muted, #6E6860);
+  color: var(--lumora-text-muted, #6e6860);
   max-width: 620px;
   line-height: 1.5;
 }
@@ -91,27 +89,27 @@
 
 .orders-tab {
   background: none;
-  border: 1px solid var(--lumora-border, #E2DBD0);
+  border: 1px solid var(--lumora-border, #e2dbd0);
   padding: 0.55rem 1.15rem;
   border-radius: 9999px;
   font-size: 0.85rem;
   font-weight: 600;
-  color: var(--lumora-text-muted, #6E6860);
+  color: var(--lumora-text-muted, #6e6860);
   cursor: pointer;
   white-space: nowrap;
   transition: all 0.2s ease;
 }
 
 .orders-tab:hover {
-  border-color: var(--lumora-accent-wood, #8A6A48);
+  border-color: var(--lumora-accent-wood, #8a6a48);
   color: var(--lumora-text-main, #252525);
-  background-color: #FAF8F5;
+  background-color: #faf8f5;
 }
 
 .orders-tab--active {
-  background-color: var(--lumora-accent-wood, #8A6A48);
-  border-color: var(--lumora-accent-wood, #8A6A48);
-  color: #FFFFFF !important;
+  background-color: var(--lumora-accent-wood, #8a6a48);
+  border-color: var(--lumora-accent-wood, #8a6a48);
+  color: #ffffff !important;
   box-shadow: 0 4px 12px rgba(138, 106, 72, 0.25);
 }
 
@@ -120,18 +118,18 @@
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  background-color: #FEF2F2;
-  border: 1px solid #FECACA;
+  background-color: #fef2f2;
+  border: 1px solid #fecaca;
   border-radius: 10px;
   padding: 1rem 1.25rem;
-  color: #991B1B;
+  color: #991b1b;
   font-size: 0.92rem;
   margin-bottom: 2rem;
 }
 
 .orders-retry-btn {
   background: none;
-  border: 1px solid #FECACA;
+  border: 1px solid #fecaca;
   border-radius: 6px;
   padding: 0.35rem 0.7rem;
   font-size: 0.82rem;
@@ -140,13 +138,13 @@
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
-  color: #991B1B;
+  color: #991b1b;
   margin-left: auto;
   transition: all 0.2s ease;
 }
 
 .orders-retry-btn:hover {
-  background-color: #FEE2E2;
+  background-color: #fee2e2;
 }
 
 /* Skeleton Loading */
@@ -157,8 +155,8 @@
 }
 
 .order-skeleton-card {
-  background-color: #FFFFFF;
-  border: 1px solid var(--lumora-border, #E2DBD0);
+  background-color: #ffffff;
+  border: 1px solid var(--lumora-border, #e2dbd0);
   border-radius: 14px;
   padding: 1.25rem 1.5rem;
   display: flex;
@@ -190,11 +188,11 @@
   justify-content: space-between;
   align-items: center;
   padding-top: 1rem;
-  border-top: 1px solid #F0EAE1;
+  border-top: 1px solid #f0eae1;
 }
 
 .skeleton-box {
-  background: linear-gradient(90deg, #F0ECE4 25%, #FAF7F2 50%, #F0ECE4 75%);
+  background: linear-gradient(90deg, #f0ece4 25%, #faf7f2 50%, #f0ece4 75%);
   background-size: 200% 100%;
   animation: skeletonShimmer 1.5s infinite linear;
   border-radius: 6px;
@@ -257,26 +255,26 @@
 .orders-empty {
   text-align: center;
   padding: 5rem 2rem;
-  background-color: #FFFFFF;
-  border: 1px dashed var(--lumora-border, #E2DBD0);
+  background-color: #ffffff;
+  border: 1px dashed var(--lumora-border, #e2dbd0);
   border-radius: 16px;
 }
 
 .orders-empty__icon {
-  color: var(--lumora-accent-wood, #8A6A48);
+  color: var(--lumora-accent-wood, #8a6a48);
   margin: 0 auto 1.25rem;
 }
 
 .orders-empty__title {
-  font-family: var(--font-serif, "Cormorant Garamond", serif);
-  font-size: 1.8rem;
+  font-family: 'Playfair Display', serif;
+  font-size: 2.8rem;
   color: var(--lumora-text-main, #252525);
   margin-bottom: 0.5rem;
 }
 
 .orders-empty__desc {
   font-size: 0.95rem;
-  color: var(--lumora-text-muted, #6E6860);
+  color: var(--lumora-text-muted, #6e6860);
   max-width: 500px;
   margin: 0 auto 1.75rem;
   line-height: 1.5;
@@ -287,14 +285,16 @@
   align-items: center;
   gap: 0.5rem;
   padding: 0.85rem 1.8rem;
-  font-size: 0.92rem;
+  font-size: 1rem;
   font-weight: 600;
-  color: #FFFFFF;
-  background-color: var(--lumora-accent-wood, #8A6A48);
+  color: #ffffff;
+  background-color: var(--lumora-accent-wood, #8a6a48);
   border-radius: 8px;
   text-decoration: none;
   box-shadow: 0 4px 14px rgba(138, 106, 72, 0.25);
   transition: all 0.2s ease;
+  font-family: 'Playfair Display', serif;
+
 }
 
 .orders-btn-primary:hover {
@@ -310,8 +310,8 @@
 }
 
 .order-item-card {
-  background-color: #FFFFFF;
-  border: 1px solid var(--lumora-border, #E2DBD0);
+  background-color: #ffffff;
+  border: 1px solid var(--lumora-border, #e2dbd0);
   border-radius: 14px;
   overflow: hidden;
   box-shadow: 0 4px 18px rgba(0, 0, 0, 0.02);
@@ -320,7 +320,7 @@
 
 .order-item-card:hover {
   box-shadow: 0 8px 26px rgba(0, 0, 0, 0.06);
-  border-color: var(--lumora-accent-wood, #8A6A48);
+  border-color: var(--lumora-accent-wood, #8a6a48);
 }
 
 /* Card Top */
@@ -329,8 +329,8 @@
   align-items: center;
   justify-content: space-between;
   padding: 1.1rem 1.5rem;
-  background-color: var(--lumora-bg-primary, #F7F4EE);
-  border-bottom: 1px solid var(--lumora-border-subtle, #F0EAE1);
+  background-color: var(--lumora-bg-primary, #f7f4ee);
+  border-bottom: 1px solid var(--lumora-border-subtle, #f0eae1);
   flex-wrap: wrap;
   gap: 0.75rem;
 }
@@ -346,16 +346,16 @@
   font-weight: 700;
   font-size: 0.92rem;
   color: var(--lumora-text-main, #252525);
-  font-family: monospace;
+  font-family: "Montserrat", sans-serif;
 }
 
 .order-card-copy-btn {
-  background: #FFFFFF;
-  border: 1px solid var(--lumora-border, #E2DBD0);
+  background: #ffffff;
+  border: 1px solid var(--lumora-border, #e2dbd0);
   border-radius: 5px;
   padding: 0.2rem 0.5rem;
   font-size: 0.74rem;
-  color: var(--lumora-text-muted, #6E6860);
+  color: var(--lumora-text-muted, #6e6860);
   cursor: pointer;
   display: inline-flex;
   align-items: center;
@@ -364,7 +364,7 @@
 }
 
 .order-card-copy-btn:hover {
-  border-color: var(--lumora-accent-wood, #8A6A48);
+  border-color: var(--lumora-accent-wood, #8a6a48);
   color: var(--lumora-text-main, #252525);
 }
 
@@ -373,7 +373,7 @@
   align-items: center;
   gap: 0.35rem;
   font-size: 0.84rem;
-  color: var(--lumora-text-muted, #6E6860);
+  color: var(--lumora-text-muted, #6e6860);
 }
 
 .order-item-card__status-group {
@@ -399,7 +399,7 @@
   align-items: center;
   gap: 1rem;
   padding: 0.5rem 0;
-  border-bottom: 1px dashed var(--lumora-border-subtle, #F0EAE1);
+  border-bottom: 1px dashed var(--lumora-border-subtle, #f0eae1);
 }
 
 .order-line-item-preview:last-child {
@@ -411,8 +411,8 @@
   height: 52px;
   border-radius: 8px;
   overflow: hidden;
-  background-color: #F5F2EC;
-  border: 1px solid var(--lumora-border-subtle, #F0EAE1);
+  background-color: #f5f2ec;
+  border: 1px solid var(--lumora-border-subtle, #f0eae1);
   flex-shrink: 0;
 }
 
@@ -440,7 +440,7 @@
   align-items: center;
   gap: 0.85rem;
   font-size: 0.8rem;
-  color: var(--lumora-text-muted, #6E6860);
+  color: var(--lumora-text-muted, #6e6860);
 }
 
 .order-line-item-preview__sku {
@@ -457,8 +457,8 @@
 /* Bottom summary */
 .order-item-card__bottom {
   padding: 1.15rem 1.5rem;
-  background-color: #FAF9F7;
-  border-top: 1px solid var(--lumora-border-subtle, #F0EAE1);
+  background-color: #faf9f7;
+  border-top: 1px solid var(--lumora-border-subtle, #f0eae1);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -471,12 +471,12 @@
   align-items: center;
   gap: 0.5rem;
   font-size: 0.84rem;
-  color: var(--lumora-text-muted, #6E6860);
+  color: var(--lumora-text-muted, #6e6860);
   max-width: 540px;
 }
 
 .order-pin-icon {
-  color: var(--lumora-accent-wood, #8A6A48);
+  color: var(--lumora-accent-wood, #8a6a48);
 }
 
 .order-item-card__total-section {
@@ -495,14 +495,14 @@
 
 .order-item-card__total-label {
   font-size: 0.86rem;
-  color: var(--lumora-text-muted, #6E6860);
+  color: var(--lumora-text-muted, #6e6860);
 }
 
 .order-item-card__total-val {
   font-size: 1.25rem;
   font-weight: 700;
-  color: var(--lumora-accent-wood, #8A6A48);
-  font-family: var(--font-serif, "Cormorant Garamond", serif);
+  color: var(--lumora-accent-wood, #8a6a48);
+  font-family: "Montserrat", sans-serif;
 }
 
 .order-item-card__actions {
@@ -514,8 +514,8 @@
 /* Task 17: Nút Hủy Đơn Hàng */
 .order-btn-cancel {
   background: none;
-  border: 1px solid #FECACA;
-  color: #DC2626;
+  border: 1px solid #fecaca;
+  color: #dc2626;
   border-radius: 7px;
   padding: 0.45rem 0.95rem;
   font-size: 0.82rem;
@@ -525,8 +525,8 @@
 }
 
 .order-btn-cancel:hover {
-  background-color: #FEF2F2;
-  border-color: #DC2626;
+  background-color: #fef2f2;
+  border-color: #dc2626;
 }
 
 /* Task 16: Nút Chi Tiết Đơn */
@@ -535,8 +535,8 @@
   align-items: center;
   gap: 0.35rem;
   padding: 0.45rem 1rem;
-  background-color: var(--lumora-accent-wood, #8A6A48);
-  color: #FFFFFF;
+  background-color: var(--lumora-accent-wood, #8a6a48);
+  color: #ffffff;
   border: none;
   border-radius: 7px;
   font-size: 0.82rem;
@@ -563,4 +563,105 @@
     margin-left: 0;
     justify-content: space-between;
   }
+}
+
+/* Khung chứa icon hàng hóa thay thế cho ảnh */
+.order-line-item-icon-wrap {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #f7f4ee;
+  color: #8a6a48;
+}
+
+/* Tinh chỉnh lại dòng item preview gọn gàng */
+.order-line-item-preview {
+  display: flex;
+  align-items: flex-start;
+  gap: 1.25rem;
+  padding: 0.85rem 0;
+  border-bottom: 1px dashed var(--lumora-border-subtle, #f0eae1);
+}
+
+.order-line-item-preview:last-child {
+  border-bottom: none;
+}
+
+.order-line-item-preview__thumb {
+  width: 56px;
+  height: 56px;
+  border-radius: 10px;
+  overflow: hidden;
+  background-color: #f5f2ec;
+  border: 1px solid var(--lumora-border-subtle, #f0eae1);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.order-line-item-preview__info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.order-line-item-preview__title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--lumora-text-main, #252525);
+}
+
+.order-line-item-preview__sku {
+  font-size: 0.75rem;
+  color: var(--lumora-text-muted, #6e6860);
+  font-family: monospace;
+}
+
+/* Danh sách thông số dạng phẳng, tinh tế */
+.order-line-item-specs {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  margin-top: 0.25rem;
+}
+
+.order-line-spec-row {
+  display: flex;
+  align-items: baseline;
+  gap: 0.4rem;
+  font-size: 0.82rem;
+}
+
+.spec-label {
+  font-weight: 600;
+  color: var(--lumora-accent-wood, #8a6a48);
+  min-width: 70px;
+  flex-shrink: 0;
+}
+
+.spec-value {
+  color: var(--lumora-text-muted, #6e6860);
+}
+
+.order-line-item-preview__price-block {
+  text-align: right;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.order-line-item-preview__price {
+  font-weight: 700;
+  font-size: 0.98rem;
+  color: var(--lumora-text-main, #252525);
+}
+
+.order-line-item-preview__qty {
+  font-size: 0.8rem;
+  color: var(--lumora-text-muted, #6e6860);
 }

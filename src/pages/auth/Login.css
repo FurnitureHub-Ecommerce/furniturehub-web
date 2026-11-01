@@ -1,13 +1,13 @@
 /* --- BIẾN MÀU SẮC & CẤU HÌNH GIAO DIỆN SÁNG SỦA, SANG TRỌNG --- */
 :root {
   --primary-color: #1c1c1c;
-  --accent-gold: #b8976b; /* Màu đồng nội thất cao cấp */
-  --bg-wrapper: #f3f4f6;  /* Nền tổng thể sáng sủa ngoài cùng */
-  --card-bg: #ffffff;     /* Nền khung card trắng tinh tế */
+  --accent-gold: #b8976b;
+  --bg-wrapper: #f3f4f6;
+  --card-bg: #ffffff;
   --text-main: #1c1c1c;
   --text-muted: #6b7280;
   --border-color: #e5e7eb;
-  --radius-lg: 20px;
+  --radius-lg: 16px;
   --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -23,7 +23,7 @@
   }
 }
 
-/* --- LỚP BACKGROUND TỔNG THỂ NGOÀI CÙNG (SÁNG SỦA) --- */
+/* --- LỚP BACKGROUND TỔNG THỂ NGOÀI CÙNG (CỐ ĐỊNH, KHÔNG TRÀN MÀN HÌNH) --- */
 .auth-wrapper {
   display: flex;
   align-items: center;
@@ -31,42 +31,41 @@
   min-height: 100vh;
   width: 100vw;
   background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-  padding: 30px;
+  padding: 12px;
   box-sizing: border-box;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   animation: pageEntrance 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  overflow: hidden; /* Khóa cuộn trang toàn cục */
 }
 
-/* --- KHUNG CARD CHÍNH NẰM TRÊN LỚP BACKGROUND --- */
+/* --- KHUNG CARD CHÍNH (THU GỌN VỪA KHÍT MÀN HÌNH MÁY TÍNH) --- */
 .auth-main-card {
   display: flex;
   width: 100%;
-  max-width: 1050px;
-  height: 620px;
+  max-width: 860px; /* Thu nhỏ chiều ngang tối đa để không bị rộng thênh thang */
+  height: 500px; /* Cố định chiều cao gọn gàng, tránh tràn dọc */
   background: var(--card-bg);
   border-radius: var(--radius-lg);
   overflow: hidden;
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.12), 0 0 0 1px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 20px 40px -12px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(0, 0, 0, 0.04);
 }
 
-/* --- BANNER BÊN TRÁI (ẢNH NỘI THẤT SÁNG SỦA, KHÔNG TỐI THUI) --- */
+/* --- BANNER BÊN TRÁI --- */
 .auth-banner {
-  flex: 1.1;
-  /* Sử dụng ảnh nội thất phòng khách hiện đại, sáng sủa, tone màu ấm áp kết hợp lớp phủ gradient trong suốt vừa đủ */
-  background: linear-gradient(to top, rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0.1)), 
+  flex: 1;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.15)), 
               url('https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?q=80&w=1400&auto=format&fit=crop') center/cover no-repeat;
   color: #ffffff;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  padding: 50px;
+  padding: 28px;
   position: relative;
 }
 
 .banner-brand {
-  font-size: 24px;
+  font-size: 20px;
   font-weight: 800;
-  letter-spacing: 5px;
+  letter-spacing: 4px;
   color: #ffffff;
   z-index: 1;
   text-shadow: 0 2px 4px rgba(0,0,0,0.3);
@@ -74,55 +73,56 @@
 
 .banner-quote {
   z-index: 1;
-  max-width: 400px;
+  max-width: 360px;
 }
 
 .banner-quote h3 {
-  font-size: 34px;
+  font-size: 24px;
   font-weight: 700;
   line-height: 1.25;
-  margin-bottom: 12px;
+  margin-bottom: 6px;
   color: #ffffff;
   text-shadow: 0 2px 6px rgba(0,0,0,0.4);
 }
 
 .banner-quote p {
-  font-size: 15px;
+  font-size: 13px;
   color: #f3f4f6;
-  line-height: 1.5;
+  line-height: 1.4;
   text-shadow: 0 1px 3px rgba(0,0,0,0.4);
 }
 
-/* --- KHUNG FORM BÊN PHẢI (NỀN TRẮNG SÁNG, GỌN GÀNG) --- */
+/* --- KHUNG FORM BÊN PHẢI (TỐI ƯU KHOẢNG CÁCH) --- */
 .auth-form-container {
-  flex: 1;
+  flex: 1.1;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 40px 50px;
+  padding: 20px 32px;
   background: #ffffff;
-  overflow-y: auto;
+  overflow-y: auto; /* Cho phép cuộn nhẹ bên trong form nếu màn hình quá nhỏ */
 }
 
 .auth-card {
   width: 100%;
-  max-width: 380px;
+  max-width: 350px;
 }
 
 .auth-header {
-  margin-bottom: 24px;
+  margin-bottom: 12px;
 }
 
 .auth-header h2 {
-  font-size: 46px;
+  font-size: 32px;
   font-weight: 800;
   color: var(--text-main);
-  margin-bottom: 6px;
+  margin-bottom: 2px;
   letter-spacing: -0.5px;
+  font-family: 'Playfair Display', serif;
 }
 
 .auth-header p {
-  font-size: 14px;
+  font-size: 12px;
   color: var(--text-muted);
 }
 
@@ -131,23 +131,16 @@
   background-color: #fef2f2;
   color: #dc2626;
   border: 1px solid #fecaca;
-  padding: 10px 14px;
-  border-radius: 8px;
-  font-size: 13px;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 11px;
   font-weight: 500;
-  margin-bottom: 18px;
-  animation: shake 0.4s ease-in-out;
+  margin-bottom: 10px;
 }
 
-@keyframes shake {
-  0%, 100% { transform: translateX(0); }
-  25% { transform: translateX(-4px); }
-  75% { transform: translateX(4px); }
-}
-
-/* --- FORM INPUTS --- */
+/* --- FORM INPUTS (THU GỌN KHOẢNG CÁCH) --- */
 .form-group {
-  margin-bottom: 16px;
+  margin-bottom: 10px;
 }
 
 .form-group label {
@@ -155,17 +148,17 @@
   font-size: 12px;
   font-weight: 700;
   color: var(--text-main);
-  margin-bottom: 6px;
-  text-transform: uppercase;
+  margin-bottom: 3px;
   letter-spacing: 0.5px;
+  font-family: 'Montserrat', sans-serif;
 }
 
 .form-input {
   width: 100%;
-  padding: 12px 14px;
-  font-size: 14px;
+  padding: 8px 12px;
+  font-size: 12px;
   border: 1.5px solid var(--border-color);
-  border-radius: 8px;
+  border-radius: 6px;
   background-color: #f9fafb;
   color: var(--text-main);
   transition: var(--transition);
@@ -185,16 +178,16 @@
 /* --- NÚT SUBMIT --- */
 .btn-submit {
   width: 100%;
-  padding: 13px;
+  padding: 9px;
   background-color: var(--primary-color);
   color: #ffffff;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 600;
   border: none;
-  border-radius: 8px;
+  border-radius: 6px;
   cursor: pointer;
   transition: var(--transition);
-  margin-top: 6px;
+  margin-top: 4px;
   box-shadow: 0 4px 10px rgba(0,0,0,0.1);
   display: flex;
   justify-content: center;
@@ -212,9 +205,9 @@
 
 /* --- FOOTER & LINKS --- */
 .auth-footer {
-  margin-top: 24px;
+  margin-top: 12px;
   text-align: center;
-  font-size: 13px;
+  font-size: 12px;
   color: var(--text-muted);
 }
 
@@ -230,27 +223,16 @@
   text-decoration: underline;
 }
 
-/* --- RESPONSIVE CHO MOBILE --- */
-@media (max-width: 900px) {
-  .auth-main-card {
-    height: auto;
-    max-width: 450px;
-  }
-  .auth-banner {
-    display: none;
-  }
-}
-
-/* --- NÚT BACK VỀ TRANG CHỦ (DẠNG MŨI TÊN) --- */
+/* --- NÚT BACK VỀ TRANG CHỦ --- */
 .btn-back-home {
   position: absolute;
-  margin-top: -50px;
+  margin-top: -36px;
   margin-left: 0px;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
   background-color: #f3f4f6;
   color: #1c1c1c;
@@ -262,5 +244,16 @@
 .btn-back-home:hover {
   background-color: #1c1c1c;
   color: #ffffff;
-  transform: translateX(-3px); /* Hiệu ứng dịch chuyển nhẹ khi rê chuột */
+  transform: translateX(-3px);
+}
+
+/* --- RESPONSIVE CHO MOBILE --- */
+@media (max-width: 900px) {
+  .auth-main-card {
+    height: auto;
+    max-width: 420px;
+  }
+  .auth-banner {
+    display: none;
+  }
 }

@@ -24,8 +24,12 @@
 }
 
 @keyframes slideLeft {
-  from { transform: translateX(100%); }
-  to { transform: translateX(0); }
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
 }
 
 .cart-drawer-header {
@@ -34,7 +38,7 @@
   align-items: center;
   padding: 20px 24px;
   border-bottom: 1px solid var(--lumora-border);
-  background-color: #FFFFFF;
+  background-color: #ffffff;
 }
 
 .cart-drawer-title {
@@ -52,7 +56,7 @@
   font-size: 0.75rem;
   font-weight: 700;
   background-color: var(--lumora-accent-wood);
-  color: #FFFFFF;
+  color: #ffffff;
   padding: 2px 8px;
   border-radius: var(--radius-full);
 }
@@ -160,7 +164,7 @@
   align-items: center;
   border: 1px solid var(--lumora-border);
   border-radius: var(--radius-sm);
-  background-color: #FFFFFF;
+  background-color: #ffffff;
 }
 
 .cart-qty-btn {
@@ -186,14 +190,18 @@
 }
 
 .cart-item-remove:hover {
-  color: #D93838;
+  color: #d93838;
 }
 
 .cart-drawer-empty {
   text-align: center;
   margin: auto;
-  color: var(--lumora-text-muted);
+  color: black;
   padding-block: 40px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
 }
 
 .cart-empty-icon {
@@ -203,7 +211,7 @@
 
 .cart-drawer-footer {
   padding: 20px 24px;
-  background-color: #FFFFFF;
+  background-color: #ffffff;
   border-top: 1px solid var(--lumora-border);
 }
 
@@ -227,21 +235,17 @@
   width: 100%;
   padding: 12px;
   background-color: var(--lumora-text-main);
-  color: #FFFFFF;
-  border-radius: var(--radius-md);
-  font-size: 0.8rem;
+  color: #ffffff;
+  font-size: 15rem;
   font-weight: 600;
-  letter-spacing: 0.08em;
   justify-content: center;
   gap: 8px;
-  transition: background-color var(--transition-fast);
+  font-family: 'Playfair Display', serif;
 }
 
 .cart-checkout-btn:hover {
   background-color: var(--lumora-accent-wood);
 }
-
-
 
 .cart-view-link:hover {
   color: var(--lumora-text-main);
@@ -269,9 +273,11 @@
   padding: 12px 16px;
   border-radius: 8px;
   font-weight: 600;
-  font-size: 14px;
+  font-size: 18px;
   text-decoration: none;
-  transition: background-color 0.2s ease, transform 0.1s ease;
+  transition:
+    background-color 0.2s ease,
+    transform 0.1s ease;
   box-shadow: 0 4px 10px rgba(128, 96, 60, 0.2);
 }
 
@@ -297,7 +303,9 @@
   font-size: 13px;
   text-decoration: none;
   white-space: nowrap; /* Không bị ngắt chữ */
-  transition: background-color 0.2s ease, color 0.2s ease;
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease;
 }
 
 .cart-view-link:hover {

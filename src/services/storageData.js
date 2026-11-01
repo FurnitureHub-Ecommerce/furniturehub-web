@@ -22,23 +22,23 @@ export const loadStorageVariants = async () => {
       const vInfo = item.variantId || {};
       const pInfo = vInfo.productId || item.product || {};
 
-      // Lấy tên sản phẩm chuẩn từ variantId.productId.name hoặc product.name
       const name = pInfo.name || vInfo.name || item.productName || item.name || 'Sản phẩm nội thất';
-
-      // Lấy mã SKU chuẩn từ variantId.sku hoặc item.sku
       const skuCode = vInfo.sku || item.sku || (item._id ? String(item._id).slice(-6) : `SKU-${index + 1}`);
 
-      // Lấy quy cách từ màu sắc và chất liệu trong variant
       const color = vInfo.color || item.color;
       const material = vInfo.material || item.material;
       const specs = (color || material) ? `${color ? color : ''} ${material ? `- ${material}` : ''}`.trim() : 'Tiêu chuẩn - Gỗ/Kim loại';
 
       return {
+        // Giữ lại toàn bộ dữ liệu gốc của item để các trang cần chi tiết có thể truy cập trực tiếp
+        ...item,
         id: skuCode,
-        variantId: vInfo._id || item._id,
+        sku: skuCode,
+        variantId: vInfo,
         name: name,
         specs: specs,
         stock: Number(stockVal),
+        quantity: Number(stockVal),
       };
     });
   } catch (error) {

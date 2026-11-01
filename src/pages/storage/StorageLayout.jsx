@@ -37,7 +37,7 @@ const StorageLayout = () => {
   };
 
   return (
-    <div className="storage-container" style={{ fontFamily: "'Inter', sans-serif" }}>
+    <div className="storage-container" style={{ fontFamily: "math"  }}>
       <aside className="storage-sidebar">
         <div className="sidebar-top">
           <div className="brand-logo">
@@ -45,8 +45,8 @@ const StorageLayout = () => {
           </div>
 
           <div className="nav-group">
-            <p className="nav-label" style={{ fontFamily: "'Inter', sans-serif", fontWeight: 600 }}>TỔNG QUAN & DỮ LIỆU KHO</p>
-            <ul style={{ fontFamily: "'Inter', sans-serif", fontWeight: 600, fontSize: '15px' }}>
+            <p className="nav-label" style={{ fontFamily: "math" , fontWeight: 600 }}>Tổng quan</p>
+            <ul style={{ fontFamily: "math" , fontWeight: 600, fontSize: '17px' }}>
               {/* Dùng end cho đường dẫn trang chủ /storage để không bị nhận diện nhầm với các trang con khác */}
               <li><NavLink to="/storage" end>Tổng Quan Tồn Kho</NavLink></li>
               <li><NavLink to="/storage/statistics">Thống Kê và Báo Cáo</NavLink></li>
@@ -54,8 +54,8 @@ const StorageLayout = () => {
           </div>
 
           <div className="nav-group">
-            <p className="nav-label" style={{ fontFamily: "'Inter', sans-serif", fontWeight: 600 }}>VẬN HÀNH KHO</p>
-            <ul style={{ fontFamily: "'Inter', sans-serif", fontWeight: 600, fontSize: '15px' }}>
+            <p className="nav-label" style={{ fontFamily: "math", fontWeight: 600 }}>Vận hành kho</p>
+            <ul style={{ fontFamily: "math" , fontWeight: 600, fontSize: '17px' }}>
               <li><NavLink to="/storage/inbound-outbound">Nhập & Xuất Kho</NavLink></li>
               <li><NavLink to="/storage/availability">Tình Trạng Sẵn Có</NavLink></li>
               <li><NavLink to="/storage/adjustment">Điều Chỉnh Kiểm Kê</NavLink></li>
@@ -63,11 +63,11 @@ const StorageLayout = () => {
           </div>
 
           <div className="nav-group">
-            <p className="nav-label" style={{ fontFamily: "'Inter', sans-serif", fontWeight: 600 }}>DANH MỤC & CẢNH BÁO</p>
-            <ul style={{ fontFamily: "'Inter', sans-serif", fontWeight: 600, fontSize: '15px' }}>
+            <p className="nav-label" style={{ fontFamily: "math", fontWeight: 600 }}>Quản lí kho</p>
+            <ul style={{ fontFamily: "math" , fontWeight: 600, fontSize: '17px' }}>
               <li><NavLink to="/storage/skus">Quản Lý SKU & Biến Thể</NavLink></li>
               <li><NavLink to="/storage/alerts">Cảnh Báo Tồn Thấp</NavLink></li>
-              <li><NavLink to="/storage/search">Tìm Kiếm & Bộ Lọc</NavLink></li>
+              {/* <li><NavLink to="/storage/search">Tìm Kiếm & Bộ Lọc</NavLink></li> */}
               <li><NavLink to="/storage/history">Lịch Sử Biến Động Kho</NavLink></li>
             </ul>
           </div>
@@ -87,7 +87,7 @@ const StorageLayout = () => {
               type="button"
               title="Cài đặt"
             >
-              <Settings size={18} />
+              <Settings size={15} />
             </button>
           </div>
 

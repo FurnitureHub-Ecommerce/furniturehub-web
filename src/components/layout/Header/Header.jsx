@@ -1,61 +1,71 @@
 import { useState, useEffect, useRef } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Search, Heart, ShoppingBag, Menu, X, User, LogOut, MapPin, Package } from "lucide-react";
+import {
+  Search,
+  Heart,
+  ShoppingBag,
+  Menu,
+  X,
+  User,
+  LogOut,
+  MapPin,
+  Package,
+  ChevronDown,
+} from "lucide-react";
 import { useShop } from "../../../context/ShopContext";
+import { useAuth, getAvatarInitial } from "../../../context/AuthContext";
+import { categoryAPI } from "../../../services/api";
 import "./Header.css";
 import logoImg from "../../../assets/images/logo.jpg";
 
-const NAV_LINKS = [
-  { label: "Trang Chủ", to: "/" },
-  { label: "Bộ Sưu Tập", to: "/products" },
-  { label: "Phòng Khách", to: "/category/living-room" },
-  { label: "Phòng Ăn", to: "/category/dining-room" },
-  { label: "Phòng Ngủ", to: "/category/bedroom" },
-  { label: "Đèn & Trang Trí", to: "/category/lighting-decor" },
-  { label: "Lookbook", to: "/lookbook" },
-];
+const CATEGORY_TRANSLATIONS = {
+  "Home Decor & Lighting": "Trang Trí & Đèn",
+  "TV Units & Media": "Kệ Tivi & Giải Trí",
+  "Bookshelves & Shelving": "Kệ Sách & Tủ Kệ",
+  "Coffee & Side Tables": "Bàn Trà & Bàn Góc",
+  "Wardrobes & Cabinets": "Tủ Quần Áo & Tủ Lớn",
+  "Office Desks & Chairs": "Bàn Ghế Làm Việc",
+  "Dining Tables & Chairs": "Bàn Ghế Ăn",
+  "Beds & Mattresses": "Giường Ngủ & Nệm",
+  "Sofa & Armchair": "Sofa & Ghế Thư Giãn",
+};
 
 export function Header() {
-  const {
-    cartCount,
-    wishlistCount,
-    setIsSearchOpen,
-    setIsCartOpen,
-  } = useShop();
+  const { cartCount, wishlistCount, setIsSearchOpen, setIsCartOpen } =
+    useShop();
+  const { user: currentUser, logout } = useAuth();
 
   const [mobileOpen, setMobileOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const [currentUser, setCurrentUser] = useState(() => {
-    try {
-      const token = localStorage.getItem("token");
-      const user = localStorage.getItem("user");
-      return token && user ? JSON.parse(user) : null;
-    } catch {
-      return null;
-    }
-  });
+  const [categories, setCategories] = useState([]);
+  const [megaMenuOpen, setMegaMenuOpen] = useState(false);
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
 
   const { pathname } = useLocation();
   const navigate = useNavigate();
 
-  // Đồng bộ trạng thái user khi đổi trang hoặc có storage event
+  // Gọi API lấy danh mục từ Backend
   useEffect(() => {
-    const syncUser = () => {
+    let isMounted = true;
+    async function fetchCategories() {
       try {
-        const token = localStorage.getItem("token");
-        const user = localStorage.getItem("user");
-        setCurrentUser(token && user ? JSON.parse(user) : null);
-      } catch {
-        setCurrentUser(null);
+        const res =
+          (await categoryAPI.getCategories?.()) ||
+          (await fetch("/api/categories").then((r) => r.json()));
+        const list = res?.data?.categories || res?.data || res || [];
+        if (Array.isArray(list) && isMounted) {
+          setCategories(list);
+        }
+      } catch (err) {
+        console.warn("Không thể tải danh mục:", err);
       }
+    }
+    fetchCategories();
+    return () => {
+      isMounted = false;
     };
-    syncUser();
-
-    window.addEventListener("storage", syncUser);
-    return () => window.removeEventListener("storage", syncUser);
-  }, [pathname]);
+  }, []);
 
   // Đóng dropdown khi click ra ngoài
   useEffect(() => {
@@ -64,18 +74,28 @@ export function Header() {
         setUserDropdownOpen(false);
       }
     };
-    if (userDropdownOpen) {
-      document.addEventListener("mousedown", handleClickOutside);
-    }
+    document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [userDropdownOpen]);
+  }, []);
 
   const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-    setCurrentUser(null);
+    if (logout) {
+      logout();
+    } else {
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      sessionStorage.removeItem("token");
+      sessionStorage.removeItem("user");
+    }
     setUserDropdownOpen(false);
-    navigate("/login");
+    navigate("/");
+  };
+
+  const handleNavClick = (to) => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    setMobileOpen(false);
+    setMegaMenuOpen(false);
+    navigate(to);
   };
 
   useEffect(() => {
@@ -86,23 +106,39 @@ export function Header() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  const displayName = currentUser?.fullName || currentUser?.name || "";
+  const userInitial = getAvatarInitial(displayName);
+
   return (
     <>
       {/* Top Banner Announcement */}
       <div className="header__topbar">
-        <div className="container header__topbar-inner">
-          <p className="header__topbar-text">
-            <span>
-              Miễn Phí Giao Hàng Cao Cấp & Lắp Ráp Cho Đơn Hàng Trên 5.000.000 ₫
-            </span>
-            <span className="header__topbar-divider">•</span>
-            <span className="header__topbar-highlight">
-              Gỗ Bền Vững Đạt Chuẩn FSC®
-            </span>
-          </p>
-          <div className="header__topbar-links">
-            <a href="#currency">VNĐ (₫)</a>
-            <a href="#support">Hỗ Trợ</a>
+        <div className="container-fluid header__topbar-inner">
+          <div className="header__topbar-marquee">
+            <div className="header__topbar-track">
+              <span className="header__topbar-text">
+                <span>
+                  Miễn Phí Giao Hàng Cao Cấp & Lắp Ráp Cho Đơn Hàng Trên
+                  5.000.000 ₫
+                </span>
+                <span className="header__topbar-divider">•</span>
+                <span className="header__topbar-highlight">
+                  Gỗ Bền Vững Đạt Chuẩn FSC®
+                </span>
+                <span className="header__topbar-divider">•</span>
+                <span>Bảo Hành Chính Hãng 2 Năm</span>
+                <span>
+                  Miễn Phí Giao Hàng Cao Cấp & Lắp Ráp Cho Đơn Hàng Trên
+                  5.000.000 ₫
+                </span>
+                <span className="header__topbar-divider">•</span>
+                <span className="header__topbar-highlight">
+                  Gỗ Bền Vững Đạt Chuẩn FSC®
+                </span>
+                <span className="header__topbar-divider">•</span>
+                <span>Bảo Hành Chính Hãng 2 Năm</span>
+              </span>
+            </div>
           </div>
         </div>
       </div>
@@ -113,340 +149,220 @@ export function Header() {
         role="banner"
       >
         <div className="header__inner flex items-center justify-between">
-          {/* Mobile Menu Toggle */}
-          <button
-            id="header-mobile-toggle"
-            className="header__mobile-toggle"
-            aria-label={
-              mobileOpen ? "Đóng Menu Điều Hướng" : "Mở Menu Điều Hướng"
-            }
-            aria-expanded={mobileOpen}
-            onClick={() => setMobileOpen((prev) => !prev)}
-            type="button"
-          >
-            {mobileOpen ? <X size={24} /> : <Menu size={24} />}
-          </button>
+          {/* 1. LOGO BÊN TRÁI */}
+          <div className="flex items-center gap-3 sm:gap-4 shrink-0">
+            <button
+              className="header__mobile-toggle"
+              onClick={() => setMobileOpen((prev) => !prev)}
+              type="button"
+            >
+              {mobileOpen ? <X size={22} /> : <Menu size={22} />}
+            </button>
 
-          {/* Brand Logo */}
-          <Link
-            to="/"
-            className="header__logo flex items-center shrink-0"
-            aria-label="Nội Thất Cao Cấp LUMORA - Trang Chủ"
-          >
-            <img
-              src={logoImg}
-              alt="Nội Thất Cao Cấp LUMORA"
-              className="header__logo-img"
-            />
-          </Link>
+            <Link
+              to="/"
+              onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+              className="header__logo flex items-center shrink-0"
+            >
+              <img src={logoImg} alt="LUMORA" className="header__logo-img" />
+            </Link>
+          </div>
 
-          {/* Desktop Navigation */}
-          <nav className="header__nav shrink min-w-0" aria-label="Điều Hướng Chính">
-            <ul className="header__nav-list flex items-center gap-3 lg:gap-4 xl:gap-6 flex-nowrap">
-              {NAV_LINKS.map(({ label, to }) => {
-                const isActive = pathname === to;
-                return (
-                  <li key={to} className="header__nav-item shrink-0">
-                    <Link
-                      to={to}
-                      className={`header__nav-link whitespace-nowrap ${isActive ? "header__nav-link--active" : ""}`}
-                    >
-                      {label}
-                    </Link>
-                  </li>
-                );
-              })}
+          {/* 2. PHẦN GIỮA: GỌN GÀNG VỚI MEGA MENU */}
+          <nav className="header__nav hidden lg:flex shrink min-w-0 mx-4">
+            <ul className="header__nav-list flex items-center gap-8 flex-nowrap">
+              <li className="header__nav-item">
+                <button
+                  type="button"
+                  onClick={() => handleNavClick("/")}
+                  className={`header__nav-link bg-transparent border-none cursor-pointer ${pathname === "/" ? "header__nav-link--active" : ""}`}
+                >
+                  Trang Chủ
+                </button>
+              </li>
+
+              <li
+                className="header__nav-item header__nav-item--dropdown"
+                onMouseEnter={() => setMegaMenuOpen(true)}
+                onMouseLeave={() => setMegaMenuOpen(false)}
+              >
+                <button
+                  type="button"
+                  onClick={() => handleNavClick("/products")}
+                  className={`header__nav-link bg-transparent border-none cursor-pointer flex items-center gap-1.5 ${pathname.startsWith("/products") || pathname.startsWith("/category") ? "header__nav-link--active" : ""}`}
+                >
+                  Bộ Sưu Tập <ChevronDown size={14} />
+                </button>
+
+                <div
+                  className={`header__megamenu ${megaMenuOpen ? "header__megamenu--open" : ""}`}
+                >
+                  <div className="header__megamenu-column">
+                    <h4>Không Gian Sống</h4>
+                    <ul className="header__megamenu-list">
+                      {categories.slice(0, 5).map((cat) => {
+                        const translatedName =
+                          CATEGORY_TRANSLATIONS[cat.name] || cat.name;
+                        return (
+                          <li key={cat._id || cat.id}>
+                            <Link
+                              to={`/category/${cat._id || cat.id}`}
+                              className="header__megamenu-link"
+                              onClick={() => {
+                                setMegaMenuOpen(false);
+                                window.scrollTo({ top: 0, behavior: "smooth" });
+                              }}
+                            >
+                              {translatedName}
+                            </Link>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </div>
+
+                  <div className="header__megamenu-column">
+                    <h4>Nội Thất & Trang Trí</h4>
+                    <ul className="header__megamenu-list">
+                      {categories.slice(5).map((cat) => {
+                        const translatedName =
+                          CATEGORY_TRANSLATIONS[cat.name] || cat.name;
+                        return (
+                          <li key={cat._id || cat.id}>
+                            <Link
+                              to={`/category/${cat._id || cat.id}`}
+                              className="header__megamenu-link"
+                              onClick={() => {
+                                setMegaMenuOpen(false);
+                                window.scrollTo({ top: 0, behavior: "smooth" });
+                              }}
+                            >
+                              {translatedName}
+                            </Link>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </div>
+                </div>
+              </li>
             </ul>
           </nav>
 
-          {/* Right Utilities */}
-          <div
-            className="header__actions flex items-center gap-2.5 sm:gap-3.5 shrink-0"
-            role="toolbar"
-            aria-label="Tiện Ích Tiêu Đề"
-          >
+          {/* 3. PHẦN BÊN PHẢI (ACTIONS & USER) */}
+          <div className="header__actions flex items-center gap-2 sm:gap-3 shrink-0">
             <button
-              id="header-search-btn"
               className="header__action-btn"
-              aria-label="Tìm Kiếm Danh Mục"
               type="button"
               onClick={() => setIsSearchOpen(true)}
+              title="Tìm kiếm"
             >
-              <Search size={20} />
+              <Search size={19} />
+            </button>
+            <button
+              className="header__action-btn hidden sm:flex"
+              type="button"
+              onClick={() => navigate("/wishlist")}
+              title="Yêu thích"
+            >
+              <Heart size={19} />
+              {wishlistCount > 0 && (
+                <span className="header__badge">{wishlistCount}</span>
+              )}
+            </button>
+            <button
+              className="header__action-btn"
+              type="button"
+              onClick={() => setIsCartOpen(true)}
+              title="Giỏ hàng"
+            >
+              <ShoppingBag size={19} />
+              {cartCount > 0 && (
+                <span className="header__badge">{cartCount}</span>
+              )}
             </button>
 
-            {/* Trạng thái User (Chưa login vs Đã login) */}
-            {currentUser ? (
-              <div
-                ref={dropdownRef}
-                className="flex items-center gap-3 shrink-0 relative"
-              >
-                <button
-                  id="header-user-btn"
-                  className="header__user-logged-btn flex items-center gap-2 p-1 rounded-full transition-colors hover:bg-black/5 cursor-pointer"
-                  aria-label="Tài khoản khách hàng"
-                  aria-expanded={userDropdownOpen}
-                  type="button"
-                  onClick={() => setUserDropdownOpen((prev) => !prev)}
-                >
-                  <div className="header__user-avatar shrink-0">
-                    {currentUser.avatar ? (
-                      <img
-                        src={currentUser.avatar}
-                        alt={currentUser.name || currentUser.fullName || "User"}
-                        className="w-full h-full object-cover rounded-full"
-                      />
-                    ) : (
-                      <span className="header__user-avatar-text">
-                        {(currentUser.name || currentUser.fullName || currentUser.email || "C")[0]}
-                      </span>
-                    )}
-                  </div>
-                  <span className="header__user-name hidden xl:inline-block">
-                    {currentUser.name || currentUser.fullName || currentUser.email?.split("@")[0] || "Khách Hàng"}
-                  </span>
-                </button>
-
-                {/* Dropdown Menu */}
-                {userDropdownOpen && (
-                  <div
-                    className="header__user-dropdown animate-in fade-in zoom-in-95 duration-150"
-                    role="menu"
+            <div
+              className="header__user-menu-wrapper relative ml-1"
+              ref={dropdownRef}
+            >
+              {currentUser ? (
+                <>
+                  <button
+                    onClick={() => setUserDropdownOpen(!userDropdownOpen)}
+                    className="flex items-center gap-2.5 py-1.5 px-3 rounded-full border border-gray-200 bg-white hover:border-gray-300 transition cursor-pointer"
+                    type="button"
                   >
-                    <div className="header__user-dropdown-header">
-                      <p className="header__user-dropdown-name truncate">
-                        {currentUser.name || currentUser.fullName || "Khách Hàng"}
-                      </p>
-                      <p className="header__user-dropdown-email truncate">
-                        {currentUser.email || ""}
-                      </p>
-                      <span className="header__user-dropdown-badge">
-                        {currentUser.role || "CUSTOMER"}
-                      </span>
+                    <div className="w-7 h-7 rounded-full bg-[#8A6A48] text-white flex items-center justify-center font-semibold text-xs shadow-sm">
+                      {userInitial}
                     </div>
+                    <span className="text-xs font-medium text-gray-800 max-w-25 truncate hidden sm:inline">
+                      {displayName || "Khách hàng"}
+                    </span>
+                    <ChevronDown size={14} className="text-gray-500" />
+                  </button>
 
-                    <div className="header__user-dropdown-links">
+                  {userDropdownOpen && (
+                    <div className="absolute right-0 top-full mt-2 w-56 bg-white rounded-xl shadow-xl border border-gray-100 py-2 z-50 animate-in fade-in zoom-in-95 duration-150">
+                      <div className="px-4 py-2 border-b border-gray-100 mb-1">
+                        <p className="text-xs text-gray-400">
+                          Tài khoản của bạn
+                        </p>
+                        <p className="text-sm font-semibold text-gray-800 truncate">
+                          {displayName || currentUser.email || "Khách hàng"}
+                        </p>
+                      </div>
                       <Link
                         to="/profile"
                         onClick={() => setUserDropdownOpen(false)}
-                        className="header__user-dropdown-item"
-                        role="menuitem"
+                        className="flex items-center gap-2.5 px-4 py-2.5 text-xs font-medium text-gray-700 hover:bg-gray-50 transition"
                       >
-                        <User size={14} />
-                        <span>Hồ sơ cá nhân</span>
+                        <User size={15} className="text-gray-500" /> Hồ sơ cá
+                        nhân
                       </Link>
                       <Link
                         to="/orders"
                         onClick={() => setUserDropdownOpen(false)}
-                        className="header__user-dropdown-item"
-                        role="menuitem"
+                        className="flex items-center gap-2.5 px-4 py-2.5 text-xs font-medium text-gray-700 hover:bg-gray-50 transition"
                       >
-                        <Package size={14} />
-                        <span>Đơn hàng của tôi</span>
+                        <Package size={15} className="text-gray-500" /> Đơn hàng
+                        của tôi
                       </Link>
                       <Link
                         to="/addresses"
                         onClick={() => setUserDropdownOpen(false)}
-                        className="header__user-dropdown-item"
-                        role="menuitem"
+                        className="flex items-center gap-2.5 px-4 py-2.5 text-xs font-medium text-gray-700 hover:bg-gray-50 transition"
                       >
-                        <MapPin size={14} />
-                        <span>Sổ địa chỉ nhận hàng</span>
+                        <MapPin size={15} className="text-gray-500" /> Sổ địa
+                        chỉ giao hàng
                       </Link>
-                      <Link
-                        to="/cart"
-                        onClick={() => setUserDropdownOpen(false)}
-                        className="header__user-dropdown-item"
-                        role="menuitem"
-                      >
-                        <ShoppingBag size={14} />
-                        <span>Giỏ hàng của tôi</span>
-                      </Link>
-                      <Link
-                        to="/wishlist"
-                        onClick={() => setUserDropdownOpen(false)}
-                        className="header__user-dropdown-item"
-                        role="menuitem"
-                      >
-                        <Heart size={14} />
-                        <span>Sản phẩm yêu thích</span>
-                      </Link>
-                      {(currentUser.role?.toUpperCase() === "ADMIN" || currentUser.role?.toUpperCase() === "MANAGER") && (
-                        <Link
-                          to="/admin/dashboard"
-                          onClick={() => setUserDropdownOpen(false)}
-                          className="header__user-dropdown-item text-amber-800 font-semibold"
-                          role="menuitem"
-                        >
-                          <span>Quản trị hệ thống</span>
-                        </Link>
-                      )}
-                      {currentUser.role?.toUpperCase() === "STAFF" && (
-                        <Link
-                          to="/staff"
-                          onClick={() => setUserDropdownOpen(false)}
-                          className="header__user-dropdown-item text-amber-800 font-semibold"
-                          role="menuitem"
-                        >
-                          <span>Cổng Nhân viên</span>
-                        </Link>
-                      )}
-                      {(currentUser.role?.toUpperCase() === "STORAGE" || currentUser.role?.toUpperCase() === "STORAGE_MANAGER") && (
-                        <Link
-                          to="/storage"
-                          onClick={() => setUserDropdownOpen(false)}
-                          className="header__user-dropdown-item text-amber-800 font-semibold"
-                          role="menuitem"
-                        >
-                          <span>Quản lý kho</span>
-                        </Link>
-                      )}
-                    </div>
-
-                    <div className="header__user-dropdown-footer">
+                      <div className="border-t border-gray-100 my-1"></div>
                       <button
-                        type="button"
                         onClick={handleLogout}
-                        className="header__user-dropdown-logout"
-                        role="menuitem"
+                        className="w-full flex items-center gap-2.5 px-4 py-2.5 text-xs font-medium text-red-600 hover:bg-red-50 hover:pl-5 transition-all duration-200 text-left active:scale-[0.98]"
+                        type="button"
                       >
-                        <LogOut size={14} />
-                        <span>Đăng xuất</span>
+                        <LogOut
+                          size={15}
+                          className="transition-transform duration-200 group-hover:rotate-12"
+                        />{" "}
+                        Đăng xuất
                       </button>
                     </div>
-                  </div>
-                )}
-              </div>
-            ) : (
-              <button
-                id="header-user-btn"
-                className="header__action-btn header__user-btn shrink-0"
-                aria-label="Tài Khoản Khách Hàng"
-                type="button"
-                onClick={() => navigate("/login")}
-              >
-                <User size={20} />
-              </button>
-            )}
-
-            <button
-              id="header-wishlist-btn"
-              className="header__action-btn shrink-0"
-              aria-label={`Sản phẩm yêu thích, ${wishlistCount} mục đã lưu`}
-              type="button"
-              onClick={() => navigate("/wishlist")}
-            >
-              <Heart size={20} />
-              {wishlistCount > 0 && (
-                <span className="header__badge" aria-hidden="true">
-                  {wishlistCount}
-                </span>
+                  )}
+                </>
+              ) : (
+                <Link
+                  to="/login"
+                  className="flex items-center gap-2 py-1.5 px-3.5 rounded-full border border-[#8A6A48] text-[#8A6A48] hover:bg-[#8A6A48] hover:text-white transition text-xs font-semibold uppercase tracking-wider"
+                >
+                  <User size={14} /> Đăng Nhập
+                </Link>
               )}
-            </button>
-
-            <button
-              id="header-cart-btn"
-              className="header__action-btn header__cart-btn shrink-0"
-              aria-label={`Giỏ hàng, ${cartCount} sản phẩm`}
-              type="button"
-              onClick={() => setIsCartOpen(true)}
-            >
-              <ShoppingBag size={20} />
-              {cartCount > 0 && (
-                <span className="header__badge" aria-hidden="true">
-                  {cartCount}
-                </span>
-              )}
-            </button>
+            </div>
           </div>
         </div>
       </header>
-
-      {/* Mobile Nav Drawer */}
-      {mobileOpen && (
-        <div
-          className="header__mobile-overlay"
-          onClick={() => setMobileOpen(false)}
-        >
-          <nav
-            id="header-mobile-drawer"
-            className="header__mobile-drawer"
-            onClick={(e) => e.stopPropagation()}
-            aria-label="Menu Di Động"
-          >
-            <div className="header__mobile-drawer-header">
-              <Link to="/" onClick={() => setMobileOpen(false)} className="header__logo" aria-label="Nội Thất Cao Cấp LUMORA - Trang Chủ">
-                <img src={logoImg} alt="Nội Thất Cao Cấp LUMORA" className="header__logo-img header__logo-img--mobile" />
-              </Link>
-              <button
-                className="header__mobile-close"
-                onClick={() => setMobileOpen(false)}
-                aria-label="Đóng menu"
-              >
-                <X size={22} />
-              </button>
-            </div>
-
-            {/* Mobile User Section */}
-            {currentUser && (
-              <div className="header__mobile-user-card">
-                <div className="header__user-avatar shrink-0">
-                  {currentUser.avatar ? (
-                    <img
-                      src={currentUser.avatar}
-                      alt={currentUser.name || "User"}
-                      className="w-full h-full object-cover rounded-full"
-                    />
-                  ) : (
-                    <span className="header__user-avatar-text">
-                      {(currentUser.name || currentUser.fullName || currentUser.email || "C")[0]}
-                    </span>
-                  )}
-                </div>
-                <div className="header__mobile-user-info truncate">
-                  <p className="font-semibold text-sm text-neutral-800 truncate">
-                    {currentUser.name || currentUser.fullName || "Khách Hàng"}
-                  </p>
-                  <p className="text-xs text-neutral-500 truncate">
-                    {currentUser.email || ""}
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={handleLogout}
-                  className="header__mobile-logout-btn"
-                  title="Đăng xuất"
-                >
-                  <LogOut size={16} />
-                </button>
-              </div>
-            )}
-
-            <ul className="header__mobile-nav-list">
-              {NAV_LINKS.map(({ label, to }) => (
-                <li key={to}>
-                  <Link
-                    to={to}
-                    className="header__mobile-nav-link"
-                    onClick={() => setMobileOpen(false)}
-                  >
-                    {label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-            <div className="header__mobile-drawer-footer">
-              <p>Bạn Cần Tư Vấn Thiết Kế?</p>
-              <a href="tel:+18005866721" className="header__mobile-phone">
-                +1 (800) 586-6721
-              </a>
-              <span className="header__mobile-hours">
-                Thứ Hai - Thứ Bảy: 9:00 AM - 6:00 PM EST
-              </span>
-            </div>
-          </nav>
-        </div>
-      )}
     </>
   );
 }
