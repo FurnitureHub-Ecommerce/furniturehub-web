@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   X,
   Calendar,
@@ -11,15 +11,15 @@ import {
   AlertCircle,
   Phone,
   ShieldCheck,
-  Package, // Thay thế ảnh bằng icon hộp hàng chuẩn UI
+  Package,
 } from "lucide-react";
 import { orderAPI, paymentAPI, getApiErrorMessage } from "../../../services/api";
 import { formatCurrency } from "../../../utils/formatters";
 import OrderStatusBadge from "../OrderStatusbadge/OrderStatusBadge";
+import CancelOrderModal from "../CancelOrderModal/CancelOrderModal";
 import OrderTrackingTimeline from "../../customer/OrderTrackingTimeline";
 import "./OrderDetailModal.css";
 
-// Component con hiển thị từng sản phẩm (Sử dụng Icon Package thay thế ảnh)
 // Component con hiển thị thông tin chi tiết từng sản phẩm một cách trực quan, có nhãn rõ ràng
 function OrderItemCard({ item }) {
   const unitPrice = item.unitPrice || 0;
@@ -80,20 +80,22 @@ function OrderItemCard({ item }) {
   );
 }
 
-export default function OrderDetailModal2({
+export default function OrderDetailModal({
   isOpen,
   onClose,
   order: initialOrder,
   orderId: propOrderId,
   onCancelClick,
+  onOrderCancelled,
 }) {
   const [order, setOrder] = useState(initialOrder);
   const [payment, setPayment] = useState(initialOrder?.payment || null);
   const [isLoading, setIsLoading] = useState(false);
   const [loadError, setLoadError] = useState(null);
   const [copiedField, setCopiedField] = useState(null);
+  const [cancelModalVisible, setCancelModalVisible] = useState(false);
 
-  const activeOrderId = order?._id || order?.id || propOrderId;
+  const activeOrderId = order?._id || order?.id || initialOrder?._id || initialOrder?.id || propOrderId;
 
   useEffect(() => {
     setOrder(initialOrder);
@@ -106,52 +108,56 @@ export default function OrderDetailModal2({
       document.body.style.overflow = "hidden";
     } else {
       document.body.style.overflow = "unset";
+      setCancelModalVisible(false);
     }
     return () => {
       document.body.style.overflow = "unset";
     };
   }, [isOpen]);
 
-  // Gọi API chuẩn từ Backend, xử lý an toàn với đơn COD không có bản ghi Payment
-  useEffect(() => {
-    if (!isOpen || !activeOrderId) return;
+  // Hàm tải lại chi tiết đơn hàng từ Backend
+  const fetchOrderDetail = useCallback(async () => {
+    if (!activeOrderId) return null;
+    setIsLoading(true);
+    setLoadError(null);
+    try {
+      const ordRes = await orderAPI.getMyOrderById(activeOrderId);
+      if (ordRes?.data) {
+        const fetchedOrder = ordRes.data.order || ordRes.data;
+        setOrder((prev) => ({
+          ...prev,
+          ...fetchedOrder,
+          reason: fetchedOrder.reason || fetchedOrder.cancelReason || prev?.reason || prev?.cancelReason,
+          cancelReason: fetchedOrder.cancelReason || fetchedOrder.reason || prev?.cancelReason || prev?.reason,
+        }));
 
-    let isMounted = true;
-    async function fetchBackendData() {
-      setIsLoading(true);
-      setLoadError(null);
-      try {
-        const ordRes = await orderAPI.getMyOrderById(activeOrderId);
-        if (!isMounted) return;
-
-        if (ordRes?.data) {
-          const fetchedOrder = ordRes.data.order || ordRes.data;
-          setOrder(fetchedOrder);
-
-          // Chỉ gọi API lấy payment nếu đơn chọn chuyển khoản ngân hàng
-          const method = fetchedOrder.paymentMethod;
-          if (method === "BANK_TRANSFER" || method === "bank_transfer") {
-            try {
-              const payRes = await paymentAPI.getPaymentByOrder(activeOrderId);
-              if (isMounted && payRes?.data) {
-                setPayment(payRes.data.payment || payRes.data);
-              }
-            } catch {
-              // Bỏ qua lỗi 404 nếu payment chưa được tạo
+        // Chỉ gọi API lấy payment nếu đơn chọn chuyển khoản ngân hàng
+        const method = fetchedOrder.paymentMethod;
+        if (method === "BANK_TRANSFER" || method === "bank_transfer") {
+          try {
+            const payRes = await paymentAPI.getPaymentByOrder(activeOrderId);
+            if (payRes?.data) {
+              setPayment(payRes.data.payment || payRes.data);
             }
+          } catch {
+            // Bỏ qua lỗi 404 nếu payment chưa được tạo
           }
         }
-      } catch (err) {
-        if (isMounted) {
-          setLoadError(getApiErrorMessage(err, "Không thể tải chi tiết đơn hàng từ hệ thống."));
-        }
-      } finally {
-        if (isMounted) setIsLoading(false);
+        return fetchedOrder;
       }
+    } catch (err) {
+      setLoadError(getApiErrorMessage(err, "Không thể tải chi tiết đơn hàng từ hệ thống."));
+    } finally {
+      setIsLoading(false);
     }
+    return null;
+  }, [activeOrderId]);
 
-    fetchBackendData();
-  }, [isOpen, activeOrderId]);
+  // Gọi API chuẩn từ Backend khi mở modal
+  useEffect(() => {
+    if (!isOpen || !activeOrderId) return;
+    fetchOrderDetail();
+  }, [isOpen, activeOrderId, fetchOrderDetail]);
 
   if (!isOpen) return null;
 
@@ -161,16 +167,38 @@ export default function OrderDetailModal2({
     setTimeout(() => setCopiedField(null), 2000);
   };
 
-  const isPending = order?.status === "pending";
+  const statusLower = String(order?.status || "").toLowerCase();
+  const isPending = statusLower === "pending";
+  const isCancelled = statusLower === "cancelled";
   const shipping = order?.shippingAddress || {};
   const items = order?.items || [];
-  
+
   const paymentMethod = payment?.paymentMethod || order?.paymentMethod || "COD";
   const isBankTransfer = paymentMethod === "BANK_TRANSFER" || paymentMethod === "bank_transfer";
   const isPaid = payment?.status === "paid" || order?.paymentStatus === "paid";
-  
+
   const totalAmount = order?.totalAmount ?? 0;
   const subtotal = order?.subtotal ?? totalAmount;
+
+  const handleCancelledSuccess = async (updatedOrder) => {
+    setCancelModalVisible(false);
+    setOrder((prev) => ({
+      ...prev,
+      ...updatedOrder,
+      status: updatedOrder.status || "cancelled",
+      reason: updatedOrder.reason || updatedOrder.cancelReason,
+      cancelReason: updatedOrder.cancelReason || updatedOrder.reason,
+    }));
+    const refreshed = await fetchOrderDetail();
+    if (onOrderCancelled) {
+      onOrderCancelled({
+        ...updatedOrder,
+        ...(refreshed || {}),
+        reason: refreshed?.reason || refreshed?.cancelReason || updatedOrder.reason || updatedOrder.cancelReason,
+        cancelReason: refreshed?.cancelReason || refreshed?.reason || updatedOrder.cancelReason || updatedOrder.reason,
+      });
+    }
+  };
 
   return (
     <div className="order-modal__overlay" onClick={onClose} role="dialog" aria-modal="true">
@@ -257,7 +285,8 @@ export default function OrderDetailModal2({
                   variant="full"
                   createdAt={order?.createdAt}
                   updatedAt={order?.updatedAt}
-                  cancelReason={order?.cancelReason}
+                  reason={order?.reason || order?.cancelReason}
+                  cancelReason={order?.cancelReason || order?.reason}
                 />
               </div>
 
@@ -328,7 +357,7 @@ export default function OrderDetailModal2({
               </div>
 
               {/* VietQR Box (Chỉ hiển thị nếu là chuyển khoản và chưa thanh toán) */}
-              {isBankTransfer && !isPaid && order?.status !== "cancelled" && (
+              {isBankTransfer && !isPaid && !isCancelled && (
                 <div className="order-modal__bank-box">
                   <div className="order-modal__bank-header">
                     <QrCode size={18} />
@@ -440,16 +469,23 @@ export default function OrderDetailModal2({
         {/* Footer */}
         <div className="order-modal__footer">
           <div className="order-modal__footer-left">
-            {isPending && (
-              <button
-                type="button"
-                className="order-modal__btn-cancel"
-                onClick={() => {
-                  if (onCancelClick) onCancelClick(order);
-                }}
-              >
-                Hủy Đơn Hàng
-              </button>
+            {isCancelled ? (
+              <div style={{ fontSize: "0.86rem", color: "#DC2626", fontWeight: 500 }}>
+                Lý do: {order?.reason || order?.cancelReason || "Người mua yêu cầu hủy"}
+              </div>
+            ) : (
+              isPending && (
+                <button
+                  type="button"
+                  className="order-modal__btn-cancel"
+                  onClick={() => {
+                    // CHỈ mở Modal lý do, không gọi API hay hiện thông báo thành công trước
+                    setCancelModalVisible(true);
+                  }}
+                >
+                  Hủy đơn hàng
+                </button>
+              )
             )}
           </div>
           <div className="order-modal__footer-right">
@@ -458,6 +494,14 @@ export default function OrderDetailModal2({
             </button>
           </div>
         </div>
+
+        {/* Modal nhập lý do hủy đơn hàng */}
+        <CancelOrderModal
+          isOpen={cancelModalVisible}
+          onClose={() => setCancelModalVisible(false)}
+          order={order}
+          onCancelled={handleCancelledSuccess}
+        />
       </div>
     </div>
   );

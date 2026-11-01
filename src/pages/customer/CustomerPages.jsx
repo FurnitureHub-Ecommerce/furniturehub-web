@@ -292,6 +292,47 @@ export function CartPage() {
     fetchCart();
   }, [fetchCart]);
 
+  const handleProceedToCheckout = async () => {
+    for (const item of cart) {
+      const prod = item.product || {};
+      const prodName = prod.name || item.name || "Sản phẩm";
+      let stock =
+        item.stock ??
+        item.inventoryQuantity ??
+        item.availableStock ??
+        prod.stock ??
+        prod.inventoryQuantity ??
+        prod.availableStock ??
+        prod.stockCount;
+
+      if (stock === undefined || stock === null) {
+        const prodId = prod.id || prod._id || item.productId;
+        const varId = item.variantId || prod.variantId;
+        if (prodId && productAPI.getProductVariants) {
+          try {
+            const res = await productAPI.getProductVariants(prodId);
+            const variants = res?.data?.variants || res?.data || [];
+            if (Array.isArray(variants) && variants.length > 0) {
+              const matched = varId
+                ? variants.find((v) => String(v._id || v.id) === String(varId)) || variants[0]
+                : variants[0];
+              stock = matched?.stock ?? matched?.inventoryQuantity ?? matched?.availableStock;
+            }
+          } catch {
+            // ignore fallback error
+          }
+        }
+      }
+
+      if (stock !== undefined && stock !== null && Number(item.quantity) > Number(stock)) {
+        window.alert(`Sản phẩm ${prodName} chỉ còn ${Number(stock)} cái trong kho`);
+        return;
+      }
+    }
+
+    navigate("/checkout");
+  };
+
   return (
     <div
       className="section container"
@@ -421,6 +462,18 @@ export function CartPage() {
             {cart.map((item) => {
               const prod = item.product || {};
               const itemPrice = item.unitPrice || prod.price || prod.minPrice || 0;
+              const itemStock =
+                item.stock ??
+                item.inventoryQuantity ??
+                item.availableStock ??
+                prod.stock ??
+                prod.inventoryQuantity ??
+                prod.availableStock ??
+                prod.stockCount;
+              const isMaxStockReached =
+                itemStock !== undefined &&
+                itemStock !== null &&
+                Number(item.quantity) >= Number(itemStock);
 
               return (
                 <div
@@ -543,11 +596,13 @@ export function CartPage() {
                       </span>
                       <button
                         onClick={() => updateCartQuantity(item.itemId || prod.id, 1)}
+                        disabled={isMaxStockReached}
                         style={{
                           padding: "6px 10px",
                           background: "none",
                           border: "none",
-                          cursor: "pointer",
+                          cursor: isMaxStockReached ? "not-allowed" : "pointer",
+                          opacity: isMaxStockReached ? 0.35 : 1,
                           display: "flex",
                           alignItems: "center",
                         }}
@@ -632,7 +687,7 @@ export function CartPage() {
             </div>
 
             <button
-              onClick={() => navigate("/checkout")}
+              onClick={handleProceedToCheckout}
               style={{
                 width: "100%",
                 padding: "16px",

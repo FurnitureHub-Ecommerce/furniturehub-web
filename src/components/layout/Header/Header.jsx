@@ -13,6 +13,7 @@ import {
   ChevronDown,
 } from "lucide-react";
 import { useShop } from "../../../context/ShopContext";
+import { useAuth, getAvatarInitial } from "../../../context/AuthContext";
 import { categoryAPI } from "../../../services/api";
 import "./Header.css";
 import logoImg from "../../../assets/images/logo.jpg";
@@ -32,22 +33,12 @@ const CATEGORY_TRANSLATIONS = {
 export function Header() {
   const { cartCount, wishlistCount, setIsSearchOpen, setIsCartOpen } =
     useShop();
+  const { user: currentUser, logout } = useAuth();
 
   const [mobileOpen, setMobileOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [categories, setCategories] = useState([]);
   const [megaMenuOpen, setMegaMenuOpen] = useState(false);
-
-  // Trạng thái tài khoản khách hàng (Hỗ trợ kiểm tra cả localStorage và sessionStorage)
-  const [currentUser, setCurrentUser] = useState(() => {
-    try {
-      const token = localStorage.getItem("token") || sessionStorage.getItem("token");
-      const userStr = localStorage.getItem("user") || sessionStorage.getItem("user");
-      return token && userStr ? JSON.parse(userStr) : null;
-    } catch {
-      return null;
-    }
-  });
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
 
@@ -88,9 +79,14 @@ export function Header() {
   }, []);
 
   const handleLogout = () => {
-    sessionStorage.removeItem("token");
-    sessionStorage.removeItem("user");
-    setCurrentUser(null);
+    if (logout) {
+      logout();
+    } else {
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      sessionStorage.removeItem("token");
+      sessionStorage.removeItem("user");
+    }
     setUserDropdownOpen(false);
     navigate("/");
   };
@@ -110,9 +106,8 @@ export function Header() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  const userInitial = currentUser?.name
-    ? currentUser.name.charAt(0).toUpperCase()
-    : "V";
+  const displayName = currentUser?.fullName || currentUser?.name || "";
+  const userInitial = getAvatarInitial(displayName);
 
   return (
     <>
@@ -302,7 +297,7 @@ export function Header() {
                       {userInitial}
                     </div>
                     <span className="text-xs font-medium text-gray-800 max-w-25 truncate hidden sm:inline">
-                      {currentUser.name}
+                      {displayName || "Khách hàng"}
                     </span>
                     <ChevronDown size={14} className="text-gray-500" />
                   </button>
@@ -314,7 +309,7 @@ export function Header() {
                           Tài khoản của bạn
                         </p>
                         <p className="text-sm font-semibold text-gray-800 truncate">
-                          {currentUser.name}
+                          {displayName || currentUser.email || "Khách hàng"}
                         </p>
                       </div>
                       <Link

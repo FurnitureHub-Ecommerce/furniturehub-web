@@ -89,12 +89,29 @@ export function QuickViewModal() {
   // Lấy giá tiền ưu tiên từ biến thể đang chọn, nếu không có lấy giá gốc sản phẩm
   const currentPrice = selectedVariant?.price ?? selectedVariant?.unitPrice ?? displayProduct.price ?? displayProduct.basePrice ?? displayProduct.minPrice ?? 0;
   const oldPrice = displayProduct.oldPrice || displayProduct.comparePrice;
+  const rawStock =
+    selectedVariant?.stock ??
+    selectedVariant?.inventoryQuantity ??
+    selectedVariant?.availableStock ??
+    displayProduct.stock ??
+    displayProduct.inventoryQuantity ??
+    displayProduct.availableStock ??
+    displayProduct.stockCount;
+  const currentStock = rawStock !== undefined && rawStock !== null ? Number(rawStock) : undefined;
+  const isMaxStockReached = currentStock !== undefined && qty >= currentStock;
 
   const handleAddToCart = () => {
+    if (currentStock !== undefined && qty > currentStock) {
+      window.alert(`Sản phẩm ${displayProduct.name} chỉ còn ${currentStock} cái trong kho`);
+      return;
+    }
     // Đính kèm thông tin biến thể thực tế vào sản phẩm khi thêm vào giỏ hàng
     const productToAdd = {
       ...displayProduct,
       price: currentPrice,
+      stock: currentStock,
+      inventoryQuantity: currentStock,
+      availableStock: currentStock,
       variantId: selectedVariant?._id || selectedVariant?.id,
       variantLabel: selectedVariant ? `${selectedVariant.color || ''} - ${selectedVariant.size || ''} - ${selectedVariant.material || ''}`.trim() : displayProduct.variantLabel,
       color: selectedVariant?.color || displayProduct.color,
@@ -225,7 +242,16 @@ export function QuickViewModal() {
               <span className="quickview-qty-val">{qty}</span>
               <button
                 className="quickview-qty-btn"
-                onClick={() => setQty((prev) => prev + 1)}
+                onClick={() =>
+                  setQty((prev) =>
+                    currentStock !== undefined ? Math.min(currentStock, prev + 1) : prev + 1
+                  )
+                }
+                disabled={isMaxStockReached}
+                style={{
+                  cursor: isMaxStockReached ? "not-allowed" : "pointer",
+                  opacity: isMaxStockReached ? 0.35 : 1,
+                }}
                 type="button"
               >
                 <Plus size={14} />
