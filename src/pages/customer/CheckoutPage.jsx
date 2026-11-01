@@ -22,6 +22,7 @@ import {
   checkoutAPI,
   orderAPI,
   paymentAPI,
+  productAPI,
   getApiErrorMessage,
 } from "../../services/api";
 import { formatCurrency } from "../../utils/formatters";
@@ -168,6 +169,46 @@ export default function CheckoutPage() {
     if (cart.length === 0) {
       setSubmitError("Giỏ hàng của bạn đang trống.");
       return;
+    }
+
+    // Kiểm tra tồn kho của toàn bộ sản phẩm trong giỏ trước khi đặt hàng
+    for (const item of cart) {
+      const prod = item.product || {};
+      const prodName = prod.name || item.name || "Sản phẩm";
+      let stock =
+        item.stock ??
+        item.inventoryQuantity ??
+        item.availableStock ??
+        prod.stock ??
+        prod.inventoryQuantity ??
+        prod.availableStock ??
+        prod.stockCount;
+
+      if (stock === undefined || stock === null) {
+        const prodId = prod.id || prod._id || item.productId;
+        const varId = item.variantId || prod.variantId;
+        if (prodId && productAPI.getProductVariants) {
+          try {
+            const res = await productAPI.getProductVariants(prodId);
+            const variants = res?.data?.variants || res?.data || [];
+            if (Array.isArray(variants) && variants.length > 0) {
+              const matched = varId
+                ? variants.find((v) => String(v._id || v.id) === String(varId)) || variants[0]
+                : variants[0];
+              stock = matched?.stock ?? matched?.inventoryQuantity ?? matched?.availableStock;
+            }
+          } catch {
+            // ignore fallback error
+          }
+        }
+      }
+
+      if (stock !== undefined && stock !== null && Number(item.quantity) > Number(stock)) {
+        const alertMsg = `Sản phẩm ${prodName} chỉ còn ${Number(stock)} cái trong kho`;
+        window.alert(alertMsg);
+        setSubmitError(alertMsg);
+        return;
+      }
     }
 
     setIsSubmitting(true);
