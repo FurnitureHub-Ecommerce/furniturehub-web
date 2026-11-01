@@ -289,8 +289,10 @@ export const orderAPI = {
   getOrders: (params = {}) => api.get("/api/orders", { params }),
   getOrdersById: (id) => api.get(`/api/orders/${id}`),
   confirmOrderStatus: (id) => api.patch(`/api/orders/${id}/confirm`),
-  rejectOrderStatus: (id) => api.patch(`/api/orders/${id}/reject`),
-  updateOrderStatus: (id, status) => api.patch(`/api/orders/${id}/status`, { status }),
+  rejectOrderStatus: (id, reason) =>
+    api.patch(`/api/orders/${id}/reject`, { reason }),
+  updateOrderStatus: (id, status) =>
+    api.patch(`/api/orders/${id}/status`, { status }),
   // Customer
   createOrder: (orderData) => api.post("/api/orders", orderData),
   getMyOrders: (params = {}) => api.get("/api/orders/my-orders", { params }),
@@ -301,7 +303,7 @@ export const orderAPI = {
     const rawReason =
       typeof data === "string"
         ? data
-        : data?.reason ?? data?.cancelReason ?? "";
+        : (data?.reason ?? data?.cancelReason ?? "");
     const payload = {
       reason: String(rawReason).trim(),
     };
