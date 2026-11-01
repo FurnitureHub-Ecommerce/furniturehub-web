@@ -36,7 +36,7 @@ export default function ProductReactivateDialog({ name, onClose, onConfirm }) {
     <form onSubmit={submit}>
       <h2 id="lc-reactivate-title">Kích hoạt lại sản phẩm?</h2>
       <p className="lc-reactivate-name">{name}</p>
-      <p>Sản phẩm sẽ được đánh dấu hoạt động nếu Backend chấp nhận. Danh sách sẽ được tải lại để xác nhận trạng thái.</p>
+      <p>Sản phẩm sẽ được đánh dấu hoạt động. Danh sách sẽ được tải lại để xác nhận trạng thái.</p>
       {error && <p className="lc-product-error" role="alert">{error}</p>}
       <footer><button type="button" disabled={saving} onClick={onClose}>Hủy</button><button type="submit" disabled={saving}>{saving ? "Đang kích hoạt…" : "Kích hoạt lại"}</button></footer>
     </form>

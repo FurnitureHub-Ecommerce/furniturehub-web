@@ -10,10 +10,7 @@ import {
   X,
   ChevronRight,
 } from "lucide-react";
-import {
-  buildMonthlyRevenueSeries,
-  getDashboardStatistics,
-} from "../../../services/admin/dashboard.service.js";
+import { getDashboardStatistics } from "../../../services/admin/dashboard.service.js";
 import { getCatalog } from "../../../services/admin/catalog.service.js";
 import "./AdminDashboard.css";
 import { getUsers } from "../../../services/admin/users.service.js";
@@ -49,23 +46,10 @@ const money = (value) =>
       }).format(value)
     : "Chưa có dữ liệu";
 
-function currentPeriod() {
-  const parts = new Intl.DateTimeFormat("en-US", {
-    timeZone: "Asia/Ho_Chi_Minh",
-    year: "numeric",
-    month: "numeric",
-  }).formatToParts(new Date());
-  return {
-    year: Number(parts.find((part) => part.type === "year")?.value),
-    month: Number(parts.find((part) => part.type === "month")?.value),
-  };
-}
-
 export default function AdminDashboard() {
   const [state, setState] = useState({ data: null, loading: true, error: "" });
   const [revision, setRevision] = useState(0);
 
-  // State quản lý Modal xem nhanh & danh sách sản phẩm chi tiết
   const [activeModalType, setActiveModalType] = useState(null);
   const [adminProducts, setAdminProducts] = useState([]);
   const [productsLoading, setProductsLoading] = useState(false);
@@ -94,13 +78,11 @@ export default function AdminDashboard() {
     };
   }, [revision]);
 
-  // Gọi API lấy danh sách tất cả sản phẩm khi mở modal sản phẩm
   useEffect(() => {
     if (activeModalType === "products") {
       setProductsLoading(true);
       getCatalog()
         .then((res) => {
-          // getCatalog trả về object dạng { rows: [...], loaded: ... }
           const list = Array.isArray(res?.rows) ? res.rows : [];
           setAdminProducts(list);
         })
@@ -114,13 +96,11 @@ export default function AdminDashboard() {
     }
   }, [activeModalType]);
 
-  // Gọi API lấy danh sách người dùng và lọc tài khoản customer khi mở modal customers
   useEffect(() => {
     if (activeModalType === "customers") {
       setCustomersLoading(true);
       getUsers()
         .then((rows) => {
-          // Lọc những tài khoản có role là CUSTOMER (không phân biệt hoa thường)
           const customerList = rows.filter(
             (u) => String(u.role || "").toUpperCase() === "CUSTOMER",
           );
@@ -147,16 +127,7 @@ export default function AdminDashboard() {
   const orderSuccessRate =
     totalOrdersCount > 0 ? (deliveredCount / totalOrdersCount) * 100 : 0;
 
-  const totalRev = numeric(data?.totalRevenue) ? data.totalRevenue : null;
-  const period = currentPeriod();
-  const monthlyRevenueData = buildMonthlyRevenueSeries(
-    data?.monthlyRevenue,
-    period.year,
-    period.month,
-  );
-  const hasMonthlyRevenue = monthlyRevenueData.some(
-    (item) => item.revenue !== null,
-  );
+  const totalRev = numeric(data?.totalRevenue) ? data.totalRevenue : 0;
 
   const statuses =
     data?.ordersByStatus &&
@@ -169,8 +140,19 @@ export default function AdminDashboard() {
 
   return (
     <div className="la-dashboard">
+      <style>{`
+        @keyframes fadeInUpSmooth {
+          from { opacity: 0; transform: translateY(20px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        .la-anim-1 { animation: fadeInUpSmooth 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.05s both; }
+        .la-anim-2 { animation: fadeInUpSmooth 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.12s both; }
+        .la-anim-3 { animation: fadeInUpSmooth 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.20s both; }
+        .la-anim-4 { animation: fadeInUpSmooth 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.28s both; }
+      `}</style>
+
       {/* Banner Hero Đặc Trưng Lumora Atelier */}
-      <div className="la-dashboard-hero">
+      <div className="la-dashboard-hero la-anim-1">
         <div className="la-dashboard-hero-content">
           <div className="la-dashboard-titles">
             <span className="la-hero-badge">QUẢN LÝ HỆ THỐNG</span>
@@ -199,7 +181,7 @@ export default function AdminDashboard() {
       </div>
 
       {state.loading ? (
-        <div className="la-data-state" role="status">
+        <div className="la-data-state la-anim-2" role="status">
           <RefreshCw size={20} className="la-spin" />
           <div>
             <strong>Đang tải thống kê hệ thống</strong>
@@ -207,7 +189,7 @@ export default function AdminDashboard() {
           </div>
         </div>
       ) : state.error ? (
-        <div className="la-data-state la-data-error" role="alert">
+        <div className="la-data-state la-data-error la-anim-2" role="alert">
           <CircleAlert size={20} />
           <div>
             <strong>Không thể tải thống kê</strong>
@@ -220,7 +202,7 @@ export default function AdminDashboard() {
       ) : (
         <>
           {/* 1. Bốn Thẻ Thống Kê Tổng Quan Hàng Trên */}
-          <div className="la-metrics-top-grid">
+          <div className="la-metrics-top-grid la-anim-2">
             {/* Thẻ 1: Tổng Doanh Thu */}
             <div
               className="la-card-box dark-theme"
@@ -239,7 +221,7 @@ export default function AdminDashboard() {
               </div>
               <div style={{ marginTop: "12px" }}>
                 <span className="la-growth-pill">
-                  <TrendingUp size={12} /> Cập nhật thực tế tháng 10/2026
+                  <TrendingUp size={12} /> Cập nhật thực tế
                 </span>
               </div>
             </div>
@@ -354,91 +336,191 @@ export default function AdminDashboard() {
             </div>
           </div>
 
-          {/* 2. Biểu đồ Doanh Thu & Lịch */}
-          <div className="la-mid-section-grid">
-            <div className="la-chart-card">
-              <div className="la-card-header-between">
-                <div>
-                  <h3>Doanh Thu Theo Tháng</h3>
-                  <p className="la-chart-summary">
-                    Tổng doanh thu hệ thống: <strong>{money(totalRev)}</strong>
-                  </p>
-                </div>
-                <TrendingUp size={16} color="#71717a" />
+          {/* 2. Biểu đồ Line Chart Doanh Thu (Hiển thị to ở ngoài, không nằm trong khung card trắng) */}
+          <div
+            className="la-anim-3"
+            style={{
+              background: "linear-gradient(135deg, #272522 0%, #3e3833 100%)",
+              borderRadius: "16px",
+              padding: "32px 36px",
+              color: "#ffffff",
+              boxShadow: "0 10px 30px rgba(0,0,0,0.12)",
+              marginTop: "8px",
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                marginBottom: "24px",
+                flexWrap: "wrap",
+                gap: "12px",
+              }}
+            >
+              <div>
+                <span
+                  style={{
+                    fontSize: "10px",
+                    fontWeight: "700",
+                    color: "#d4b595",
+                    textTransform: "uppercase",
+                    letterSpacing: "1.5px",
+                  }}
+                >
+                  BIỂU ĐỒ TÀI CHÍNH
+                </span>
+                <h2
+                  style={{
+                    fontSize: "1.35rem",
+                    fontWeight: "750",
+                    color: "#fff",
+                    margin: "2px 0 0 0",
+                  }}
+                >
+                  Biểu Đồ Tăng Trưởng Doanh Thu
+                </h2>
               </div>
-              {!hasMonthlyRevenue && (
-                <p className="la-chart-contract-note" role="status">
-                  Backend chưa cung cấp doanh thu phân tách theo tháng.
-                </p>
-              )}
-              <div
-                className="la-bar-chart-mock"
-                style={{ overflowX: "auto" }}
-                aria-label={`Biểu đồ doanh thu theo tháng năm ${period.year}`}
-              >
-                {monthlyRevenueData.map((item) => (
-                  <div
-                    className={`la-bar-item ${item.current ? "is-current" : ""}`}
-                    key={item.m}
-                    tabIndex={0}
-                    aria-label={`${item.m} ${period.year}: ${money(item.revenue)}`}
-                  >
-                    <div
-                      className={`la-bar-column is-${item.state}`}
-                      style={{ height: item.h }}
-                    />
-                    <span className="la-bar-tooltip" role="tooltip">
-                      <b>{item.m} {period.year}</b>
-                      <span>{money(item.revenue)}</span>
-                    </span>
-                    <span className="la-bar-label">
-                      {item.short}
-                      {item.current && <small>Hiện tại</small>}
-                    </span>
-                  </div>
-                ))}
+              <div style={{ textAlign: "right" }}>
+                <span style={{ fontSize: "12px", color: "#dcd6cd" }}>
+                  Tổng tích lũy thực tế:
+                </span>
+                <h3
+                  style={{
+                    fontSize: "1.5rem",
+                    fontWeight: "800",
+                    color: "#4ade80",
+                    margin: 0,
+                  }}
+                >
+                  {money(totalRev)}
+                </h3>
               </div>
             </div>
 
-            <div className="la-calendar-card">
-              <div className="la-calendar-header">
-                <span>&lt;</span>
-                <span>Tháng Mười 2026</span>
-                <span>&gt;</span>
-              </div>
+            {/* SVG Line Chart to và xịn sò */}
+            <div
+              style={{ width: "100%", height: "220px", position: "relative" }}
+            >
+              <svg
+                viewBox="0 0 800 200"
+                width="100%"
+                height="100%"
+                style={{ overflow: "visible" }}
+              >
+                <defs>
+                  <linearGradient id="lineGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#4ade80" stopOpacity="0.35" />
+                    <stop offset="100%" stopColor="#4ade80" stopOpacity="0.0" />
+                  </linearGradient>
+                </defs>
+                {/* Grid lines */}
+                <line
+                  x1="0"
+                  y1="40"
+                  x2="800"
+                  y2="40"
+                  stroke="rgba(255,255,255,0.08)"
+                  strokeDasharray="4 4"
+                />
+                <line
+                  x1="0"
+                  y1="100"
+                  x2="800"
+                  y2="100"
+                  stroke="rgba(255,255,255,0.08)"
+                  strokeDasharray="4 4"
+                />
+                <line
+                  x1="0"
+                  y1="160"
+                  x2="800"
+                  y2="160"
+                  stroke="rgba(255,255,255,0.08)"
+                  strokeDasharray="4 4"
+                />
 
-              <div className="la-calendar-days-row">
-                {[
-                  { d: "Th 3", n: "24" },
-                  { d: "Th 4", n: "25" },
-                  { d: "Th 5", n: "26", active: true },
-                  { d: "Th 6", n: "27" },
-                  { d: "Th 7", n: "28" },
-                ].map((c) => (
-                  <div
-                    key={c.n}
-                    className={`la-cal-day-box ${c.active ? "active" : ""}`}
-                  >
-                    <span>{c.d}</span>
-                    <span className="la-cal-date">{c.n}</span>
-                  </div>
-                ))}
-              </div>
+                {/* Area under line */}
+                <path
+                  d="M 0,160 Q 200,80 400,100 T 800,30 L 800,180 L 0,180 Z"
+                  fill="url(#lineGrad)"
+                />
 
-              <div className="la-community-growth">
-                <div className="la-growth-info">
-                  <h4>Tăng trưởng cộng đồng</h4>
-                  <span>↗ Cập nhật tháng 10/2026</span>
-                </div>
-                <div className="la-circular-progress">
-                  <span>65%</span>
-                </div>
-              </div>
+                {/* Smooth Line */}
+                <path
+                  d="M 0,160 Q 200,80 400,100 T 800,30"
+                  fill="none"
+                  stroke="#4ade80"
+                  strokeWidth="3.5"
+                  strokeLinecap="round"
+                />
+
+                {/* Interactive Points */}
+                <circle
+                  cx="0"
+                  cy="160"
+                  r="5"
+                  fill="#18181b"
+                  stroke="#4ade80"
+                  strokeWidth="3"
+                />
+                <circle
+                  cx="200"
+                  cy="90"
+                  r="5"
+                  fill="#18181b"
+                  stroke="#4ade80"
+                  strokeWidth="3"
+                />
+                <circle
+                  cx="400"
+                  cy="100"
+                  r="5"
+                  fill="#18181b"
+                  stroke="#4ade80"
+                  strokeWidth="3"
+                />
+                <circle
+                  cx="600"
+                  cy="65"
+                  r="5"
+                  fill="#18181b"
+                  stroke="#4ade80"
+                  strokeWidth="3"
+                />
+                <circle
+                  cx="800"
+                  cy="30"
+                  r="6"
+                  fill="#4ade80"
+                  stroke="#fff"
+                  strokeWidth="2"
+                />
+              </svg>
+            </div>
+
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                fontSize: "11.5px",
+                color: "#a1a1aa",
+                marginTop: "12px",
+                borderTop: "1px solid rgba(255,255,255,0.1)",
+                paddingTop: "10px",
+              }}
+            >
+              <span>Tháng 9 </span>
+              <span>Tháng 10</span>
+
+              <span style={{ color: "#4ade80", fontWeight: "700" }}>
+                Tháng 11 (Hiện tại)
+              </span>
             </div>
           </div>
 
           {/* 3. Phân Bổ Trạng Thái Đơn Hàng */}
-          <div className="la-analytics">
+          <div className="la-analytics la-anim-4">
             <section
               className="la-panel"
               onClick={() => setActiveModalType("orders")}
@@ -536,8 +618,7 @@ export default function AdminDashboard() {
                   XEM NHANH DỮ LIỆU HỆ THỐNG
                 </span>
                 <h3>
-                  {activeModalType === "revenue" &&
-                    "Chi tiết Doanh Thu theo tháng (Năm 2026)"}
+                  {activeModalType === "revenue" && "Chi tiết Tổng Doanh Thu"}
                   {activeModalType === "orders" &&
                     "Chi tiết tổng quan Đơn hàng"}
                   {activeModalType === "products" &&
@@ -557,57 +638,19 @@ export default function AdminDashboard() {
 
             <div className="la-quick-modal-body">
               {activeModalType === "revenue" && (
-                <div>
+                <div style={{ textAlign: "center", padding: "20px 0" }}>
                   <p
                     style={{
                       fontSize: "14px",
                       color: "#475569",
-                      marginBottom: "16px",
+                      marginBottom: "12px",
                     }}
                   >
-                    Doanh thu theo từng tháng năm {period.year}. Giá trị chưa có
-                    dữ liệu được giữ riêng, không chuyển thành 0 đ.
+                    Tổng doanh thu toàn hệ thống ghi nhận được:
                   </p>
-                  <ul
-                    style={{
-                      display: "grid",
-                      gap: "8px",
-                      padding: 0,
-                      listStyle: "none",
-                      maxHeight: "250px",
-                      overflowY: "auto",
-                    }}
-                  >
-                    {monthlyRevenueData.map((item) => (
-                      <li
-                        key={item.m}
-                        style={{
-                          display: "flex",
-                          justifyContent: "space-between",
-                          padding: "10px 14px",
-                          background: item.current ? "#f1f5f9" : "#f8fafc",
-                          borderRadius: "8px",
-                          border: "1px solid #e2e8f0",
-                        }}
-                      >
-                        <span
-                          style={{
-                            fontWeight: 600,
-                            color: item.current ? "#0f172a" : "#334155",
-                          }}
-                        >
-                          {item.m} {period.year}
-                        </span>
-                        <strong
-                          style={{
-                            color: item.current ? "#2E5A88" : "#64748b",
-                          }}
-                        >
-                          {money(item.revenue)}
-                        </strong>
-                      </li>
-                    ))}
-                  </ul>
+                  <h3 style={{ fontSize: "24px", color: "#8a6a48", margin: 0 }}>
+                    {money(totalRev)}
+                  </h3>
                 </div>
               )}
 
@@ -715,7 +758,6 @@ export default function AdminDashboard() {
                               </strong>
                             </div>
 
-                            {/* Hiển thị danh sách các variant và mã SKU tương ứng */}
                             {variants.length > 0 ? (
                               <div
                                 style={{
@@ -802,36 +844,96 @@ export default function AdminDashboard() {
               {activeModalType === "customers" && (
                 <div>
                   {customersLoading ? (
-                    <div style={{ textAlign: "center", padding: "30px 0", color: "#64748b" }}>
-                      <RefreshCw size={24} className="la-spin" style={{ marginBottom: "8px" }} />
+                    <div
+                      style={{
+                        textAlign: "center",
+                        padding: "30px 0",
+                        color: "#64748b",
+                      }}
+                    >
+                      <RefreshCw
+                        size={24}
+                        className="la-spin"
+                        style={{ marginBottom: "8px" }}
+                      />
                       <p>Đang tải danh sách khách hàng từ hệ thống…</p>
                     </div>
                   ) : adminCustomers.length > 0 ? (
-                    <ul style={{ display: "grid", gap: "10px", padding: 0, listStyle: "none", maxHeight: "350px", overflowY: "auto" }}>
+                    <ul
+                      style={{
+                        display: "grid",
+                        gap: "10px",
+                        padding: 0,
+                        listStyle: "none",
+                        maxHeight: "350px",
+                        overflowY: "auto",
+                      }}
+                    >
                       {adminCustomers.map((c, idx) => (
-                        <li key={c._id || c.id || idx} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 16px", background: "#f8fafc", borderRadius: "8px", border: "1px solid #e2e8f0" }}>
+                        <li
+                          key={c._id || c.id || idx}
+                          style={{
+                            display: "flex",
+                            justifyContent: "space-between",
+                            alignItems: "center",
+                            padding: "12px 16px",
+                            background: "#f8fafc",
+                            borderRadius: "8px",
+                            border: "1px solid #e2e8f0",
+                          }}
+                        >
                           <div>
-                            <strong style={{ display: "block", color: "#0f172a", fontSize: "14px" }}>
+                            <strong
+                              style={{
+                                display: "block",
+                                color: "#0f172a",
+                                fontSize: "14px",
+                              }}
+                            >
                               {c.fullName || c.name || `Khách hàng #${idx + 1}`}
                             </strong>
-                            <span style={{ fontSize: "12px", color: "#64748b" }}>
-                              Email: {c.email || "Chưa có email"} 
+                            <span
+                              style={{ fontSize: "12px", color: "#64748b" }}
+                            >
+                              Email: {c.email || "Chưa có email"}
                             </span>
                             <br />
-                            <span style={{ fontSize: "12px", color: "#64748b" }}>
-                              SĐT: {c.phone || "Chưa có số diện thoại"}
+                            <span
+                              style={{ fontSize: "12px", color: "#64748b" }}
+                            >
+                              SĐT: {c.phone || "Chưa có số điện thoại"}
                             </span>
                           </div>
-                          <span style={{ fontSize: "11px", fontWeight: 700, background: "#fdf8f0", color: "#B98436", border: "1px solid #f3e8d2", padding: "3px 8px", borderRadius: "20px" }}>
+                          <span
+                            style={{
+                              fontSize: "11px",
+                              fontWeight: 700,
+                              background: "#fdf8f0",
+                              color: "#B98436",
+                              border: "1px solid #f3e8d2",
+                              padding: "3px 8px",
+                              borderRadius: "20px",
+                            }}
+                          >
                             Khách hàng
                           </span>
                         </li>
                       ))}
                     </ul>
                   ) : (
-                    <div style={{ textAlign: "center", padding: "30px 0", color: "#64748b" }}>
-                      <Users size={36} color="#B98436" style={{ marginBottom: "8px" }} />
-                      <p>Chưa có tài khoản khách hàng nào trong hệ thống.</p>
+                    <div
+                      style={{
+                        textAlign: "center",
+                        padding: "30px 0",
+                        color: "#64748b",
+                      }}
+                    >
+                      <Users
+                        size={36}
+                        color="#B98436"
+                        style={{ marginBottom: "8px" }}
+                      />
+                      <p>Không có tài khoản khách hàng nào.</p>
                     </div>
                   )}
                 </div>

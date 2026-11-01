@@ -26,14 +26,18 @@ export function activeState(record) {
   return null;
 }
 
+// TỐI ƯU CỰC TỐC: Chạy song song toàn bộ sản phẩm cùng một lúc để lấy variants
 export async function loadProductVariants(products) {
-  const result = [];
-  for (let offset = 0; offset < products.length; offset += 4) {
-    const batch = await Promise.all(products.slice(offset, offset + 4).map(async product => {
-      const productId = entityId(product);
-      if (!productId) throw new Error("Product thiếu ID để tải danh sách Variant.");
+  const list = Array.isArray(products) ? products : [];
+  
+  const promises = list.map(async product => {
+    const productId = entityId(product);
+    if (!productId || typeof productId !== "string" || !/^[0-9a-fA-F]{24}$/.test(productId)) {
+      return { productId, variants: [] };
+    }
+    try {
       const response = await productAPI.getProductVariantsAdmin(productId);
-      return recordsFrom(response.data, "variants").map(variant => {
+      const variants = recordsFrom(response.data, "variants").map(variant => {
         const stock = realNumber(variant.availableStock);
         return {
           ...variant,
@@ -45,21 +49,39 @@ export async function loadProductVariants(products) {
           isActive: activeState(variant),
         };
       });
-    }));
-    result.push(...batch);
-  }
-  return result;
+      return { productId, variants };
+    } catch {
+      return { productId, variants: [] };
+    }
+  });
+
+  const results = await Promise.all(promises);
+  const variantMap = new Map(results.map(r => [r.productId, r.variants]));
+  return list.map(product => variantMap.get(entityId(product)) || []);
 }
 
-// Hàm chỉ gọi API một lần duy nhất để lấy toàn bộ dữ liệu thô và biến thể
+// Bộ nhớ đệm (Cache) giúp chuyển qua lại tab Biến thể load tức thì (0 giây)
+let variantsCache = null;
+let variantsCacheTimestamp = 0;
+const CACHE_DURATION = 60000; // Cache 1 phút
+
 export async function loadAllVariantsData() {
-  const response = await productAPI.getProductsAdmin();
-  const products = recordsFrom(response.data, "products");
+  const now = Date.now();
+  if (variantsCache && (now - variantsCacheTimestamp < CACHE_DURATION)) {
+    return variantsCache;
+  }
+
+  const [productRes] = await Promise.all([
+    productAPI.getProductsAdmin()
+  ]);
+  const products = recordsFrom(productRes.data, "products");
   const groups = await loadProductVariants(products);
   const variants = groups.flat();
   const materials = [...new Set(variants.map(variant => variant.material).filter(value => typeof value === "string" && value.trim()))].sort((a, b) => a.localeCompare(b, "vi"));
   
-  return { variants, products, materials };
+  variantsCache = { variants, products, materials };
+  variantsCacheTimestamp = Date.now();
+  return variantsCache;
 }
 
 // Hàm lọc thuần túy chạy trực tiếp trên RAM (cực kỳ nhanh)
@@ -100,6 +122,7 @@ export async function getVariantForEdit(id) {
 }
 
 export async function saveVariant({ id, productId, sku, price, color, size, material }) {
+  variantsCache = null; // Xóa cache khi thêm/sửa biến thể để cập nhật mới ngay
   requireId(id ?? productId);
   if (typeof sku !== "string" || !sku.trim()) throw new Error("Vui lòng nhập SKU.");
   if (typeof price !== "number" || !Number.isFinite(price) || price < 0) throw new Error("Giá phải là số không âm.");
@@ -115,6 +138,7 @@ export async function saveVariant({ id, productId, sku, price, color, size, mate
 }
 
 export async function deactivateVariant(id) {
+  variantsCache = null; // Xóa cache khi vô hiệu hóa biến thể
   requireId(id);
   await storageAPI.deactivateVariant(id);
 }

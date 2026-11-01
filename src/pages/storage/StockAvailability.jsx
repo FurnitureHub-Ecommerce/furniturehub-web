@@ -193,7 +193,9 @@ const StockAvailability = () => {
                         <br />
                         <span style={{ fontSize: '11px', fontWeight: 700, color: '#b45309', background: '#fef3c7', padding: '2px 6px', borderRadius: '4px' }}>{prod.id}</span>
                       </td>
-                      <td style={{ padding: '16px' }}>{prod.specs}</td>
+                      <td style={{ padding: '16px', maxWidth: '280px', wordBreak: 'break-word', whiteSpace: 'normal', fontSize: '12px', color: '#57534e', lineHeight: '1.5' }}>
+  {prod.specs}
+</td>
                       <td style={{ padding: '16px', textAlign: 'center' }}>
                         <strong style={{ color: prod.stock > 0 ? '#16a34a' : '#dc2626' }}>{prod.stock.toLocaleString()}</strong> cái
                       </td>

@@ -166,10 +166,8 @@ export default function AdminCatalog() {
     status: "",
   });
 
-  // State phụ cho ô tìm kiếm giúp gõ phím mượt mà không bị delay
   const [searchTerm, setSearchTerm] = useState(query.search);
 
-  // Lưu trữ toàn bộ dữ liệu thô cache trên client
   const [rawCatalog, setRawCatalog] = useState({
     products: [],
     categories: [],
@@ -184,11 +182,10 @@ export default function AdminCatalog() {
   const [confirmProduct, setConfirmProduct] = useState(null);
   const [reactivateTarget, setReactivateTarget] = useState(null);
   const [workingId, setWorkingId] = useState(null);
-  const [activeMenuId, setActiveMenuId] = useState(null); // Quản lý trạng thái mở menu thao tác của dòng nào
+  const [activeMenuId, setActiveMenuId] = useState(null);
   const [notice, setNotice] = useState("");
   const [actionError, setActionError] = useState("");
 
-  // Đóng menu thao tác khi click ra ngoài
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (!e.target.closest(".lc-action-dropdown")) {
@@ -199,7 +196,6 @@ export default function AdminCatalog() {
     return () => document.removeEventListener("click", handleClickOutside);
   }, []);
 
-  // Áp dụng Debounce 300ms cho ô tìm kiếm
   useEffect(() => {
     const timer = setTimeout(() => {
       setQuery((current) => {
@@ -211,7 +207,7 @@ export default function AdminCatalog() {
     return () => clearTimeout(timer);
   }, [searchTerm]);
 
-  // Chỉ gọi API tải toàn bộ dữ liệu một lần duy nhất khi vào trang hoặc reload()
+  // Tải dữ liệu danh mục, thương hiệu và sản phẩm tối ưu
   useEffect(() => {
     let cancelled = false;
     setState((current) => ({ ...current, loading: true, error: "" }));
@@ -235,7 +231,6 @@ export default function AdminCatalog() {
     };
   }, [revision]);
 
-  // Sử dụng useMemo để lọc dữ liệu ngay lập tức trên RAM mà không gọi lại mạng
   const data = useMemo(() => {
     return filterProducts(
       rawCatalog.products,
@@ -252,11 +247,32 @@ export default function AdminCatalog() {
   function reload() {
     setRevision((value) => value + 1);
   }
-  function saved(message) {
+
+  // CẬP NHẬT TỨC THÌ (OPTIMISTIC / LOCAL STATE UPDATE) KHI THÊM/SỬA SẢN PHẨM
+  function saved(message, savedProductData) {
     setEditor(null);
     setNotice(message);
     setActionError("");
-    reload();
+
+    if (savedProductData) {
+      setRawCatalog((current) => {
+        const existsIndex = current.products.findIndex(
+          (p) => p._id === savedProductData._id || p.id === savedProductData._id
+        );
+        let updatedProducts = [...current.products];
+        if (existsIndex >= 0) {
+          updatedProducts[existsIndex] = {
+            ...updatedProducts[existsIndex],
+            ...savedProductData,
+          };
+        } else {
+          updatedProducts = [savedProductData, ...updatedProducts];
+        }
+        return { ...current, products: updatedProducts };
+      });
+    } else {
+      reload(); // Fallback gọi lại nếu không có object trả về
+    }
   }
 
   async function deactivate(product) {
@@ -266,8 +282,13 @@ export default function AdminCatalog() {
     setActionError("");
     try {
       await deactivateProduct(product._id);
+      setRawCatalog((current) => ({
+        ...current,
+        products: current.products.map((p) =>
+          p._id === product._id ? { ...p, isActive: false } : p
+        ),
+      }));
       setNotice("Đã vô hiệu hóa sản phẩm.");
-      reload();
     } finally {
       setWorkingId(null);
     }
@@ -280,8 +301,13 @@ export default function AdminCatalog() {
     setActionError("");
     try {
       await reactivateProduct(product._id);
+      setRawCatalog((current) => ({
+        ...current,
+        products: current.products.map((p) =>
+          p._id === product._id ? { ...p, isActive: true } : p
+        ),
+      }));
       setNotice("Đã kích hoạt lại sản phẩm.");
-      reload();
     } finally {
       setWorkingId(null);
     }
@@ -502,7 +528,6 @@ export default function AdminCatalog() {
                         </span>
                       </td>
                       <td style={{ textAlign: "right" }}>
-                        {/* NÚT THAO TÁC GOM GỌN (DROPDOWN) */}
                         <div
                           className="lc-action-dropdown"
                           style={{
