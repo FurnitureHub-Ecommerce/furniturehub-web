@@ -163,11 +163,13 @@ export default function OrderTrackingTimeline({
   const createdAt = tracking?.createdAt || propCreatedAt;
   const updatedAt = tracking?.updatedAt || propUpdatedAt;
   const cancelReason =
-    propReason ||
-    propCancelReason ||
-    tracking?.reason ||
     tracking?.cancelReason ||
-    "Người mua yêu cầu hủy";
+    tracking?.cancellationReason ||
+    tracking?.reason ||
+    tracking?.cancelNote ||
+    propCancelReason ||
+    propReason ||
+    "Đơn hàng đã được hủy bởi cửa hàng";
 
   // Xác định mốc hiện tại (index: 0..4)
   const currentIndex = isTerminated

@@ -53,16 +53,32 @@ export default function CustomerOrdersPage() {
     if (!orderIdToFetch) return null;
     try {
       const res = await orderAPI.getMyOrderById(orderIdToFetch);
-      const fetched = res.data?.order || res.data || null;
+      const fetched = res.data?.order || res.data?.data || res.data || null;
       if (fetched) {
+        const resolvedReason =
+          fetched.cancelReason ||
+          fetched.cancellationReason ||
+          fetched.reason ||
+          fetched.cancelNote ||
+          fetched.rejectReason;
         setOrders((prev) =>
           prev.map((ord) =>
             (ord._id || ord.id) === (fetched._id || fetched.id || orderIdToFetch)
               ? {
                   ...ord,
                   ...fetched,
-                  reason: fetched.reason || fetched.cancelReason || ord.reason || ord.cancelReason,
-                  cancelReason: fetched.cancelReason || fetched.reason || ord.cancelReason || ord.reason,
+                  reason:
+                    resolvedReason ||
+                    ord.cancelReason ||
+                    ord.cancellationReason ||
+                    ord.reason ||
+                    ord.cancelNote,
+                  cancelReason:
+                    resolvedReason ||
+                    ord.cancelReason ||
+                    ord.cancellationReason ||
+                    ord.reason ||
+                    ord.cancelNote,
                 }
               : ord
           )
@@ -499,8 +515,18 @@ export default function CustomerOrdersPage() {
                     variant="compact"
                     createdAt={ord.createdAt}
                     updatedAt={ord.updatedAt}
-                    reason={ord.reason || ord.cancelReason}
-                    cancelReason={ord.cancelReason || ord.reason}
+                    reason={
+                      ord.cancelReason ||
+                      ord.cancellationReason ||
+                      ord.reason ||
+                      ord.cancelNote
+                    }
+                    cancelReason={
+                      ord.cancelReason ||
+                      ord.cancellationReason ||
+                      ord.reason ||
+                      ord.cancelNote
+                    }
                   />
                   {isCancelled && (
                     <div
@@ -511,7 +537,12 @@ export default function CustomerOrdersPage() {
                         fontWeight: 500,
                       }}
                     >
-                      Lý do: {ord.reason || ord.cancelReason || "Người mua yêu cầu hủy"}
+                      Lý do:{" "}
+                      {ord.cancelReason ||
+                        ord.cancellationReason ||
+                        ord.reason ||
+                        ord.cancelNote ||
+                        "Đơn hàng đã được hủy bởi cửa hàng"}
                     </div>
                   )}
                 </div>
