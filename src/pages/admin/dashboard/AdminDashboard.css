@@ -721,6 +721,91 @@
   font-weight: 600;
 }
 
+/* Doanh thu tháng chỉ hiển thị khi API cung cấp dữ liệu đúng kỳ. */
+.la-chart-summary {
+  margin: 4px 0 0;
+  color: var(--la-muted);
+  font-size: 11px;
+}
+
+.la-chart-contract-note {
+  margin: -6px 0 10px;
+  color: #756d64;
+  font-size: 11px;
+}
+
+.la-bar-item {
+  position: relative;
+  outline: none;
+}
+
+.la-bar-column.is-value {
+  background: #8a6a48;
+}
+
+.la-bar-column.is-zero {
+  min-height: 4px;
+  background: #b9aa98;
+}
+
+.la-bar-column.is-missing {
+  min-height: 0;
+  border-top: 2px dashed #cfc7bc;
+  background: transparent;
+}
+
+.la-bar-item.is-current .la-bar-label {
+  color: #5f4328;
+  font-weight: 750;
+}
+
+.la-bar-label small {
+  display: block;
+  margin-top: 2px;
+  font-size: 8px;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+
+.la-bar-tooltip {
+  position: absolute;
+  z-index: 4;
+  left: 50%;
+  bottom: 34px;
+  display: grid;
+  gap: 3px;
+  min-width: 142px;
+  padding: 9px 11px;
+  color: #fff;
+  background: #30302a;
+  border-radius: 5px;
+  box-shadow: 0 8px 24px #30281f2e;
+  font-size: 10px;
+  line-height: 1.4;
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, 5px);
+  transition: opacity var(--lm-motion-fast) var(--lm-ease-standard),
+    transform var(--lm-motion-fast) var(--lm-ease-standard);
+}
+
+.la-bar-item:hover .la-bar-tooltip,
+.la-bar-item:focus-visible .la-bar-tooltip {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+.la-bar-item:focus-visible {
+  box-shadow: inset 0 0 0 2px #8a6a48;
+  border-radius: 5px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .la-bar-tooltip {
+    transition-duration: .01ms;
+  }
+}
+
 /* --- BIỂU ĐỒ PHÂN BỔ TRẠNG THÁI ĐƠN HÀNG XỊN SÒ --- */
 .la-status-chart-container {
   display: flex;

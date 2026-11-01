@@ -165,7 +165,7 @@ export default function AdminCatalog() {
     material: "",
     status: "",
   });
-  
+
   // State phụ cho ô tìm kiếm giúp gõ phím mượt mà không bị delay
   const [searchTerm, setSearchTerm] = useState(query.search);
 
@@ -215,7 +215,7 @@ export default function AdminCatalog() {
   useEffect(() => {
     let cancelled = false;
     setState((current) => ({ ...current, loading: true, error: "" }));
-    
+
     loadAllCatalogData()
       .then((res) => {
         if (!cancelled) {
@@ -242,7 +242,7 @@ export default function AdminCatalog() {
       rawCatalog.categories,
       rawCatalog.brands,
       rawCatalog.materials,
-      query
+      query,
     );
   }, [rawCatalog, query]);
 
@@ -341,7 +341,7 @@ export default function AdminCatalog() {
       <section className="lc-filters" aria-label="Lọc sản phẩm">
         <div className="lc-filter-heading">
           <div>
-            <strong>Bộ lọc danh mục</strong>
+            <strong>Bộ lọc sản phẩm</strong>
           </div>
         </div>
         <label className="lc-search">
@@ -349,7 +349,7 @@ export default function AdminCatalog() {
           <input
             type="search"
             aria-label="Tìm sản phẩm"
-            placeholder="Tên sản phẩm, mô tả hoặc SKU…"
+            placeholder="Tên sản phẩm..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
