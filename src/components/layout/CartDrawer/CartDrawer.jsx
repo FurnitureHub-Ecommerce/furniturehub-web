@@ -90,6 +90,18 @@ export function CartDrawer() {
               const product = item.product || {};
               const itemPrice = item.unitPrice || product.price || 0;
               const itemId = item.itemId || product.id;
+              const itemStock =
+                item.stock ??
+                item.inventoryQuantity ??
+                item.availableStock ??
+                product.stock ??
+                product.inventoryQuantity ??
+                product.availableStock ??
+                product.stockCount;
+              const isMaxStockReached =
+                itemStock !== undefined &&
+                itemStock !== null &&
+                Number(item.quantity) >= Number(itemStock);
 
               return (
                 <div key={itemId} className="cart-item">
@@ -145,6 +157,11 @@ export function CartDrawer() {
                         <button
                           className="cart-qty-btn"
                           onClick={() => updateCartQuantity(itemId, 1)}
+                          disabled={isMaxStockReached}
+                          style={{
+                            cursor: isMaxStockReached ? "not-allowed" : "pointer",
+                            opacity: isMaxStockReached ? 0.35 : 1,
+                          }}
                           aria-label="Tăng số lượng"
                           type="button"
                         >

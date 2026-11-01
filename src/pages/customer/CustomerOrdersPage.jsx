@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { Link, useNavigate, useSearchParams, useParams } from "react-router-dom";
 import {
   Package,
@@ -40,7 +40,7 @@ export default function CustomerOrdersPage() {
   const [trackingOrder, setTrackingOrder] = useState(null);
   const [isTrackingOpen, setIsTrackingOpen] = useState(false);
   const [cancellingOrder, setCancellingOrder] = useState(null);
-  const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
+  const [cancelModalVisible, setCancelModalVisible] = useState(false);
 
   // Toast notification
   const [toastMessage, setToastMessage] = useState(null);
@@ -48,6 +48,31 @@ export default function CustomerOrdersPage() {
 
   const targetOrderId = searchParams.get("orderId") || paramOrderId;
   const [reloadKey, setReloadKey] = useState(0);
+
+  const fetchOrderDetail = useCallback(async (orderIdToFetch) => {
+    if (!orderIdToFetch) return null;
+    try {
+      const res = await orderAPI.getMyOrderById(orderIdToFetch);
+      const fetched = res.data?.order || res.data || null;
+      if (fetched) {
+        setOrders((prev) =>
+          prev.map((ord) =>
+            (ord._id || ord.id) === (fetched._id || fetched.id || orderIdToFetch)
+              ? {
+                  ...ord,
+                  ...fetched,
+                  reason: fetched.reason || fetched.cancelReason || ord.reason || ord.cancelReason,
+                  cancelReason: fetched.cancelReason || fetched.reason || ord.cancelReason || ord.reason,
+                }
+              : ord
+          )
+        );
+      }
+      return fetched;
+    } catch {
+      return null;
+    }
+  }, []);
 
   useEffect(() => {
     if (!token) {
@@ -139,18 +164,20 @@ export default function CustomerOrdersPage() {
     setTrackingOrder(null);
   };
 
+  // Khi bấm nút 'Hủy đơn hàng': CHỈ mở Modal lý do, không gọi API hay hiện thông báo trước
   const handleOpenCancelModal = (order) => {
     setCancellingOrder(order);
-    setIsCancelModalOpen(true);
+    setCancelModalVisible(true);
   };
 
   const handleCloseCancelModal = () => {
-    setIsCancelModalOpen(false);
+    setCancelModalVisible(false);
     setCancellingOrder(null);
   };
 
-  const handleOrderCancelledSuccess = (updatedOrder) => {
+  const handleOrderCancelledSuccess = async (updatedOrder) => {
     const updatedId = updatedOrder._id || updatedOrder.id;
+    const reasonText = updatedOrder.reason || updatedOrder.cancelReason;
 
     setOrders((prev) =>
       prev.map((ord) => {
@@ -158,8 +185,10 @@ export default function CustomerOrdersPage() {
         if (ordId === updatedId) {
           return {
             ...ord,
-            status: "cancelled",
-            cancelReason: updatedOrder.cancelReason,
+            ...updatedOrder,
+            status: updatedOrder.status || "cancelled",
+            reason: reasonText,
+            cancelReason: reasonText,
           };
         }
         return ord;
@@ -169,23 +198,37 @@ export default function CustomerOrdersPage() {
     if (detailOrder && (detailOrder._id || detailOrder.id) === updatedId) {
       setDetailOrder((prev) => ({
         ...prev,
-        status: "cancelled",
-        cancelReason: updatedOrder.cancelReason,
+        ...updatedOrder,
+        status: updatedOrder.status || "cancelled",
+        reason: reasonText,
+        cancelReason: reasonText,
       }));
     }
 
-    showToast(`Đã hủy thành công đơn hàng #${updatedId?.slice(-6).toUpperCase()}`);
+    if (trackingOrder && (trackingOrder._id || trackingOrder.id) === updatedId) {
+      setTrackingOrder((prev) => ({
+        ...prev,
+        ...updatedOrder,
+        status: updatedOrder.status || "cancelled",
+        reason: reasonText,
+        cancelReason: reasonText,
+      }));
+    }
+
     handleCloseCancelModal();
+    await fetchOrderDetail(updatedId);
+    showToast(`Đã hủy thành công đơn hàng #${updatedId?.slice(-6).toUpperCase()}`);
   };
 
   const tabCounts = useMemo(() => {
+    const getSt = (o) => String(o.status || "").toLowerCase();
     return {
       all: orders.length,
-      pending: orders.filter((o) => o.status === "pending").length,
-      confirmed: orders.filter((o) => o.status === "confirmed").length,
-      shipping: orders.filter((o) => o.status === "shipping").length,
-      delivered: orders.filter((o) => o.status === "delivered").length,
-      cancelled: orders.filter((o) => o.status === "cancelled").length,
+      pending: orders.filter((o) => getSt(o) === "pending").length,
+      confirmed: orders.filter((o) => getSt(o) === "confirmed").length,
+      shipping: orders.filter((o) => getSt(o) === "shipping").length,
+      delivered: orders.filter((o) => getSt(o) === "delivered").length,
+      cancelled: orders.filter((o) => getSt(o) === "cancelled").length,
     };
   }, [orders]);
 
@@ -193,7 +236,9 @@ export default function CustomerOrdersPage() {
     let result = orders;
 
     if (activeTab !== "all") {
-      result = result.filter((o) => o.status === activeTab);
+      result = result.filter(
+        (o) => String(o.status || "").toLowerCase() === activeTab
+      );
     }
 
     if (timeFilter !== "all") {
@@ -395,7 +440,9 @@ export default function CustomerOrdersPage() {
             const ordId = ord._id || ord.id;
             const shipping = ord.shippingAddress || {};
             const items = ord.items || [];
-            const canCancel = ord.status === "pending";
+            const statusLower = String(ord.status || "").toLowerCase();
+            const canCancel = statusLower === "pending";
+            const isCancelled = statusLower === "cancelled";
             const total = ord.totalAmount ?? ord.subtotal ?? 0;
 
             return (
@@ -452,15 +499,28 @@ export default function CustomerOrdersPage() {
                     variant="compact"
                     createdAt={ord.createdAt}
                     updatedAt={ord.updatedAt}
+                    reason={ord.reason || ord.cancelReason}
+                    cancelReason={ord.cancelReason || ord.reason}
                   />
+                  {isCancelled && (
+                    <div
+                      style={{
+                        marginTop: "8px",
+                        fontSize: "0.84rem",
+                        color: "#DC2626",
+                        fontWeight: 500,
+                      }}
+                    >
+                      Lý do: {ord.reason || ord.cancelReason || "Người mua yêu cầu hủy"}
+                    </div>
+                  )}
                 </div>
 
-                {/* Items Preview (Thay ảnh bằng icon hàng hóa và bố cục thông số phẳng) */}
+                {/* Items Preview */}
                 <div className="order-item-card__items">
                   {items.map((it, idx) => {
                     const unitPrice = it.unitPrice || 0;
                     const qty = it.quantity || 1;
-                    const lineTotal = it.itemSubtotal || unitPrice * qty;
 
                     return (
                       <div
@@ -480,28 +540,6 @@ export default function CustomerOrdersPage() {
                           <div className="order-line-item-preview__sku">
                             SKU: {it.sku || it.variantId || "N/A"}
                           </div>
-                          
-                          {/* Thông số chi tiết phẳng, trực quan */}
-                          {/* <div className="order-line-item-specs">
-                            {it.color && (
-                              <div className="order-line-spec-row">
-                                <span className="spec-label">Màu sắc:</span>
-                                <span className="spec-value">{it.color}</span>
-                              </div>
-                            )}
-                            {it.size && (
-                              <div className="order-line-spec-row">
-                                <span className="spec-label">Kích thước:</span>
-                                <span className="spec-value">{it.size}</span>
-                              </div>
-                            )}
-                            {it.material && (
-                              <div className="order-line-spec-row">
-                                <span className="spec-label">Chất liệu:</span>
-                                <span className="spec-value">{it.material}</span>
-                              </div>
-                            )}
-                          </div> */}
                         </div>
 
                         <div className="order-line-item-preview__price-block">
@@ -541,13 +579,13 @@ export default function CustomerOrdersPage() {
                     </div>
 
                     <div className="order-item-card__actions">
-                      {canCancel && (
+                      {canCancel && !isCancelled && (
                         <button
                           type="button"
                           className="order-btn-cancel"
                           onClick={() => handleOpenCancelModal(ord)}
                         >
-                          Hủy Đơn Hàng
+                          Hủy đơn hàng
                         </button>
                       )}
 
@@ -590,6 +628,7 @@ export default function CustomerOrdersPage() {
         onCancelClick={(ord) => {
           handleOpenCancelModal(ord);
         }}
+        onOrderCancelled={handleOrderCancelledSuccess}
       />
 
       <OrderTrackingModal
@@ -601,13 +640,13 @@ export default function CustomerOrdersPage() {
           handleOpenDetail(ord);
         }}
         onCancelClick={(ord) => {
-          handleCloseTracking();
           handleOpenCancelModal(ord);
         }}
+        onOrderCancelled={handleOrderCancelledSuccess}
       />
 
       <CancelOrderModal
-        isOpen={isCancelModalOpen}
+        isOpen={cancelModalVisible}
         onClose={handleCloseCancelModal}
         order={cancellingOrder}
         onCancelled={handleOrderCancelledSuccess}

@@ -27,7 +27,7 @@ import {
 
 export function ProductDetailPage() {
   const { slug } = useParams();
-  const { addToCart, wishlist, toggleWishlist, setIsCartOpen } = useShop();
+  const { cart, addToCart, wishlist, toggleWishlist, setIsCartOpen } = useShop();
 
   const [isLoading, setIsLoading] = useState(true);
   const [product, setProduct] = useState(null);
@@ -43,6 +43,15 @@ export function ProductDetailPage() {
   const [selectedImage, setSelectedImage] = useState("");
   const [isZoomModalOpen, setIsZoomModalOpen] = useState(false);
   const [quantity, setQuantity] = useState(1);
+  const [stockError, setStockError] = useState("");
+
+  useEffect(() => {
+    if (!stockError) return;
+    const timer = setTimeout(() => {
+      setStockError("");
+    }, 3000);
+    return () => clearTimeout(timer);
+  }, [stockError]);
 
   // Tab State
   const [activeTab, setActiveTab] = useState("description");
@@ -147,10 +156,13 @@ export function ProductDetailPage() {
             reviewCount: finalCount,
             isNew: realProd.isNew !== undefined ? realProd.isNew : true,
             inStock:
-              realProd.availableStock !== undefined
-                ? realProd.availableStock > 0
+              (realProd.stock ?? realProd.inventoryQuantity ?? realProd.availableStock) !== undefined
+                ? (realProd.stock ?? realProd.inventoryQuantity ?? realProd.availableStock) > 0
                 : true,
-            stockCount: realProd.availableStock ?? 15,
+            stock: realProd.stock ?? realProd.inventoryQuantity ?? realProd.availableStock,
+            inventoryQuantity: realProd.inventoryQuantity ?? realProd.stock ?? realProd.availableStock,
+            availableStock: realProd.availableStock ?? realProd.stock ?? realProd.inventoryQuantity,
+            stockCount: realProd.stock ?? realProd.inventoryQuantity ?? realProd.availableStock ?? 15,
             shortDescription:
               realProd.description ||
               "Chế tác từ chất liệu thượng hạng, tối ưu công năng và thẩm mỹ.",
@@ -287,20 +299,41 @@ export function ProductDetailPage() {
 
   const isWishlisted = wishlist.includes(String(product.id || product._id));
   const currentPrice = selectedVariant?.price ?? product.basePrice;
-  const currentStock = selectedVariant?.availableStock ?? product.stockCount;
+  const currentStock = selectedVariant
+    ? (selectedVariant.stock ?? selectedVariant.inventoryQuantity ?? selectedVariant.availableStock ?? 0)
+    : (product.stock ?? product.inventoryQuantity ?? product.availableStock ?? product.stockCount ?? 0);
 
   // Logic kiểm tra tồn kho chính xác theo biến thể được chọn
-  const isSelectedOutOfStock = selectedVariant
-    ? (selectedVariant.availableStock ?? 0) <= 0
-    : currentStock <= 0;
+  const isSelectedOutOfStock = currentStock <= 0;
   const currentSku = selectedVariant?.sku || product.sku || "SWL-OAK-NAT-001";
 
   const handleAddToCart = () => {
     if (isSelectedOutOfStock) return;
+
+    const prodId = String(product.id || product._id);
+    const varId = selectedVariant?._id ? String(selectedVariant._id) : null;
+    const existingInCart = (cart || []).find((item) => {
+      const itemProdId = String(item.productId || item.product?.id || item.product?._id || "");
+      const itemVarId = item.variantId || item.product?.variantId;
+      if (varId && itemVarId) return String(itemVarId) === varId;
+      return itemProdId === prodId;
+    });
+    const existingQty = existingInCart ? Number(existingInCart.quantity || 0) : 0;
+
+    if (quantity > currentStock || existingQty + quantity > currentStock) {
+      setStockError(`Sản phẩm ${product.name} chỉ còn ${currentStock} cái trong kho`);
+      return;
+    }
+
+    setStockError("");
     const cartPayload = {
       ...product,
       variantId: selectedVariant?._id,
       price: currentPrice,
+      stock: currentStock,
+      inventoryQuantity: currentStock,
+      availableStock: currentStock,
+      stockCount: currentStock,
       variantLabel: selectedVariant
         ? [
             selectedVariant.color,
@@ -561,7 +594,11 @@ export function ProductDetailPage() {
                         <button
                           key={v._id}
                           type="button"
-                          onClick={() => setSelectedVariant(v)}
+                          onClick={() => {
+                            setSelectedVariant(v);
+                            const vStock = v.stock ?? v.inventoryQuantity ?? v.availableStock ?? 0;
+                            setQuantity((q) => (vStock > 0 ? Math.min(q, vStock) : 1));
+                          }}
                           className={`p-3.5 rounded-xl border text-left flex items-start justify-between gap-3 transition-all cursor-pointer ${
                             isSelected
                               ? "border-amber-800 bg-amber-50/60 ring-2 ring-amber-800/20 shadow-sm"
@@ -656,18 +693,14 @@ export function ProductDetailPage() {
                       type="button"
                       onClick={() =>
                         setQuantity((q) =>
-                          Math.min(
-                            selectedVariant?.availableStock ?? currentStock,
-                            q + 1,
-                          ),
+                          Math.min(currentStock, q + 1),
                         )
                       }
                       disabled={
-                        quantity >=
-                          (selectedVariant?.availableStock ?? currentStock) ||
+                        quantity >= currentStock ||
                         isSelectedOutOfStock
                       }
-                      className="w-8 h-8 flex items-center justify-center text-stone-600 hover:text-stone-900 disabled:opacity-30"
+                      className="w-8 h-8 flex items-center justify-center text-stone-600 hover:text-stone-900 disabled:opacity-30 disabled:cursor-not-allowed"
                     >
                       +
                     </button>
@@ -716,6 +749,12 @@ export function ProductDetailPage() {
                     />
                   </button>
                 </div>
+
+                {stockError && (
+                  <p className="text-red-600 text-sm">
+                    {stockError}
+                  </p>
+                )}
 
                 {/* Assurance Perks */}
                 <div className="grid grid-cols-2 gap-3 pt-3 text-[11px] text-stone-500">

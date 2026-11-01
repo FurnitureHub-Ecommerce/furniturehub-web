@@ -88,6 +88,7 @@ export default function OrderTrackingTimeline({
   status: propStatus,
   createdAt: propCreatedAt,
   updatedAt: propUpdatedAt,
+  reason: propReason,
   cancelReason: propCancelReason,
   variant = "full", // "full" | "compact" | "vertical"
   showCard = false,
@@ -145,12 +146,15 @@ export default function OrderTrackingTimeline({
     return () => {
       isCancelled = true;
     };
-  }, [orderId, initialTracking, onRefresh]);
+  }, [orderId, initialTracking, propStatus, onRefresh]);
 
   // Trích xuất thông tin trạng thái & thời gian thực tế
-  const activeStatus = String(
-    tracking?.status || propStatus || "pending"
-  ).toLowerCase().trim();
+  const propStatusLower = String(propStatus || "").toLowerCase().trim();
+  const trackingStatusLower = String(tracking?.status || "").toLowerCase().trim();
+  const activeStatus =
+    propStatusLower === "cancelled" || propStatusLower === "rejected"
+      ? propStatusLower
+      : trackingStatusLower || propStatusLower || "pending";
 
   const isCancelled = activeStatus === "cancelled";
   const isRejected = activeStatus === "rejected";
@@ -159,7 +163,11 @@ export default function OrderTrackingTimeline({
   const createdAt = tracking?.createdAt || propCreatedAt;
   const updatedAt = tracking?.updatedAt || propUpdatedAt;
   const cancelReason =
-    tracking?.cancelReason || propCancelReason || "Khách hàng yêu cầu hủy đơn";
+    propReason ||
+    propCancelReason ||
+    tracking?.reason ||
+    tracking?.cancelReason ||
+    "Người mua yêu cầu hủy";
 
   // Xác định mốc hiện tại (index: 0..4)
   const currentIndex = isTerminated

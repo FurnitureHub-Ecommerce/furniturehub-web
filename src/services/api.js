@@ -297,8 +297,19 @@ export const orderAPI = {
   getMyOrderById: (id) => api.get(`/api/orders/${id}`),
   getOrderTracking,
   trackOrder: getOrderTracking,
-  cancelOrder: (id, data = {}) => api.patch(`/api/orders/${id}/cancel`, data),
+  cancelOrder: (id, data = {}) => {
+    const rawReason =
+      typeof data === "string"
+        ? data
+        : data?.reason ?? data?.cancelReason ?? "";
+    const payload = {
+      reason: String(rawReason).trim(),
+    };
+    return api.patch(`/api/orders/${id}/cancel`, payload);
+  },
 };
+
+export const cancelOrder = (id, data = {}) => orderAPI.cancelOrder(id, data);
 
 // =========== CART API (CUSTOMER) ===========
 

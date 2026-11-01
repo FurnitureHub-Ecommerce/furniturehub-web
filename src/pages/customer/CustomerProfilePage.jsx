@@ -15,7 +15,7 @@ import {
   Lock,
 } from "lucide-react";
 import { getUserProfile, updateUserProfile, getApiErrorMessage } from "../../services/api";
-import { useAuth } from "../../context/AuthContext";
+import { useAuth, getAvatarInitial } from "../../context/AuthContext";
 import AddressManagementPage from "./AddressManagementPage";
 import "./CustomerProfile.css";
 
@@ -194,7 +194,7 @@ export default function CustomerProfilePage() {
     }
   };
 
-  const initialLetter = (fullName || profile?.email || "L")[0].toUpperCase();
+  const initialLetter = getAvatarInitial(fullName || profile?.fullName || profile?.name);
   const memberSince = profile?.createdAt
     ? new Date(profile.createdAt).toLocaleDateString("vi-VN", {
         month: "long",

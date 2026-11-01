@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import { ArrowRight, ChevronLeft, ChevronRight, Sparkles, TreeDeciduous, Truck, ShieldCheck, Leaf } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Sparkles, TreeDeciduous, Truck, ShieldCheck, Leaf } from 'lucide-react';
 import { HERO_BANNERS, USP_ITEMS } from '../../../data/lumoraData';
 import { HeroSkeleton } from '../../common/Skeleton/Skeleton';
 import './HeroBanner.css';
@@ -116,24 +115,6 @@ export function HeroBanner({ isLoading = false }) {
           {/* Title & Subtitle (Font chữ Serif tinh tế, sang trọng) */}
           <h1 className="hero__title"  style={{ fontFamily: "Bodoni Moda", fontSize: 'clamp(3rem, 2.5vw, 2.7rem)', letterSpacing: '-0.02em', fontWeight: 600 }}>{currentBanner.title}</h1>
           <p className="hero__subtitle">{currentBanner.subtitle}</p>
-
-          {/* Price Snippet & CTAs */}
-          <div className="hero__actions-row">
-            <div className="hero__price-box">
-              <span className="hero__price-label">Giá khởi điểm</span>
-              <span className="hero__price-value">{currentBanner.priceSnippet}</span>
-            </div>
-
-            <div className="hero__cta-group">
-              <Link to={currentBanner.primaryLink} className="hero__btn hero__btn--primary">
-                <span>{currentBanner.ctaPrimary}</span>
-                <ArrowRight size={16} />
-              </Link>
-              <Link to={currentBanner.secondaryLink} className="hero__btn hero__btn--secondary">
-                <span>{currentBanner.ctaSecondary}</span>
-              </Link>
-            </div>
-          </div>
         </div>
 
         {/* Carousel Controls */}
