@@ -58,29 +58,63 @@ export function AuthProvider({ children }) {
       }
 
       setIsAuthLoading(true);
+      let storedUser = null;
+      try {
+        const rawStored = localStorage.getItem("user");
+        storedUser = rawStored ? JSON.parse(rawStored) : null;
+      } catch {
+        storedUser = null;
+      }
+
+      // Nếu là tài khoản quản trị/nội bộ đã đăng nhập hợp lệ từ login response,
+      // giữ nguyên thông tin user & role để tránh /api/users/profile (dành cho customer) ghi đè hoặc trả lỗi 403
+      const storedRole = String(storedUser?.role || "").trim().toUpperCase();
+      if (
+        storedUser &&
+        ["ADMIN", "STAFF", "STORAGE", "STORAGE_MANAGER", "MANAGER"].includes(storedRole)
+      ) {
+        if (!isCancelled) {
+          setUser(storedUser);
+          setIsAuthLoading(false);
+        }
+        return;
+      }
+
       try {
         const res = await getUserProfile();
         if (isCancelled) return;
 
-        const profileData = res?.data?.user || res?.data || null;
+        const profileData = res?.data?.user || res?.data?.data || res?.data || null;
         if (profileData && typeof profileData === "object" && (profileData._id || profileData.id || profileData.email)) {
-          setUser(profileData);
-          localStorage.setItem("user", JSON.stringify(profileData));
+          const mergedUser = {
+            ...(storedUser || {}),
+            ...profileData,
+            role: profileData.role || storedUser?.role || "CUSTOMER",
+          };
+          setUser(mergedUser);
+          localStorage.setItem("user", JSON.stringify(mergedUser));
+        } else if (storedUser && (storedUser._id || storedUser.id || storedUser.email)) {
+          setUser(storedUser);
         } else {
           throw new Error("Invalid profile data");
         }
-      } catch {
+      } catch (err) {
         if (isCancelled) return;
-        // Token không hợp lệ hoặc hết hạn -> đặt lại về trạng thái khách vãng lai (user = null)
-        setUser(null);
-        setToken(null);
-        try {
-          localStorage.removeItem("token");
-          localStorage.removeItem("user");
-          sessionStorage.removeItem("token");
-          sessionStorage.removeItem("user");
-        } catch {
-          // ignore storage errors
+        // Nếu lỗi không phải 401 và đã có user hợp lệ từ phiên đăng nhập vừa tạo thì giữ nguyên
+        if (err?.response?.status !== 401 && storedUser && (storedUser._id || storedUser.id || storedUser.email || storedUser.role)) {
+          setUser(storedUser);
+        } else {
+          // Token không hợp lệ hoặc hết hạn -> đặt lại về trạng thái khách vãng lai (user = null)
+          setUser(null);
+          setToken(null);
+          try {
+            localStorage.removeItem("token");
+            localStorage.removeItem("user");
+            sessionStorage.removeItem("token");
+            sessionStorage.removeItem("user");
+          } catch {
+            // ignore storage errors
+          }
         }
       } finally {
         if (!isCancelled) {

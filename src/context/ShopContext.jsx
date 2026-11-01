@@ -201,10 +201,17 @@ export function ShopProvider({ children }) {
     });
   }, []);
 
-  // Fetch real Cart from Backend if logged in
+  // Fetch real Cart from Backend if logged in (Customer only)
   const fetchCart = useCallback(async (showSpinner = false) => {
     const currentToken = localStorage.getItem('token');
     if (!currentToken) return;
+    try {
+      const savedUser = JSON.parse(localStorage.getItem('user') || 'null');
+      const role = String(savedUser?.role || '').trim().toUpperCase();
+      if (role && role !== 'CUSTOMER') return;
+    } catch {
+      // ignore
+    }
 
     if (showSpinner) setIsCartLoading(true);
     setCartError(null);
@@ -236,10 +243,17 @@ export function ShopProvider({ children }) {
     }
   }, [normalizeCartItem, enrichCartItemsWithStock]);
 
-  // Fetch real Wishlist from Backend if logged in
+  // Fetch real Wishlist from Backend if logged in (Customer only)
   const fetchWishlist = useCallback(async (showSpinner = false) => {
     const currentToken = localStorage.getItem('token');
     if (!currentToken) return;
+    try {
+      const savedUser = JSON.parse(localStorage.getItem('user') || 'null');
+      const role = String(savedUser?.role || '').trim().toUpperCase();
+      if (role && role !== 'CUSTOMER') return;
+    } catch {
+      // ignore
+    }
 
     if (showSpinner) setIsWishlistLoading(true);
     setWishlistError(null);
