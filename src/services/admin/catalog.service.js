@@ -86,16 +86,7 @@ export function filterProducts(
   const rows = products.filter((product) => {
     // 1. Kiểm tra tìm kiếm từ khóa (search)
     const matchesSearch =
-      !query ||
-      normalize(
-        [
-          product.name,
-          product.description,
-          product.category?.name,
-          product.brand?.name,
-          ...(product.variants || []).map((v) => v.sku),
-        ].join(" "),
-      ).includes(query);
+      !query || normalize(product.name ?? "").includes(query);
 
     // 2. Kiểm tra danh mục (so sánh chuỗi an toàn cho ID)
     const matchesCategory =

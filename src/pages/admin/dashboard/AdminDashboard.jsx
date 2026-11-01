@@ -10,7 +10,10 @@ import {
   X,
   ChevronRight,
 } from "lucide-react";
-import { getDashboardStatistics } from "../../../services/admin/dashboard.service.js";
+import {
+  buildMonthlyRevenueSeries,
+  getDashboardStatistics,
+} from "../../../services/admin/dashboard.service.js";
 import { getCatalog } from "../../../services/admin/catalog.service.js";
 import "./AdminDashboard.css";
 import { getUsers } from "../../../services/admin/users.service.js";
@@ -44,7 +47,19 @@ const money = (value) =>
         style: "currency",
         currency: "VND",
       }).format(value)
-    : "0 đ";
+    : "Chưa có dữ liệu";
+
+function currentPeriod() {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: "Asia/Ho_Chi_Minh",
+    year: "numeric",
+    month: "numeric",
+  }).formatToParts(new Date());
+  return {
+    year: Number(parts.find((part) => part.type === "year")?.value),
+    month: Number(parts.find((part) => part.type === "month")?.value),
+  };
+}
 
 export default function AdminDashboard() {
   const [state, setState] = useState({ data: null, loading: true, error: "" });
@@ -132,26 +147,16 @@ export default function AdminDashboard() {
   const orderSuccessRate =
     totalOrdersCount > 0 ? (deliveredCount / totalOrdersCount) * 100 : 0;
 
-  const totalRev = data?.totalRevenue || 0;
-
-  const currentMonthIndex = 9;
-  const monthlyRevenueData = Array.from({ length: 12 }, (_, index) => {
-    const monthNum = index + 1;
-    const rev = index === currentMonthIndex ? totalRev : 0;
-
-    let heightPercent = "0%";
-    if (totalRev > 0) {
-      heightPercent = index === currentMonthIndex ? "100%" : "4px";
-    }
-
-    return {
-      m: `Tháng ${monthNum}`,
-      short: `T${monthNum}`,
-      revenue: rev,
-      h: heightPercent,
-      highlight: index === currentMonthIndex,
-    };
-  });
+  const totalRev = numeric(data?.totalRevenue) ? data.totalRevenue : null;
+  const period = currentPeriod();
+  const monthlyRevenueData = buildMonthlyRevenueSeries(
+    data?.monthlyRevenue,
+    period.year,
+    period.month,
+  );
+  const hasMonthlyRevenue = monthlyRevenueData.some(
+    (item) => item.revenue !== null,
+  );
 
   const statuses =
     data?.ordersByStatus &&
@@ -353,21 +358,43 @@ export default function AdminDashboard() {
           <div className="la-mid-section-grid">
             <div className="la-chart-card">
               <div className="la-card-header-between">
-                <h3>Biểu Đồ Doanh Thu Theo Tháng ({money(totalRev)})</h3>
+                <div>
+                  <h3>Doanh Thu Theo Tháng</h3>
+                  <p className="la-chart-summary">
+                    Tổng doanh thu hệ thống: <strong>{money(totalRev)}</strong>
+                  </p>
+                </div>
                 <TrendingUp size={16} color="#71717a" />
               </div>
-              <div className="la-bar-chart-mock" style={{ overflowX: "auto" }}>
+              {!hasMonthlyRevenue && (
+                <p className="la-chart-contract-note" role="status">
+                  Backend chưa cung cấp doanh thu phân tách theo tháng.
+                </p>
+              )}
+              <div
+                className="la-bar-chart-mock"
+                style={{ overflowX: "auto" }}
+                aria-label={`Biểu đồ doanh thu theo tháng năm ${period.year}`}
+              >
                 {monthlyRevenueData.map((item) => (
                   <div
-                    className="la-bar-item"
+                    className={`la-bar-item ${item.current ? "is-current" : ""}`}
                     key={item.m}
-                    title={`${item.m} 2026: ${money(item.revenue)}`}
+                    tabIndex={0}
+                    aria-label={`${item.m} ${period.year}: ${money(item.revenue)}`}
                   >
                     <div
-                      className={`la-bar-column ${item.highlight ? "highlight" : ""}`}
+                      className={`la-bar-column is-${item.state}`}
                       style={{ height: item.h }}
                     />
-                    <span className="la-bar-label">{item.short}</span>
+                    <span className="la-bar-tooltip" role="tooltip">
+                      <b>{item.m} {period.year}</b>
+                      <span>{money(item.revenue)}</span>
+                    </span>
+                    <span className="la-bar-label">
+                      {item.short}
+                      {item.current && <small>Hiện tại</small>}
+                    </span>
                   </div>
                 ))}
               </div>
@@ -538,8 +565,8 @@ export default function AdminDashboard() {
                       marginBottom: "16px",
                     }}
                   >
-                    Thống kê doanh thu thực tế phát sinh trong năm 2026 (Tính
-                    đến tháng 10/2026):
+                    Doanh thu theo từng tháng năm {period.year}. Giá trị chưa có
+                    dữ liệu được giữ riêng, không chuyển thành 0 đ.
                   </p>
                   <ul
                     style={{
@@ -558,7 +585,7 @@ export default function AdminDashboard() {
                           display: "flex",
                           justifyContent: "space-between",
                           padding: "10px 14px",
-                          background: item.highlight ? "#f1f5f9" : "#f8fafc",
+                          background: item.current ? "#f1f5f9" : "#f8fafc",
                           borderRadius: "8px",
                           border: "1px solid #e2e8f0",
                         }}
@@ -566,14 +593,14 @@ export default function AdminDashboard() {
                         <span
                           style={{
                             fontWeight: 600,
-                            color: item.highlight ? "#0f172a" : "#334155",
+                            color: item.current ? "#0f172a" : "#334155",
                           }}
                         >
-                          {item.m} 2026
+                          {item.m} {period.year}
                         </span>
                         <strong
                           style={{
-                            color: item.highlight ? "#2E5A88" : "#64748b",
+                            color: item.current ? "#2E5A88" : "#64748b",
                           }}
                         >
                           {money(item.revenue)}
